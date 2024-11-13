@@ -21,6 +21,7 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
+log.initialize();
 log.info('Application Starting...');
 
 const viteDevServer = !process.env.DEV
