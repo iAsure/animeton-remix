@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.base.json",
+  "include": ["electron/**/*"],
+  "exclude": ["build"],
+  "strict": false,
+  "compilerOptions": {
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "composite": true,
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false,
+    "types": ["node"]
+  }
+}
