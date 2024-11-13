@@ -4,11 +4,14 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-} from "@remix-run/react";
+} from '@remix-run/react';
+import { NextUIProvider } from '@nextui-org/react';
+import log from 'electron-log';
 
-import "./globals.css";
+import './globals.css';
 
 export default function App() {
+  log.info('Renderer initialized');
   return (
     <html lang="en">
       <head>
@@ -19,9 +22,11 @@ export default function App() {
         <Links />
       </head>
       <body className="h-lvh max-h-lvh">
-        <Outlet />
-        <ScrollRestoration />
-        <Scripts />
+        <NextUIProvider>
+          <Outlet />
+          <ScrollRestoration />
+          <Scripts />
+        </NextUIProvider>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Progress } from '@nextui-org/react';
 import { useTorrentStream } from '../hooks/useTorrentStream';
 import { useSubtitles } from '../hooks/useSubtitles';
+import log from 'electron-log';
 
 export const meta: MetaFunction = () => {
   return [
@@ -30,12 +31,15 @@ export default function Index() {
   const { loadSubtitlesFromFile } = useSubtitles(videoRef, isVideoReady);
 
   const handleVideoReady = useCallback(() => {
+    log.info('Video ready');
     setIsVideoReady(true);
   }, []);
 
   const handleVideoPlay = useCallback(() => {
     if (videoRef.current) {
+      log.info('Playing video');
       videoRef.current.play().catch((error) => {
+        log.error('Error playing video', { error });
         console.error('Error playing video:', error);
       });
     }
@@ -43,6 +47,7 @@ export default function Index() {
 
   useEffect(() => {
     const handleTorrentServerDone = (event: any, data: any) => {
+      log.info('Torrent server done', { data });
       const { url, filePath } = data;
       if (videoRef.current) {
         videoRef.current.src = url;

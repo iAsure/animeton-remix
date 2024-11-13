@@ -13,6 +13,20 @@ if (!fs.statSync(TEMP_DIR).isDirectory()) {
 // Download "CodeSignTool" and move to /scripts/CodeSignTool
 // https://www.ssl.com/download/codesigntool-for-windows/
 const CODE_SIGN_TOOL_DIR = path.join(__dirname, 'CodeSignTool');
+const CODE_SIGN_TOOL_PATH = path.join(CODE_SIGN_TOOL_DIR, 'CodeSignTool.bat');
+
+// Validate CodeSignTool existence
+if (!fs.existsSync(CODE_SIGN_TOOL_PATH)) {
+  console.error(`
+Error: CodeSignTool not found at ${CODE_SIGN_TOOL_PATH}
+
+Please follow these steps:
+1. Download CodeSignTool from: https://www.ssl.com/download/codesigntool-for-windows/
+2. Extract the downloaded file
+3. Move the extracted 'CodeSignTool' folder to: ${CODE_SIGN_TOOL_DIR}
+`);
+  process.exit(1);
+}
 
 function sign(configuration) {
   // credentials from ssl.com
