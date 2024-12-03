@@ -16,11 +16,11 @@ function useTorrentStream(torrentId: string) {
     window.api.addTorrent(torrentId)
 
     const handleTorrentProgress = (event: any, data: any) => {
-      log.debug('Torrent progress update', {
-        progress: Math.round(data.progress * 100 * 100) / 100,
-        downloadSpeed: prettyBytes(data.downloadSpeed) + '/s',
-        peers: data.numPeers
-      });
+      // log.debug('Torrent progress update', {
+      //   progress: Math.round(data.progress * 100 * 100) / 100,
+      //   downloadSpeed: prettyBytes(data.downloadSpeed) + '/s',
+      //   peers: data.numPeers
+      // });
 
       const {
         numPeers,

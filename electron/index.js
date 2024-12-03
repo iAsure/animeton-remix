@@ -2,10 +2,13 @@ import * as fsp from "node:fs/promises";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import log from 'electron-log';
+import { Worker } from 'worker_threads'
 
 import { app, BrowserWindow, session, protocol, ipcMain, utilityProcess, net } from "electron";
 import { createRequestHandler } from "@remix-run/node";
 import * as mime from "mime-types";
+
+import { setupSubtitlesHandlers } from './subtitles.js';
 
 const appId = 'com.tiahui.animeton';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -70,22 +73,109 @@ app.whenReady().then(async () => {
     const ses = session.fromPartition(partition);
     let win;
 
+    // Setup handlers and get cleanup function
+    const cleanupSubtitles = setupSubtitlesHandlers();
+
     // Initialize WebTorrent process
     log.info('Forking WebTorrent process...');
     const webTorrentProcess = utilityProcess.fork('electron/webtorrent.js');
 
+    // Initialize Subtitles Worker
+    const subtitlesWorker = new Worker(path.join(__dirname, 'subtitlesWorker.js'));
+    
+    subtitlesWorker.on('error', (error) => {
+      log.error('Subtitles worker error:', error);
+    });
+
     // Handle WebTorrent messages
-    webTorrentProcess.on('message', (message) => {
-      log.debug('WebTorrent message received:', message.type);
-      if (message.type === 'server-ready') {
-        webTorrentPort = message.port;
-        log.info(`WebTorrent server ready on port ${message.port}`);
-        setupCSP(webTorrentPort, ses);
+    webTorrentProcess.on('message', async (message) => {
+      const blackListProcess = ['torrent-progress']
+      if (!blackListProcess.includes(message.type)) {
+        log.debug('WebTorrent message received:', message.type);
       }
       
-      if (['torrent-progress', 'torrent-done', 'torrent-server-done', 'torrent-file'].includes(message.type)) {
-        win?.webContents.send(message.type, message.data);
+      switch (message.type) {
+        case 'server-ready':
+          webTorrentPort = message.port;
+          log.info(`WebTorrent server ready on port ${message.port}`);
+          setupCSP(webTorrentPort, ses);
+          break;
+
+        case 'process-mkv':
+          try {
+            const { filePath } = message.data;
+            log.info('Processing MKV file:', filePath);
+            
+            const subtitlesPromise = new Promise((resolve, reject) => {
+              const timeoutId = setTimeout(() => {
+                reject(new Error('Subtitle extraction timed out'));
+              }, 120000); // Increased timeout to 2 minutes
+
+              const handleMessage = (result) => {
+                clearTimeout(timeoutId);
+                
+                if (result.type === 'complete') {
+                  log.info('Subtitles extraction completed');
+                  log.debug('Subtitles:', result.data);
+                  resolve(result.data);
+                } else if (result.type === 'error') {
+                  log.error('Subtitles extraction failed:', result.error);
+                  reject(new Error(result.error));
+                }
+              };
+
+              subtitlesWorker.once('message', handleMessage);
+              subtitlesWorker.postMessage({ filePath });
+              
+              // Add error handler
+              subtitlesWorker.once('error', (error) => {
+                clearTimeout(timeoutId);
+                log.error('Subtitles worker error:', error);
+                reject(error);
+              });
+            });
+
+            const subtitles = await subtitlesPromise;
+            
+            if (!subtitles || (Array.isArray(subtitles) && subtitles.length === 0)) {
+              log.warn('No subtitles found in file');
+              win?.webContents.send('subtitles-extracted', {
+                success: true,
+                data: []
+              });
+              return;
+            }
+
+            log.info(`Found ${Array.isArray(subtitles) ? subtitles.length : 'multiple'} subtitle tracks`);
+            win?.webContents.send('subtitles-extracted', {
+              success: true,
+              data: subtitles
+            });
+          } catch (error) {
+            log.error('Error processing MKV:', error);
+            win?.webContents.send('subtitles-error', {
+              success: false,
+              error: error.message
+            });
+          }
+          break;
+
+        case 'torrent-progress':
+        case 'torrent-done':
+        case 'torrent-server-done':
+        case 'torrent-file':
+          win?.webContents.send(message.type, message.data);
+          break;
+
+        default:
+          log.warn('Unknown message type received:', message.type);
       }
+    });
+
+    // Cleanup on app quit
+    app.on('before-quit', () => {
+      log.info('Cleaning up workers...');
+      cleanupSubtitles();
     });
 
     // Setup IPC handlers

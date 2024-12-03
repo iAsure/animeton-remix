@@ -22,9 +22,6 @@ const api = {
     ipcRenderer.removeListener('torrent-file', callback),
   removeTorrentError: (callback) =>
     ipcRenderer.removeListener('torrent-error', callback),
-
-  // Subtitles
-  extractSubtitles: (filePath) => ipcRenderer.invoke('extract-subtitles', filePath),
 };
 
 contextBridge.exposeInMainWorld('api', api);
