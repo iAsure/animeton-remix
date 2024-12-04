@@ -54,10 +54,10 @@ export default function Index() {
       }
     };
 
-    window.api.onTorrentServerDone(handleTorrentServerDone);
+    window.api.torrent.onServerDone.subscribe(handleTorrentServerDone);
 
     return () => {
-      window.api.removeTorrentServerDone(handleTorrentServerDone);
+      window.api.torrent.onServerDone.unsubscribe(handleTorrentServerDone);
     };
   }, []);
 

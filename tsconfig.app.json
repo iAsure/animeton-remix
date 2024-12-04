@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["app/**/*", "vite.config.ts", "electron/preload/preload.d.ts", "public/vendor/jassub/jassub.es.js"],
+  "include": ["app/**/*", "vite.config.ts", "electron/shared/types/preload.d.ts", "public/vendor/jassub/jassub.es.js"],
   "compilerOptions": {
     "composite": true,
     "noEmit": true,

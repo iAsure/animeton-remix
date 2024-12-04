@@ -55,15 +55,15 @@ function useTorrentStream(torrentId: string) {
       alert('Error: ' + data.message)
     }
 
-    window.api.onTorrentProgress(handleTorrentProgress)
-    window.api.onTorrentDone(handleTorrentDone)
-    window.api.onTorrentError(handleTorrentError)
+    window.api.torrent.onProgress.subscribe(handleTorrentProgress)
+    window.api.torrent.onDone.subscribe(handleTorrentDone)
+    window.api.torrent.onError.subscribe(handleTorrentError)
 
     return () => {
       log.info('Cleaning up torrent stream', { torrentId });
-      window.api.removeTorrentProgress(handleTorrentProgress)
-      window.api.removeTorrentDone(handleTorrentDone)
-      window.api.removeTorrentError(handleTorrentError)
+      window.api.torrent.onProgress.unsubscribe(handleTorrentProgress)
+      window.api.torrent.onDone.unsubscribe(handleTorrentDone)
+      window.api.torrent.onError.unsubscribe(handleTorrentError)
     }
   }, [torrentId])
 
