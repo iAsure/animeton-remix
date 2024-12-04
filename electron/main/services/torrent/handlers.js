@@ -20,9 +20,9 @@ export function setupTorrentHandlers(webTorrentProcess, mainWindow) {
       mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.ERROR, error);
     },
 
-    'process-mkv': (data) => {
+    [IPC_CHANNELS.TORRENT.MKV_PROCESS]: (data) => {
       log.info('Processing MKV file:', data.filePath);
-      mainWindow?.webContents.send('process-mkv', data);
+      mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.MKV_PROCESS, data);
     }
   };
 

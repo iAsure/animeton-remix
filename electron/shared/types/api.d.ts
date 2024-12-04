@@ -51,4 +51,11 @@ export interface SubtitlesApi {
     data?: SubtitleTrack[];
     error?: string;
   }>;
+  onExtracted: EventHandler<SubtitleTrack[]>;
+  onError: EventHandler<{ error: string }>;
+}
+
+export interface Api {
+  torrent: TorrentApi;
+  subtitles: SubtitlesApi;
 }

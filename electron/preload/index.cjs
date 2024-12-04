@@ -11,7 +11,7 @@ const createEventHandler = (channel) => ({
   const { IPC_CHANNELS } = await import('../shared/constants/event-channels.js');
 
   // Define APIs
-  const torrentApi = {
+  const api = {
     addTorrent: (torrentId) => {
       ipcRenderer.send(IPC_CHANNELS.TORRENT.ADD, { 
         action: 'add-torrent', 
@@ -26,19 +26,16 @@ const createEventHandler = (channel) => ({
       onFile: createEventHandler(IPC_CHANNELS.TORRENT.FILE),
       onError: createEventHandler(IPC_CHANNELS.TORRENT.ERROR),
       onMkvProcess: createEventHandler(IPC_CHANNELS.TORRENT.MKV_PROCESS)
-    }
-  };
+    },
 
-  const subtitlesApi = {
     extractSubtitles: (filePath) => 
-      ipcRenderer.invoke(IPC_CHANNELS.SUBTITLES.EXTRACT, filePath)
+      ipcRenderer.invoke(IPC_CHANNELS.SUBTITLES.EXTRACT, filePath),
+    onExtracted: createEventHandler(IPC_CHANNELS.SUBTITLES.EXTRACTED),
+    onError: createEventHandler(IPC_CHANNELS.SUBTITLES.ERROR)
   };
 
   // Expose APIs to renderer process
-  contextBridge.exposeInMainWorld('api', {
-    ...torrentApi,
-    ...subtitlesApi
-  });
+  contextBridge.exposeInMainWorld('api', api);
 })().catch(err => {
   console.error('Failed to initialize preload:', err);
 });

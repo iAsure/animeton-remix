@@ -1,7 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload';
-import { TorrentApi, SubtitlesApi } from './api';
-
-export interface Api extends TorrentApi, SubtitlesApi {}
+import { Api } from './api.d.ts';
 
 declare global {
   interface Window {
