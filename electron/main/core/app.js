@@ -8,6 +8,7 @@ import { utilityProcess } from 'electron';
 import path from 'path';
 import { fileURLToPath } from "node:url";
 import { createServer } from 'vite';
+import { init as initUpdater } from './updater.js';
 
 let webTorrentProcess = null;
 let subtitlesWorker = null;
@@ -44,6 +45,8 @@ export async function initializeApp() {
     app.setAppUserModelId(process.env.APP_ID);
 
     await setupProtocol(build, viteDevServer);
+
+    initUpdater();
     
     // Initialize processes
     webTorrentProcess = utilityProcess.fork('electron/main/services/torrent/client.js');
