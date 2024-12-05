@@ -1,15 +1,21 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["electron/**/*"],
-  "exclude": ["build"],
-  "strict": false,
+  "include": [
+    "electron/**/*",
+  ],
+  "exclude": [
+    "electron/build/**/*"
+  ],
   "compilerOptions": {
     "module": "Node16",
     "moduleResolution": "Node16",
     "composite": true,
-    "noEmit": true,
+    "noEmit": false,
     "allowJs": true,
     "checkJs": false,
-    "types": ["node"]
+    "types": ["node"],
+    "outDir": "build",
+    "moduleDetection": "force",
+    "verbatimModuleSyntax": false,
   }
 }
