@@ -8,7 +8,7 @@ import {
 import { NextUIProvider } from '@nextui-org/react';
 import log from 'electron-log';
 
-import './globals.css';
+import '@/globals.css';
 
 export default function App() {
   log.info('Renderer initialized');

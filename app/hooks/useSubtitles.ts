@@ -1,7 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
-import { defaultHeader } from '../constants/subtitles';
+import { useCallback, useEffect, useState } from 'react';
+
+import { defaultHeader } from '@/constants/subtitles';
+import { formatAssSubtitles } from '@/utils/subtitles';
 
 import JASSUB from 'public/vendor/jassub/jassub.es.js';
+import log from 'electron-log';
 
 export const useSubtitles = (
   videoRef: React.RefObject<HTMLVideoElement>,
@@ -22,7 +25,7 @@ export const useSubtitles = (
         modernWasmUrl: '/vendor/jassub/jassub-worker-modern.wasm',
         debug: true,
         asyncRender: true,
-        onDemandRender: true
+        onDemandRender: true,
       });
 
       setSubtitlesRenderer(renderer);
@@ -57,6 +60,33 @@ export const useSubtitles = (
     },
     [loadSubtitles]
   );
+
+  useEffect(() => {
+    const handleSubtitles = (
+      _: any,
+      result: { success: boolean; data: any[] }
+    ) => {
+      if (result.success && Object.keys(result.data).length > 0) {
+        const firstSubtitles = result.data[0];
+
+        const assContent = formatAssSubtitles(firstSubtitles);
+        loadSubtitles(assContent);
+        log.info('Subtitles loaded into renderer');
+      }
+    };
+
+    const handleError = (_: any, result: { error: string }) => {
+      log.error('Subtitle extraction error:', result.error);
+    };
+
+    window.api.subtitles.onExtracted.subscribe(handleSubtitles);
+    window.api.subtitles.onError.subscribe(handleError);
+
+    return () => {
+      window.api.subtitles.onExtracted.unsubscribe(handleSubtitles);
+      window.api.subtitles.onError.unsubscribe(handleError);
+    };
+  }, [loadSubtitles]);
 
   return {
     loadSubtitles,

@@ -1,8 +1,8 @@
 import { type MetaFunction } from '@remix-run/react';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Progress } from '@nextui-org/react';
-import { useTorrentStream } from '../hooks/useTorrentStream';
-import { useSubtitles } from '../hooks/useSubtitles';
+import { useTorrentStream } from '@hooks/useTorrentStream';
+import { useSubtitles } from '@hooks/useSubtitles';
 import log from 'electron-log';
 
 export const meta: MetaFunction = () => {
@@ -14,7 +14,7 @@ export const meta: MetaFunction = () => {
 
 export default function Index() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [torrentId] = useState('https://nyaa.si/download/1849578.torrent');
+  const [torrentId] = useState('https://nyaa.si/download/1902712.torrent');
   const [isVideoReady, setIsVideoReady] = useState(false);
 
   const {
@@ -54,10 +54,10 @@ export default function Index() {
       }
     };
 
-    window.api.onTorrentServerDone(handleTorrentServerDone);
+    window.api.torrent.onServerDone.subscribe(handleTorrentServerDone);
 
     return () => {
-      window.api.removeTorrentServerDone(handleTorrentServerDone);
+      window.api.torrent.onServerDone.unsubscribe(handleTorrentServerDone);
     };
   }, []);
 
