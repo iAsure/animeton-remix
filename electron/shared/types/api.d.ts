@@ -22,40 +22,45 @@ export interface EventHandler<T = any> {
 
 export interface TorrentApi {
   addTorrent: (torrentId: string) => void;
-  torrent: {
-    onProgress: EventHandler<TorrentProgress>;
-    onDone: EventHandler<void>;
-    onServerDone: EventHandler<TorrentServerDone>;
-    onFile: EventHandler<any>;
-    onError: EventHandler<{ error: string }>;
-    onMkvProcess: EventHandler<{ filePath: string; status: string }>;
-  };
+  onProgress: EventHandler<TorrentProgress>;
+  onDone: EventHandler<void>;
+  onServerDone: EventHandler<TorrentServerDone>;
+  onFile: EventHandler<any>;
+  onError: EventHandler<{ error: string }>;
+  onMkvProcess: EventHandler<TorrentMkvProcess>;
 }
 
-export interface Subtitle {
+export interface SubtitleCue {
   start: number;
   end: number;
   text: string;
 }
 
 export interface SubtitleTrack {
-  number: number;
-  language: string;
-  name: string;
-  subtitles: Subtitle[];
+  track: {
+    number: number;
+    language: string;
+    type: string;
+    name: string;
+    header: string;
+  };
+  cues: SubtitleCue[];
+}
+
+export interface SubtitleResult {
+  success: boolean;
+  data?: SubtitleTrack[];
+  error?: string;
 }
 
 export interface SubtitlesApi {
-  extractSubtitles: (filePath: string) => Promise<{
-    success: boolean;
-    data?: SubtitleTrack[];
-    error?: string;
-  }>;
-  onExtracted: EventHandler<SubtitleTrack[]>;
+  extractSubtitles: (filePath: string) => Promise<SubtitleResult>;
+  onExtracted: EventHandler<SubtitleResult>;
   onError: EventHandler<{ error: string }>;
 }
 
 export interface Api {
+  addTorrent: (torrentId: string) => void;
   torrent: TorrentApi;
   subtitles: SubtitlesApi;
 }

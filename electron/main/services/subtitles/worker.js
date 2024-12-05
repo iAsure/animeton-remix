@@ -59,15 +59,24 @@ async function processStream(metadata, fileStream) {
 
 // Message handler
 parentPort?.on('message', async ({ filePath }) => {
+  log.info('Subtitle worker received file:', filePath);
   try {
-    log.info('Worker processing file:', filePath);
-    const subtitles = await parseSubtitles(filePath);
+    const allSubtitles = await parseSubtitles(filePath);
+    
+    // Filter subtitles to only include Spanish tracks
+    const spanishSubtitles = Object.fromEntries(
+      Object.entries(allSubtitles).filter(([_, data]) => 
+        data.track.language === 'spa'
+      )
+    );
+
+    log.info('Spanish subtitles extracted successfully');
     parentPort?.postMessage({ 
       type: 'complete',
-      data: subtitles
+      data: spanishSubtitles
     });
   } catch (error) {
-    log.error('Worker error:', error);
+    log.error('Subtitle extraction failed:', error);
     parentPort?.postMessage({ 
       type: 'error',
       error: error.message 

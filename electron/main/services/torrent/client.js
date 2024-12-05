@@ -4,6 +4,7 @@ import fs from 'fs';
 import { parentPort } from 'worker_threads';
 import log from 'electron-log';
 import { humanizeDuration } from '../../../shared/utils/time.js';
+import { IPC_CHANNELS } from '../../../shared/constants/event-channels.js';
 
 let activeClient = null;
 let progressInterval = null;
@@ -98,15 +99,24 @@ async function verifyDownload(filePath, torrent, maxAttempts = 10) {
 
 async function handleMkvFile(filePath) {
   try {
+    // Small delay to ensure file is fully written
     await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Send MKV process event with correct type from IPC_CHANNELS
     process.parentPort?.postMessage({
-      type: 'process-mkv',
-      data: { filePath, status: 'starting' },
+      type: IPC_CHANNELS.TORRENT.MKV_PROCESS,
+      data: { 
+        filePath,
+        status: 'ready_for_subtitles'
+      }
     });
   } catch (error) {
     process.parentPort?.postMessage({
-      type: 'process-mkv-error',
-      data: { error: error.message, filePath }
+      type: IPC_CHANNELS.TORRENT.ERROR,
+      data: { 
+        error: error.message,
+        filePath 
+      }
     });
   }
 }
