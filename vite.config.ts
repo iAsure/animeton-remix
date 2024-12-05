@@ -9,7 +9,7 @@ export default defineConfig({
     wasm(),
     topLevelAwait(),
     remix({
-      buildDirectory: 'electron/build',
+      buildDirectory: 'build/app',
     }),
     tsconfigPaths(),
   ],

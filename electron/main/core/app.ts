@@ -1,14 +1,14 @@
 import { app } from 'electron';
 import log from 'electron-log';
-import { setupWindow } from './window';
-import { setupProtocol } from './protocol';
-import { setupIpcHandlers } from '../ipc/handlers';
+import { setupWindow } from './window.js';
+import { setupProtocol } from './protocol.js';
+import { setupIpcHandlers } from '../ipc/handlers.js';
 import { Worker } from 'worker_threads';
 import { utilityProcess } from 'electron';
 import path from 'path';
 import { fileURLToPath } from "node:url";
 import { createServer } from 'vite';
-import { init as initUpdater } from './updater';
+import { init as initUpdater } from './updater.js';
 
 let webTorrentProcess = null;
 let subtitlesWorker = null;
@@ -39,7 +39,8 @@ export async function initializeApp() {
     const viteDevServer = await initializeViteServer();
     const build = viteDevServer
       ? () => viteDevServer.ssrLoadModule("virtual:remix/server-build")
-      : () => import("../../build/server/index.js");
+      // @ts-ignore
+      : () => import("../../../app/server/index.js");
 
     log.info(`Starting app with build ID: ${process.env.APP_ID}`);
     app.setAppUserModelId(process.env.APP_ID);
