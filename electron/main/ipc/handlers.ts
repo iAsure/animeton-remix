@@ -1,13 +1,22 @@
-import { ipcMain } from 'electron';
+import { BrowserWindow, ipcMain, UtilityProcess } from 'electron';
 import { IPC_CHANNELS } from '../../shared/constants/event-channels.js';
 import { setupTorrentHandlers } from '../services/torrent/handlers.js';
 import { SubtitlesService } from '../services/subtitles/service.js';
 import log from 'electron-log';
+import { Worker as NodeWorker } from 'worker_threads';
 
-export function setupIpcHandlers(webTorrentProcess, subtitlesWorker, mainWindow) {
+export function setupIpcHandlers(
+  webTorrentProcess: UtilityProcess,
+  subtitlesWorker: NodeWorker,
+  mainWindow: BrowserWindow
+) {
   // Initialize services
   const subtitlesService = new SubtitlesService(subtitlesWorker, mainWindow);
-  const torrentHandlers = setupTorrentHandlers(webTorrentProcess, mainWindow, subtitlesService);
+  const torrentHandlers = setupTorrentHandlers(
+    webTorrentProcess,
+    mainWindow,
+    subtitlesService
+  );
 
   // Register torrent handler
   ipcMain.on(IPC_CHANNELS.TORRENT.ADD, (_, arg) => {

@@ -8,6 +8,7 @@ import {
 import { NextUIProvider } from '@nextui-org/react';
 import log from 'electron-log';
 
+import Header from '@/shared/components/core/header';
 import '@/globals.css';
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
       </head>
       <body className="h-lvh max-h-lvh">
         <NextUIProvider>
+          <Header />
           <Outlet />
           <ScrollRestoration />
           <Scripts />

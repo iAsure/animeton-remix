@@ -14,6 +14,12 @@ export default defineConfig({
     tsconfigPaths(),
   ],
   optimizeDeps: {
-    exclude: ['electron', 'electron/main', 'fsevents', 'jassub'],
+    exclude: [
+      'electron',
+      'electron/main',
+      '@electron/remote',
+      'fsevents',
+      'jassub'
+    ],
   },
 });

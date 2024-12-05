@@ -3,8 +3,8 @@ import path from 'path';
 import log from 'electron-log';
 import { fileURLToPath } from "node:url";
 
-let mainWindow = null;
-const windows = new Set();
+let mainWindow: BrowserWindow | null = null;
+const windows = new Set<BrowserWindow>();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 
@@ -16,7 +16,7 @@ export function getAllWindows() {
   return Array.from(windows);
 }
 
-export async function setupWindow(partition = 'persist:partition') {
+export async function setupWindow(partition = 'persist:partition'): Promise<BrowserWindow> {
   log.info('Creating main window...');
   
   mainWindow = new BrowserWindow({

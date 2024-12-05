@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { defaultHeader } from '@/constants/subtitles';
-import { formatAssSubtitles } from '@/utils/subtitles';
+import { defaultHeader } from '@/shared/constants/subtitles';
+import { formatAssSubtitles } from '@/shared/utils/subtitles';
 
 import JASSUB from 'public/vendor/jassub/jassub.es.js';
 import log from 'electron-log';

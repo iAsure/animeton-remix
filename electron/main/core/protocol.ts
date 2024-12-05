@@ -32,7 +32,7 @@ export async function setupProtocol(build, viteDevServer) {
       if (viteDevServer) {
         const staticFile = path.resolve(
           __dirname,
-          '../../../public' + url.pathname
+          '../../../../public' + url.pathname
         );
         if (
           await fsp
