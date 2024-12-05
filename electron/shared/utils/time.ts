@@ -1,4 +1,4 @@
-export const humanizeDuration = (milliseconds) => {
+export const humanizeDuration = (milliseconds: number) => {
   const seconds = Math.floor(milliseconds / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);

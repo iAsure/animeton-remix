@@ -1,6 +1,6 @@
 import { app, protocol } from 'electron';
 import log from 'electron-log';
-import { initializeApp } from './core/app.js';
+import { initializeApp } from './core/app';
 import 'dotenv/config';
 
 log.initialize();

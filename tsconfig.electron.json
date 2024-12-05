@@ -1,15 +1,21 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["electron/**/*"],
-  "exclude": ["build"],
-  "strict": false,
+  "include": [
+    "electron/**/*",
+    "electron/build/server/index.js"
+  ],
+  "exclude": [
+    "electron/build/client/**/*",
+    "electron/build/server/**/*",
+    "!electron/build/server/index.js"
+  ],
   "compilerOptions": {
-    "module": "Node16",
-    "moduleResolution": "Node16",
+    "module": "ESNext",
+    "moduleResolution": "node",
     "composite": true,
-    "noEmit": true,
+    "noEmit": false,
     "allowJs": true,
     "checkJs": false,
-    "types": ["node"]
+    "types": ["node"],
   }
 }

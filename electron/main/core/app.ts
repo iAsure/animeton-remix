@@ -1,14 +1,14 @@
 import { app } from 'electron';
 import log from 'electron-log';
-import { setupWindow } from './window.js';
-import { setupProtocol, setupCSP } from './protocol.js';
-import { setupIpcHandlers } from '../ipc/handlers.js';
+import { setupWindow } from './window';
+import { setupProtocol } from './protocol';
+import { setupIpcHandlers } from '../ipc/handlers';
 import { Worker } from 'worker_threads';
 import { utilityProcess } from 'electron';
 import path from 'path';
 import { fileURLToPath } from "node:url";
 import { createServer } from 'vite';
-import { init as initUpdater } from './updater.js';
+import { init as initUpdater } from './updater';
 
 let webTorrentProcess = null;
 let subtitlesWorker = null;

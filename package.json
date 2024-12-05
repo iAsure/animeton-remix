@@ -12,10 +12,11 @@
     "url": "https://github.com/Tiahui-Tech/webtorrent-animeton.git"
   },
   "sideEffects": false,
-  "main": "electron/main/index.js",
+  "main": "electron/dist/electron/main/index.js",
   "scripts": {
     "postinstall": "patch-package",
-    "build": "remix vite:build",
+    "build": "tsc -p tsconfig.electron.json",
+    "build:vite": "remix vite:build",
     "predist": "npm run build",
     "dist": "electron-builder",
     "dev": "cross-env DEV=1 electron ./electron/main/index.js",
