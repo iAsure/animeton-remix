@@ -16,6 +16,6 @@
     "types": ["node"],
     "outDir": "build",
     "moduleDetection": "force",
-    "verbatimModuleSyntax": false,
+    "verbatimModuleSyntax": false
   }
 }

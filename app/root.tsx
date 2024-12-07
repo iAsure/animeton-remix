@@ -9,7 +9,12 @@ import { NextUIProvider } from '@nextui-org/react';
 import log from 'electron-log';
 
 import Header from '@/shared/components/core/header';
-import '@/globals.css';
+
+import styles from '@/globals.css?url';
+
+export function links() {
+  return [{ rel: "stylesheet", href: styles }];
+}
 
 export default function App() {
   log.info('Renderer initialized');

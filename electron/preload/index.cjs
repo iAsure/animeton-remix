@@ -10,6 +10,17 @@ const createEventHandler = (channel) => ({
     '../shared/constants/event-channels.js'
   );
 
+  const electron = {
+    ipc: {
+      send: (channel, data) => ipcRenderer.send(channel, data),
+      invoke: (channel, data) => ipcRenderer.invoke(channel, data),
+      on: (channel, callback) => ipcRenderer.on(channel, callback),
+      once: (channel, callback) => ipcRenderer.once(channel, callback),
+      removeListener: (channel, callback) => 
+        ipcRenderer.removeListener(channel, callback),
+    }
+  };
+
   const api = {
     addTorrent: (torrentId) => {
       ipcRenderer.send(IPC_CHANNELS.TORRENT.ADD, {
@@ -35,7 +46,7 @@ const createEventHandler = (channel) => ({
     },
   };
 
-  // Expose APIs to renderer process (window.api)
+  contextBridge.exposeInMainWorld('electron', electron);
   contextBridge.exposeInMainWorld('api', api);
 })().catch((err) => {
   console.error('Failed to initialize preload:', err);

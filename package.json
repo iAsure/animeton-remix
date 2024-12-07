@@ -25,7 +25,6 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@electron/remote": "^2.1.2",
     "@iconify/react": "^5.0.2",
     "@nextui-org/react": "^2.4.6",
     "@remix-run/express": "^2.6.0",
@@ -69,6 +68,7 @@
     "patch-package": "^8.0.0",
     "typescript": "^5.1.6",
     "vite": "^5.0.0",
+    "vite-env-only": "^2.2.0",
     "vite-plugin-top-level-await": "^1.4.4",
     "vite-plugin-wasm": "^3.3.0",
     "vite-tsconfig-paths": "^4.2.1"

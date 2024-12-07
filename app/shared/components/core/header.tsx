@@ -8,7 +8,7 @@ import { useWindowControls } from '@/hooks/useWindowControls';
 import { useUpdateDownload } from '@/hooks/useUpdateDownload';
 
 const isPlayerRoute = (path: string) => path.includes('/player');
-const appVersion = require('../../../../package.json').version;
+import { version as appVersion } from '../../../../package.json';
 
 const Header = () => {
   const { isMaximized, handleWindowControl } = useWindowControls();
@@ -31,8 +31,9 @@ const Header = () => {
 
   const handleClosedBeta = () => {};
 
-  const startDrag = (e: React.MouseEvent) => {
-    window.electron.ipcRenderer.send('dragWindow');
+  const startDrag = (e) => {
+    if (e.button !== 0) return;
+    window.electron.ipc.send('dragWindow');
   };
 
   const appIsActivated = true;
@@ -74,7 +75,7 @@ const Header = () => {
                   icon="gravity-ui:house"
                   width="28"
                   height="28"
-                  className={`pointer-events-none 'text-white'`}
+                  className={`pointer-events-none ${canGoHome ? 'text-white' : 'text-gray-500'}`}
                 />
               </button>
               <button
@@ -226,7 +227,7 @@ const Header = () => {
                     <Tooltip content="¡Consigue mas interactuando en discord!">
                       <div className="flex items-center gap-1 bg-zinc-800/80 rounded-full px-2 py-0.5">
                         <img
-                          src={'assets/icons/coin.png'}
+                          src={'icons/coin.png'}
                           alt="coin"
                           className="w-3.5 h-3.5"
                         />
@@ -273,7 +274,7 @@ const Header = () => {
               >
                 <Icon
                   icon="gravity-ui:minus"
-                  className="pointer-events-none"
+                  className="pointer-events-none text-white"
                   width="26"
                   height="26"
                 />
@@ -285,7 +286,7 @@ const Header = () => {
               >
                 <Icon
                   icon={isMaximized ? 'gravity-ui:copy' : 'gravity-ui:square'}
-                  className="pointer-events-none"
+                  className="pointer-events-none text-white"
                   width="26"
                   height="26"
                 />
@@ -297,7 +298,7 @@ const Header = () => {
               >
                 <Icon
                   icon="gravity-ui:xmark"
-                  className="pointer-events-none"
+                  className="pointer-events-none text-white"
                   width="26"
                   height="26"
                 />

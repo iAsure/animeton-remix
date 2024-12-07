@@ -38,4 +38,45 @@ export function setupIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.SUBTITLES.EXTRACT, async (_, filePath) => {
     return subtitlesService.processFile(filePath);
   });
+
+  // Window control handlers
+  ipcMain.handle(IPC_CHANNELS.WINDOW.IS_MAXIMIZED, () => {
+    return mainWindow.isMaximized();
+  });
+
+  ipcMain.on(IPC_CHANNELS.WINDOW.CONTROL, (_, action: 'minimize' | 'maximize' | 'close') => {
+    switch (action) {
+      case 'minimize':
+        mainWindow.minimize();
+        break;
+      case 'maximize':
+        if (mainWindow.isFullScreen()) {
+          mainWindow.setFullScreen(false);
+          setTimeout(() => {
+            if (mainWindow.isFullScreen()) mainWindow.maximize();
+          }, 100);
+        } else if (mainWindow.isMaximized()) {
+          mainWindow.unmaximize();
+        } else {
+          mainWindow.maximize();
+        }
+        break;
+      case 'close':
+        mainWindow.close();
+        break;
+    }
+  });
+
+  // Forward window state events to renderer
+  mainWindow.on('maximize', () => {
+    mainWindow.webContents.send(IPC_CHANNELS.WINDOW.MAXIMIZE);
+  });
+
+  mainWindow.on('unmaximize', () => {
+    mainWindow.webContents.send(IPC_CHANNELS.WINDOW.UNMAXIMIZE);
+  });
+
+  mainWindow.on('resize', () => {
+    mainWindow.webContents.send(IPC_CHANNELS.WINDOW.RESIZE);
+  });
 }

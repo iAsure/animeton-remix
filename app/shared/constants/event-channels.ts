@@ -7,18 +7,20 @@ export const IPC_CHANNELS = {
     FILE: 'torrent-file',
     ERROR: 'torrent-error',
     MKV_PROCESS: 'process-mkv',
-    MKV_ERROR: 'process-mkv-error',
+    MKV_ERROR: 'process-mkv-error'
   },
   SUBTITLES: {
     EXTRACT: 'extract-subtitles',
     EXTRACTED: 'subtitles-extracted',
-    ERROR: 'subtitles-error',
+    ERROR: 'subtitles-error'
   },
   WINDOW: {
     MAXIMIZE: 'window-maximize',
     UNMAXIMIZE: 'window-unmaximize',
     RESIZE: 'window-resize',
     CONTROL: 'window-control',
-    IS_MAXIMIZED: 'window-is-maximized',
-  },
-};
+    IS_MAXIMIZED: 'window-is-maximized'
+  }
+} as const;
+
+export type IpcChannel = typeof IPC_CHANNELS[keyof typeof IPC_CHANNELS][keyof typeof IPC_CHANNELS[keyof typeof IPC_CHANNELS]];

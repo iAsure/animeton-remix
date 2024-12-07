@@ -66,8 +66,10 @@ export const useSubtitles = (
       _: any,
       result: { success: boolean; data: any[] }
     ) => {
-      if (result.success && Object.keys(result.data).length > 0) {
-        const firstSubtitles = result.data[0];
+      const subtitlesArray = Object.values(result.data);
+      
+      if (result.success && subtitlesArray.length > 0) {
+        const firstSubtitles = subtitlesArray[0];
 
         const assContent = formatAssSubtitles(firstSubtitles);
         loadSubtitles(assContent);

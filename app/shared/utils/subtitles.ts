@@ -1,3 +1,5 @@
+import log from "electron-log";
+
 const parseTimeToAss = (timeInMilliseconds: number): string => {
   const timeInSeconds = timeInMilliseconds / 1000;
   const hours = Math.floor(timeInSeconds / 3600);
@@ -29,6 +31,7 @@ export const formatAssSubtitles = (subtitleTrack: {
   track: { header: string };
   cues: SubtitleCue[];
 }): string => {
+  log.info(subtitleTrack);
   let assContent = subtitleTrack.track.header;
 
   subtitleTrack.cues.forEach((cue) => {

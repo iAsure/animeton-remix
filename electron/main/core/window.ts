@@ -23,6 +23,7 @@ export async function setupWindow(partition = 'persist:partition'): Promise<Brow
     icon: "./public/favicon.png",
     width: 900,
     height: 900,
+    frame: false,
     webPreferences: {
       partition,
       preload: path.join(__dirname, "../../preload/index.cjs"),

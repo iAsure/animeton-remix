@@ -1,66 +1,37 @@
 import { useEffect, useState } from 'react';
-import { getCurrentWindow } from '@electron/remote';
+import { IPC_CHANNELS } from '@constants/event-channels';
 
 export const useWindowControls = () => {
   const [isMaximized, setIsMaximized] = useState(false);
 
   useEffect(() => {
-    let win: Electron.BrowserWindow | null = null;
-    try {
-      win = getCurrentWindow();
-    } catch (error) {
-      console.error('Error getting window reference:', error);
-      return;
-    }
+    // Get initial maximized state
+    window.electron.ipc.invoke(IPC_CHANNELS.WINDOW.IS_MAXIMIZED)
+      .then(setIsMaximized)
+      .catch(console.error);
 
+    // Setup event listeners
     const handleMaximize = () => setIsMaximized(true);
     const handleUnmaximize = () => setIsMaximized(false);
-    const handleResize = () => {
-      if (win) setIsMaximized(win.isMaximized());
+    const handleResize = async () => {
+      const maximized = await window.electron.ipc.invoke(IPC_CHANNELS.WINDOW.IS_MAXIMIZED);
+      setIsMaximized(maximized);
     };
 
-    setIsMaximized(win.isMaximized());
-
-    win.on('maximize', handleMaximize);
-    win.on('unmaximize', handleUnmaximize);
-    win.on('resize', handleResize);
+    window.electron.ipc.on(IPC_CHANNELS.WINDOW.MAXIMIZE, handleMaximize);
+    window.electron.ipc.on(IPC_CHANNELS.WINDOW.UNMAXIMIZE, handleUnmaximize);
+    window.electron.ipc.on(IPC_CHANNELS.WINDOW.RESIZE, handleResize);
 
     return () => {
-      win.off('maximize', handleMaximize);
-      win.off('unmaximize', handleUnmaximize);
-      win.off('resize', handleResize);
+      window.electron.ipc.removeListener(IPC_CHANNELS.WINDOW.MAXIMIZE, handleMaximize);
+      window.electron.ipc.removeListener(IPC_CHANNELS.WINDOW.UNMAXIMIZE, handleUnmaximize);
+      window.electron.ipc.removeListener(IPC_CHANNELS.WINDOW.RESIZE, handleResize);
     };
   }, []);
 
-  const handleWindowControl = (action) => (e) => {
+  const handleWindowControl = (action: 'minimize' | 'maximize' | 'close') => (e: React.MouseEvent) => {
     e.stopPropagation();
-    const win = getCurrentWindow();
-    if (!win) return;
-
-    try {
-      switch (action) {
-        case 'minimize':
-          win.minimize();
-          break;
-        case 'maximize':
-          if (win.isFullScreen()) {
-            win.setFullScreen(false);
-            setTimeout(() => {
-              if (win.isFullScreen()) win.maximize();
-            }, 100);
-          } else if (win.isMaximized()) {
-            win.unmaximize();
-          } else {
-            win.maximize();
-          }
-          break;
-        case 'close':
-          win.close();
-          break;
-      }
-    } catch (error) {
-      console.error(`Error executing window action ${action}:`, error);
-    }
+    window.electron.ipc.send(IPC_CHANNELS.WINDOW.CONTROL, action);
   };
 
   return { isMaximized, handleWindowControl };
