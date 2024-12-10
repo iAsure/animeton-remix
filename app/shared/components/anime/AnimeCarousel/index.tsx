@@ -57,18 +57,15 @@ const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ animes }) => {
     const animeImage = currentAnime?.bannerImage || currentAnime?.coverImage?.extraLarge;
 
     const slideVariants = {
-        enter: (direction) => ({
-            x: direction > 0 ? 1000 : -1000,
+        enter: {
             opacity: 0,
-        }),
+        },
         center: {
-            x: 0,
             opacity: 1,
         },
-        exit: (direction) => ({
-            x: direction < 0 ? 1000 : -1000,
+        exit: {
             opacity: 0,
-        }),
+        },
     };
 
     const handleAnimeClick = (anime) => {
@@ -88,8 +85,7 @@ const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ animes }) => {
                     animate="center"
                     exit="exit"
                     transition={{
-                        x: { type: 'spring', stiffness: 300, damping: 30 },
-                        opacity: { duration: 0.2 },
+                        opacity: { duration: 0.5 },
                     }}
                     className="absolute inset-0"
                 >

@@ -69,6 +69,7 @@ const Header = () => {
             {/* Navigate Buttons */}
             <div className="flex flex-row items-center">
               <button
+                onClick={handleHome}
                 className={`focus:outline-none p-1 hover:bg-zinc-800 rounded`}
                 style={{ zIndex: 9999 }}
               >
@@ -80,6 +81,7 @@ const Header = () => {
                 />
               </button>
               <button
+                onClick={handleBack}
                 className={`focus:outline-none p-1 hover:bg-zinc-800 rounded ${
                   canGoBack ? 'cursor-pointer' : 'cursor-default'
                 }`}
