@@ -1,144 +1,51 @@
-import { type MetaFunction } from '@remix-run/react';
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { Progress } from '@nextui-org/react';
-import { useTorrentStream } from '@hooks/useTorrentStream';
-import { useSubtitles } from '@hooks/useSubtitles';
-import log from 'electron-log';
+import { useEffect } from 'react';
 
-export const meta: MetaFunction = () => {
-  return [
-    { title: 'Animeton' },
-    { name: 'description', content: 'Stream anime torrents directly!' },
-  ];
-};
+import AnimeCarousel from '@components/anime/AnimeCarousel';
+// import { LatestEpisodes } from '@components/episode/LatestEpisodes';
+// import { AnimeSection } from '@components/anime/AnimeSection';
+import Spinner from '@components/decoration/spinner';
+// import { Activation } from '@components/common/activation';
+
+import useAnimesData from '@hooks/useAnimesData';
+import LatestEpisodes from '@/shared/components/episode/LatestEpisode';
+// import { useValidateKey } from '@hooks/useValidateKey';
 
 export default function Index() {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [torrentId] = useState('https://nyaa.si/download/1849578.torrent');
-  const [isVideoReady, setIsVideoReady] = useState(false);
+  const animes = useAnimesData({ displayCount: 10 });
 
-  const {
-    torrent,
-    progress,
-    downloadSpeed,
-    uploadSpeed,
-    numPeers,
-    downloaded,
-    total,
-    remaining,
-  } = useTorrentStream(torrentId);
+  // State-dependent code
+  // const { isValid, isLoading, validateKey } = useValidateKey(state?.saved?.activation?.key);
+  // const needActivation = !state?.saved?.activation?.key || (state?.saved?.activation?.key && !isValid);
+  
+  // useEffect(() => {
+  //   if (!needActivation) {
+  //     dispatch('updateDiscordRPC', { details: 'En el inicio' });
+  //   }
+  // }, [needActivation]);
 
-  const { loadSubtitlesFromFile } = useSubtitles(videoRef, isVideoReady);
+  // useEffect(() => {
+  //   if (state?.saved?.activation?.key) {
+  //     validateKey();
+  //   }
+  // }, [state?.saved?.activation?.key, validateKey]);
 
-  const handleVideoReady = useCallback(() => {
-    log.info('Video ready');
-    setIsVideoReady(true);
-  }, []);
+  // if (isLoading) return <Spinner />;
+  // if (needActivation) return <Activation isValid={isValid} />;
 
-  const handleVideoPlay = useCallback(() => {
-    if (videoRef.current) {
-      log.info('Playing video');
-      videoRef.current.play().catch((error) => {
-        log.error('Error playing video', { error });
-        console.error('Error playing video:', error);
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleTorrentServerDone = (event: any, data: any) => {
-      log.info('Torrent server done', { data });
-      const { url, filePath } = data;
-      if (videoRef.current) {
-        videoRef.current.src = url;
-      }
-    };
-
-    window.api.torrent.onServerDone.subscribe(handleTorrentServerDone);
-
-    return () => {
-      window.api.torrent.onServerDone.unsubscribe(handleTorrentServerDone);
-    };
-  }, []);
+  if (!animes) return <Spinner />;
 
   return (
-    <div className="dark flex flex-col justify-center items-center gap-4 min-h-screen bg-gray-100 p-4">
-      <div className="mb-4 w-full max-w-4xl">
-        <Progress
-          color="secondary"
-          aria-label="Loading..."
-          className="w-full"
-          value={progress}
-        />
-        <video
-          id="output"
-          ref={videoRef}
-          className="w-full mt-4 rounded-lg shadow-lg"
-          controls
-          onCanPlay={handleVideoReady}
-          onPlay={handleVideoPlay}
-          crossOrigin="anonymous"
-        />
-      </div>
-      <div className="bg-white rounded-lg shadow-md p-4 max-w-4xl w-full">
-        <div className="mb-2">
-          <span
-            className={`font-semibold ${
-              torrent?.done ? 'text-green-600' : 'text-blue-600'
-            }`}
-          >
-            {torrent?.done ? 'Seeding' : 'Downloading'}
-          </span>
-          <a
-            className="text-sm text-gray-600 hover:text-gray-800 ml-2 break-all"
-            href={torrentId}
-          >
-            {torrentId}
-          </a>
-          <span
-            className={`ml-2 ${
-              torrent?.done ? 'text-green-600' : 'text-blue-600'
-            }`}
-          >
-            {torrent?.done ? ' to ' : ' from '}
-          </span>
-          <span className="font-mono text-sm">{numPeers} peers</span>
-        </div>
-        <div className="text-sm text-gray-700">
-          <span className="font-mono">{downloaded}</span>
-          <span> of </span>
-          <span className="font-mono">{total}</span>
-          <span className="ml-2 text-gray-500">{remaining}</span>
-          <div className="mt-1">
-            <span className="mr-2">↓</span>
-            <span className="font-mono">{downloadSpeed}/s</span>
-            <span className="mx-2">/</span>
-            <span className="mr-2">↑</span>
-            <span className="font-mono">{uploadSpeed}/s</span>
-          </div>
-        </div>
-      </div>
-      <div className="w-full max-w-4xl">
-        <input
-          type="file"
-          accept=".ass"
-          onChange={(e) => {
-            if (e.target.files && e.target.files[0]) {
-              loadSubtitlesFromFile(e.target.files[0]);
-            }
-          }}
-          className="w-full p-2 border rounded-lg"
-        />
-      </div>
-      {/* Uncomment if you want to show subtitle extraction status
-      {isExtracting && <p>Extracting subtitles...</p>}
-      {error && <p>Error extracting subtitles: {error.message}</p>}
-      {subtitleTracks.map((track) => (
-        <div key={track.number}>
-          <h3>{track.name} ({track.language})</h3>
-          <p>{track.subtitles.length} subtitles</p>
-        </div>
-      ))} */}
+    <div className="dark min-h-screen bg-gray-100">
+      <AnimeCarousel animes={animes} />
+      {/* State-dependent components */}
+      <LatestEpisodes sectionTitle={'Últimos Episodios'} />
+      {/* <AnimeSection
+        state={state}
+        sectionTitle={'Animes Populares'}
+        searchTerm={''}
+        fullScreen={false}
+        showViewMore={true}
+      /> */}
     </div>
   );
 }

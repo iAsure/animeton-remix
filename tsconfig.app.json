@@ -25,7 +25,8 @@
       "@/*": ["./app/*"],
       "@utils/*": ["app/shared/utils/*"],
       "@hooks/*": ["./app/hooks/*"],
-      "@constants/*": ["app/shared/constants/*"]
+      "@constants/*": ["app/shared/constants/*"],
+      "@components/*": ["app/shared/components/*"]
     }
   }
 }
