@@ -8,6 +8,7 @@ import Spinner from '@components/decoration/spinner';
 
 import useAnimesData from '@hooks/useAnimesData';
 import LatestEpisodes from '@/shared/components/episode/LatestEpisode';
+import AnimeSection from '@/shared/components/anime/AnimeSection';
 // import { useValidateKey } from '@hooks/useValidateKey';
 
 export default function Index() {
@@ -39,13 +40,12 @@ export default function Index() {
       <AnimeCarousel animes={animes} />
       {/* State-dependent components */}
       <LatestEpisodes sectionTitle={'Últimos Episodios'} />
-      {/* <AnimeSection
-        state={state}
+      <AnimeSection
         sectionTitle={'Animes Populares'}
         searchTerm={''}
         fullScreen={false}
         showViewMore={true}
-      /> */}
+      />
     </div>
   );
 }

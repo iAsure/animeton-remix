@@ -11,7 +11,11 @@ module.exports = {
     "./node_modules/@nextui-org/theme/dist/**/*.{js,ts,jsx,tsx}"
   ],
   theme: {
-    extend: {},
+    extend: {
+      gridTemplateColumns: {
+        'auto-fit': 'repeat(auto-fit, minmax(200px, 220px))',
+      },
+    },
   },
   plugins: [nextui()],
 };
