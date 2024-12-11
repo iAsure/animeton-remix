@@ -23,12 +23,10 @@ export async function setupProtocol(build, viteDevServer) {
 
   ses.protocol.handle('https', async (request) => {
     const url = new URL(request.url);
-    log.debug(`Handling HTTPS request: ${url.pathname}`);
+    // log.debug(`Handling HTTPS request: ${url.pathname}`);
 
     // Check if URL is external
     const isExternalUrl = url?.hostname !== 'remix'
-
-    log.debug('isExternalUrl', isExternalUrl, url.hostname);
     
     if (isExternalUrl || EXTERNAL_HOSTNAMES_ARRAY.includes(url.hostname)) {
       return await net.fetch(request.url);

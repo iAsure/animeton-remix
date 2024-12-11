@@ -31,7 +31,19 @@ const AnimeDetails: React.FC<AnimeDetailsProps> = ({ state }) => {
   const idAnilist = useLoaderData<typeof loader>();
 
   const [isLoading, setIsLoading] = useState(true);
-  const [showSidebar, setShowSidebar] = useState(window.innerWidth >= 1500);
+  const [showSidebar, setShowSidebar] = useState(false);
+
+  useEffect(() => {
+    setShowSidebar(window.innerWidth >= 1500);
+
+    const handleResize = () => {
+      setShowSidebar(window.innerWidth >= 1500);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   log.debug('idAnilist', idAnilist);
   const anime = useAnimeDetails(idAnilist);
