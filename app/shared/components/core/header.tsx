@@ -155,29 +155,29 @@ const Header = () => {
             >
               <p
                 onClick={handleHome}
-                className="text-white font-bold text-2xl leading-none"
+                className="text-white font-bold font-exo text-2xl leading-none"
                 style={{ cursor: canGoHome ? 'pointer' : 'default' }}
               >
-                Animeton
+                ANIMETON
               </p>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 text-xs">
                 <span
                   onClick={
                     isPlayerRoute(currentPath) ? handleHome : handleClosedBeta
                   }
-                  className="text-zinc-400 text-xs mt-1 leading-none"
+                  className="text-zinc-400 mt-1 leading-none"
                   style={{ cursor: 'pointer' }}
                 >
                   {headerTitle}
                 </span>
-                <span className="text-zinc-500 text-xs mt-1 cursor-pointer">
+                <span className="text-zinc-500 mt-1 cursor-pointer">
                   {' - '}
                 </span>
                 <span
                   onClick={
                     isPlayerRoute(currentPath) ? handleHome : handleClosedBeta
                   }
-                  className="text-zinc-400 text-xs mt-1 cursor-pointer"
+                  className="text-zinc-400 mt-1 cursor-pointer"
                 >
                   v{appVersion}
                 </span>
