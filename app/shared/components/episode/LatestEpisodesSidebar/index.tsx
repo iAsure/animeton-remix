@@ -58,7 +58,8 @@ const LatestEpisodesSidebar = memo(({ state, bannerColors, sectionTitle }: Lates
             <Episode
               key={`rss-episode-${i}`}
               anime={anime}
-              isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
+              isLoading={false}
+              // isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
               onPlay={() => handlePlay(anime)}
             />
           ))}

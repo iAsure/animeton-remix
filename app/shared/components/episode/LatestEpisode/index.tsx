@@ -93,7 +93,8 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
       const card = (
         <EpisodeCard
           anime={anime}
-          isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
+          isLoading={false}
+          // isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
           onPlay={() => handlePlay(anime)}
         />
       );
