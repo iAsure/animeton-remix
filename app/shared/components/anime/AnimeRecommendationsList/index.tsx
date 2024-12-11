@@ -1,12 +1,17 @@
-const React = require('react');
-const { Divider } = require('@nextui-org/react');
+import { memo } from 'react';
+import { Divider } from '@nextui-org/react';
 
-const AnimeCard = require('../AnimeSection/anime');
-const AnimeCardSkeleton = require('../AnimeSection/skeleton');
+import AnimeCard from '../AnimeSection/anime';
+import AnimeCardSkeleton from '../AnimeSection/skeleton';
 
-const useAnimeRecommendations = require('../../../hooks/useAnimeRecommendations');
+import useAnimeRecommendations from '@hooks/useAnimeRecommendations';
 
-const AnimeRecommendationsList = React.memo(({ idAnilist, sectionTitle }) => {
+interface AnimeRecommendationsListProps {
+  idAnilist: number | string;
+  sectionTitle: string;
+}
+
+const AnimeRecommendationsList = memo(({ idAnilist, sectionTitle }: AnimeRecommendationsListProps) => {
   const recommendations = useAnimeRecommendations(idAnilist);
 
   return (
@@ -21,7 +26,6 @@ const AnimeRecommendationsList = React.memo(({ idAnilist, sectionTitle }) => {
         {recommendations ? (recommendations.map((anime, i) => (
           <AnimeCard
             anime={anime}
-            state={state}
             key={`anim-recomm-${idAnilist}-${i}`}
           />
         ))) : (
@@ -34,4 +38,4 @@ const AnimeRecommendationsList = React.memo(({ idAnilist, sectionTitle }) => {
   );
 });
 
-module.exports = AnimeRecommendationsList;
+export default AnimeRecommendationsList;

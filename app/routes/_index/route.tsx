@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import AnimeCarousel from '@components/anime/AnimeCarousel';
 // import { LatestEpisodes } from '@components/episode/LatestEpisodes';
 // import { AnimeSection } from '@components/anime/AnimeSection';
-import Spinner from '@components/decoration/spinner';
+import Spinner from '@components/decoration/Spinner';
 // import { Activation } from '@components/common/activation';
 
 import useAnimesData from '@hooks/useAnimesData';

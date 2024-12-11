@@ -9,10 +9,11 @@ import useExtractColor from '@hooks/useExtractColor';
 import useAnimeDetails from '@hooks/useAnimeDetails';
 
 import AnimeOverview from '@components/anime/AnimeOverview';
-// import { AnimeRecommendationsList } from '../../components/anime/AnimeRecommendationsList';
-// import { AnimeEpisodesList } from '../../components/episode/EpisodesList';
-// import { LatestEpisodesSidebar } from '../../components/episode/LatestEpisodesSidebar';
-import Spinner from '@components/decoration/spinner';
+import AnimeRecommendationsList from '@components/anime/AnimeRecommendationsList';
+import AnimeEpisodesList from '@components/episode/EpisodeList';
+import LatestEpisodesSidebar from '@components/episode/LatestEpisodesSidebar';
+
+import Spinner from '@components/decoration/Spinner';
 
 interface AnimeDetailsProps {
   state: {
@@ -30,7 +31,7 @@ const AnimeDetails: React.FC<AnimeDetailsProps> = ({ state }) => {
   const idAnilist = useLoaderData<typeof loader>();
 
   const [isLoading, setIsLoading] = useState(true);
-  //   const [showSidebar, setShowSidebar] = useState(window.innerWidth >= 1500);
+  const [showSidebar, setShowSidebar] = useState(window.innerWidth >= 1500);
 
   log.debug('idAnilist', idAnilist);
   const anime = useAnimeDetails(idAnilist);
@@ -86,30 +87,29 @@ const AnimeDetails: React.FC<AnimeDetailsProps> = ({ state }) => {
           textColor={textColor}
           //   background={background}
         />
-        {/* <div className="flex flex-row gap-8 p-8 pt-0 justify-between items-start h-full">
-            <AnimeRecommendationsList
-              idAnilist={idAnilist}
-              sectionTitle="Animes Similares"
-            />
-            <AnimeEpisodesList
-              idAnilist={idAnilist}
-              animeColors={animeColors}
-              textColor={textColor}
-              sectionTitle="Episodios"
-            />
-          </div> */}
+        <div className="flex flex-row gap-8 p-8 pt-0 justify-between items-start h-full">
+          <AnimeRecommendationsList
+            idAnilist={idAnilist}
+            sectionTitle="Animes Similares"
+          />
+          <AnimeEpisodesList
+            idAnilist={idAnilist}
+            animeColors={animeColors}
+            textColor={textColor}
+            sectionTitle="Episodios"
+          />
+        </div>
       </div>
 
-      {/* 
       {showSidebar && (
         <div className="flex-shrink-0 z-50">
           <LatestEpisodesSidebar
-              state={state}
-              bannerColors={bannerColors}
-              sectionTitle="Episodios Recientes"
-            /> 
+            state={state}
+            bannerColors={bannerColors}
+            sectionTitle="Episodios Recientes"
+          />
         </div>
-      )} */}
+      )}
     </div>
   );
 };
