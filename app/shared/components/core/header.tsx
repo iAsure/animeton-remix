@@ -8,6 +8,9 @@ import { useHeaderTitle } from '@/hooks/useHeaderTitle';
 import { useWindowControls } from '@/hooks/useWindowControls';
 import { useUpdateDownload } from '@/hooks/useUpdateDownload';
 
+import { useModal } from '@/context/ModalContext';
+
+import ClosedBetaModal from '@components/modals/ClosedBeta';
 import NewBadge from '@components/decoration/NewBadge';
 
 const isPlayerRoute = (path: string) => path.includes('/player');
@@ -31,10 +34,15 @@ const Header = () => {
   } = useHeaderNavigation();
   const { headerTitle } = useHeaderTitle();
   const { updateDownloaded, handleUpdateClick } = useUpdateDownload();
+  const { openModal } = useModal();
 
   const [opacity, setOpacity] = useState(1);
 
-  const handleClosedBeta = () => {};
+  const handleClosedBeta = () => {
+    openModal('closed-beta', ({ onClose }) => (
+      <ClosedBetaModal onClose={onClose} />
+    ));
+  };
 
   const appIsActivated = true;
   const appUserDiscordId = '1234567890';

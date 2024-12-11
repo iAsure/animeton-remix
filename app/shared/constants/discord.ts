@@ -1,0 +1,3 @@
+export const DISCORD_INVITE_CODE = 'fYNNmKJJfk'
+
+export const ANIMETON_GUILD_ID = '1247689458879299625'

@@ -8,6 +8,8 @@ import {
 import { NextUIProvider } from '@nextui-org/react';
 import log from 'electron-log';
 
+import { ModalProvider } from './context/ModalContext';
+
 import Header from '@components/core/header';
 import Fonts from '@components/core/fonts';
 
@@ -27,12 +29,14 @@ export default function App() {
       </head>
       <body className="text-foreground bg-background font-noto">
         <NextUIProvider>
-          <Header />
-          <div className="h-full w-full mt-14">
-            <Outlet />
-          </div>
-          <ScrollRestoration />
-          <Scripts />
+          <ModalProvider>
+            <Header />
+            <div className="h-full w-full mt-14">
+              <Outlet />
+            </div>
+            <ScrollRestoration />
+            <Scripts />
+          </ModalProvider>
         </NextUIProvider>
       </body>
     </html>
