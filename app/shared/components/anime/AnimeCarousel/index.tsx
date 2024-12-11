@@ -75,7 +75,7 @@ const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ animes }) => {
     };
 
     return (
-        <div className="relative w-full h-[480px] overflow-hidden bg-black">
+        <div className="relative w-full h-[480px] overflow-hidden">
             <AnimatePresence initial={false} custom={direction}>
                 <motion.div
                     key={currentIndex}

@@ -1,5 +1,6 @@
 import { Icon } from '@iconify/react';
 import { Divider, Skeleton, Tooltip } from '@nextui-org/react';
+import { useNavigate } from '@remix-run/react';
 import { useState } from 'react';
 
 import { useHeaderNavigation } from '@/hooks/useHeaderNavigation';
@@ -7,10 +8,14 @@ import { useHeaderTitle } from '@/hooks/useHeaderTitle';
 import { useWindowControls } from '@/hooks/useWindowControls';
 import { useUpdateDownload } from '@/hooks/useUpdateDownload';
 
+import NewBadge from '@components/decoration/NewBadge';
+
 const isPlayerRoute = (path: string) => path.includes('/player');
 import { version as appVersion } from '../../../../package.json';
 
 const Header = () => {
+  const navigate = useNavigate();
+
   const { isMaximized, handleWindowControl } = useWindowControls();
   const {
     canGoBack,
@@ -77,7 +82,9 @@ const Header = () => {
                   icon="gravity-ui:house"
                   width="28"
                   height="28"
-                  className={`pointer-events-none ${canGoHome ? 'text-white' : 'text-gray-500'}`}
+                  className={`pointer-events-none ${
+                    canGoHome ? 'text-white' : 'text-gray-500'
+                  }`}
                 />
               </button>
               <button
@@ -130,13 +137,10 @@ const Header = () => {
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-8">
             {/* Left Link */}
 
-            {/* <NewBadge>
+            <NewBadge>
               <button
                 className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2"
-                style={{ WebkitAppRegion: 'no-drag' }}
-                onClick={() =>
-                  eventBus.emit('navigate', { path: '/popular-anime' })
-                }
+                onClick={() => navigate('/popular-anime')}
               >
                 <Icon
                   icon="gravity-ui:star"
@@ -146,7 +150,7 @@ const Header = () => {
                 />
                 Animes Populares
               </button>
-            </NewBadge> */}
+            </NewBadge>
 
             <Divider orientation="vertical" className="bg-zinc-800 h-6 mr-1" />
 
@@ -189,13 +193,10 @@ const Header = () => {
             <Divider orientation="vertical" className="bg-zinc-800 h-6 mr-1" />
 
             {/* Right Link */}
-            {/* <NewBadge>
+            <NewBadge>
               <button
                 className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2"
-                style={{ WebkitAppRegion: 'no-drag' }}
-                onClick={() =>
-                  eventBus.emit('navigate', { path: '/latest-episodes' })
-                }
+                onClick={() => navigate('/latest-episodes')}
               >
                 <Icon
                   icon="majesticons:megaphone-line"
@@ -205,7 +206,7 @@ const Header = () => {
                 />
                 Últimos Episodios
               </button>
-            </NewBadge> */}
+            </NewBadge>
           </div>
 
           {/* Window Controls and Discord User */}

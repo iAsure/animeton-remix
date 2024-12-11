@@ -36,7 +36,7 @@ export default function Index() {
   if (!animes) return <Spinner />;
 
   return (
-    <div className="dark min-h-screen bg-gray-100">
+    <div className="dark min-h-screen">
       <AnimeCarousel animes={animes} />
       {/* State-dependent components */}
       <LatestEpisodes sectionTitle={'Últimos Episodios'} />

@@ -122,7 +122,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
     };
 
     return (
-      <div className="relative flex flex-col items-center py-6 bg-black">
+      <div className="relative flex flex-col items-center py-6">
         {/* Background */}
         {/* <div
         className="absolute inset-0 bg-cover bg-center"

@@ -24,7 +24,7 @@ const PopularAnimePage = ({ state }) => {
 //   }, []);
 
   return (
-    <div className='py-6 bg-black'>
+    <div className='py-6'>
       <AnimeSection
         fullScreen={true}
         perPage={70}

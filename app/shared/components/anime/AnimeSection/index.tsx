@@ -123,7 +123,7 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
 
     return (
       <div
-        className={`relative flex flex-col p-8 px-12 bg-black ${
+        className={`relative flex flex-col p-8 px-12 ${
           isEmpty ? 'justify-center' : 'justify-start'
         } items-center ${fullScreen ? 'min-h-[calc(100vh-56px)]' : ''}`}
       >
