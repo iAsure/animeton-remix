@@ -62,7 +62,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
       setLoadingEpisodeId(infoHash);
       // TorrentPlayer.playTorrent(anime, state, setLoadingEpisodeId);
       const encodedUrl = encodeURIComponent(anime?.torrent?.link);
-      navigate(`/player?url=${encodedUrl}`);
+      navigate(`/player?url=${encodedUrl}`, { viewTransition: true });
     };
 
     const cardVariants = {
@@ -116,6 +116,10 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
       );
     };
 
+    const handleViewMore = () => {
+      navigate('/latest-episodes', { viewTransition: true });
+    };
+
     return (
       <div className="relative flex flex-col items-center py-6">
         {/* Background */}
@@ -130,7 +134,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
 
         {sectionTitle && (
           <button
-            onClick={() => navigate('/latest-episodes')}
+            onClick={handleViewMore}
             className="flex flex-row items-center gap-2 mb-6 transition-transform duration-300 hover:-translate-y-1"
           >
             <Icon
@@ -157,7 +161,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
           {showViewMore && (
             <div className="flex flex-col items-center justify-center w-full">
               <button
-                onClick={() => navigate('/latest-episodes')}
+                onClick={handleViewMore}
                 className="group flex items-center gap-2 mt-6 px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 transition-all duration-300"
               >
                 <span className="text-xl font-semibold text-zinc-300">

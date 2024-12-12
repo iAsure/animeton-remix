@@ -142,7 +142,7 @@ const Header = () => {
             <NewBadge>
               <button
                 className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2 webkit-app-region-no-drag"
-                onClick={() => navigate('/popular-anime')}
+                onClick={() => navigate('/popular-anime', { viewTransition: true })}
               >
                 <Icon
                   icon="gravity-ui:star"
@@ -198,7 +198,7 @@ const Header = () => {
             <NewBadge>
               <button
                 className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2 webkit-app-region-no-drag"
-                onClick={() => navigate('/latest-episodes')}
+                onClick={() => navigate('/latest-episodes', { viewTransition: true })}
               >
                 <Icon
                   icon="majesticons:megaphone-line"

@@ -4,6 +4,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
 } from '@remix-run/react';
 import { NextUIProvider } from '@nextui-org/react';
 import log from 'electron-log';
@@ -16,6 +17,9 @@ import Fonts from '@components/core/fonts';
 import './globals.css';
 
 export default function App() {
+  const location = useLocation();
+  const isPlayerRoute = location.pathname === '/player';
+  
   log.info('Renderer initialized');
   return (
     <html lang="en" className="dark">
@@ -31,7 +35,7 @@ export default function App() {
         <NextUIProvider>
           <ModalProvider>
             <Header />
-            <div className="h-full w-full mt-14">
+            <div className={`h-full w-full ${!isPlayerRoute ? 'mt-14' : ''}`}>
               <Outlet />
             </div>
             <ScrollRestoration />

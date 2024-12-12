@@ -29,9 +29,7 @@ const Episode = memo(({ anime, isLoading, onPlay }: EpisodeProps) => {
   };
 
   const handleAnimeClick = () => {
-    navigate(`/anime/${anime.idAnilist}`, {
-      state: { title: anime.title.romaji },
-    });
+    navigate(`/anime/${anime.idAnilist}`, { viewTransition: true });
   };
 
   return (

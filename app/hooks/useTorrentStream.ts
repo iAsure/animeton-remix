@@ -3,8 +3,7 @@ import log from 'electron-log';
 
 import { prettyBytes } from '@/shared/utils/strings';
 
-function useTorrentStream(torrentId: string) {
-  const [torrent, setTorrent] = useState<any>(null)
+const useTorrentStream = (torrentId: string) => {
   const [progress, setProgress] = useState<number>(0)
   const [downloadSpeed, setDownloadSpeed] = useState<string>('0 b/s')
   const [uploadSpeed, setUploadSpeed] = useState<string>('0 b/s')
@@ -70,7 +69,6 @@ function useTorrentStream(torrentId: string) {
   }, [torrentId])
 
   return {
-    torrent,
     progress,
     downloadSpeed,
     uploadSpeed,
@@ -81,4 +79,4 @@ function useTorrentStream(torrentId: string) {
   }
 }
 
-export { useTorrentStream }
+export default useTorrentStream;

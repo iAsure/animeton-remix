@@ -6,7 +6,7 @@ import { formatAssSubtitles } from '@/shared/utils/subtitles';
 import JASSUB from 'public/vendor/jassub/jassub.es.js';
 import log from 'electron-log';
 
-export const useSubtitles = (
+const useSubtitles = (
   videoRef: React.RefObject<HTMLVideoElement>,
   isVideoReady: boolean
 ) => {
@@ -95,3 +95,5 @@ export const useSubtitles = (
     loadSubtitlesFromFile,
   };
 };
+
+export default useSubtitles;

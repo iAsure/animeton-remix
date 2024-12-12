@@ -82,9 +82,7 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }: EpisodeCardProps) => {
   };
 
   const handleAnimeClick = () => {
-    navigate(`/anime/${anime.idAnilist}`, {
-      state: { title: anime.title.romaji },
-    });
+    navigate(`/anime/${anime.idAnilist}`, { viewTransition: true });
   };
 
   const { animeColors } = useExtractColor(episodeImage);
