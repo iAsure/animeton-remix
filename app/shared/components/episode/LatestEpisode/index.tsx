@@ -12,13 +12,6 @@ import useRSSData from '@hooks/useRSSData';
 import EpisodeCard from './episode';
 import EpisodeCardSkeleton from './skeleton';
 
-// Types
-interface Anime {
-  torrent?: {
-    infoHash: string;
-  };
-}
-
 interface LatestEpisodesProps {
   sectionTitle?: string;
   perPage?: number;
@@ -58,16 +51,18 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
       }
     }, [error]);
 
-    const handlePlay = (anime: Anime) => {
-      // const infoHash = anime?.torrent?.infoHash;
+    const handlePlay = (anime) => {
+      const infoHash = anime?.torrent?.infoHash;
       // if (!infoHash) {
       //   return sendNotification(state, { message: 'Episodio no disponible.' });
       // }
       // if (loadingEpisodeId) {
       //   return sendNotification(state, { title: 'Wow, espera!', message: 'Ya estamos cargando un episodio.', type: 'alert' });
       // }
-      // setLoadingEpisodeId(infoHash);
+      setLoadingEpisodeId(infoHash);
       // TorrentPlayer.playTorrent(anime, state, setLoadingEpisodeId);
+      const encodedUrl = encodeURIComponent(anime?.torrent?.link);
+      navigate(`/player?url=${encodedUrl}`);
     };
 
     const cardVariants = {
@@ -89,12 +84,11 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
       },
     };
 
-    const renderEpisodeCard = (anime: Anime, index: number) => {
+    const renderEpisodeCard = (anime, index: number) => {
       const card = (
         <EpisodeCard
           anime={anime}
-          isLoading={false}
-          // isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
+          isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
           onPlay={() => handlePlay(anime)}
         />
       );

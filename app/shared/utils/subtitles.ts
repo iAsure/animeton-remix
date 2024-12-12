@@ -31,7 +31,6 @@ export const formatAssSubtitles = (subtitleTrack: {
   track: { header: string };
   cues: SubtitleCue[];
 }): string => {
-  log.info(subtitleTrack);
   let assContent = subtitleTrack.track.header;
 
   subtitleTrack.cues.forEach((cue) => {

@@ -22,13 +22,17 @@ async function cleanup() {
 async function initializeWebTorrentClient() {
   await cleanup();
   const { default: WebTorrent } = await import('webtorrent');
-  activeClient = new WebTorrent();
+  activeClient = new WebTorrent({
+    downloadLimit: -1,
+    uploadLimit: -1,
+    maxConns: 100,
+    webSeeds: true
+  });
   const instance = activeClient.createServer();
 
   // Initialize server on random port
   instance.server.listen(0, () => {
     const port = instance.server.address().port;
-    process.parentPort?.postMessage({ type: 'server-ready', port });
   });
 
   return { client: activeClient, instance };
@@ -36,14 +40,25 @@ async function initializeWebTorrentClient() {
 
 async function handleTorrent(torrent, instance) {
   const fileName = encodeURIComponent(torrent.files[0].name);
-  const url = `http://localhost:${
-    instance.server.address().port
-  }/webtorrent/${torrent.infoHash}/${fileName}`;
+  const url = `http://localhost:${instance.server.address().port}/webtorrent/${
+    torrent.infoHash
+  }/${fileName}`;
+
+  const filePath = path.join(
+    process.env.TEMP || process.env.TMP || os.tmpdir(),
+    'webtorrent',
+    torrent.files[0].name
+  );
+
+  process.parentPort?.postMessage({
+    type: IPC_CHANNELS.TORRENT.SERVER_DONE,
+    data: { url, filePath },
+  });
 
   // Setup progress updates
   const progressInterval = setInterval(() => {
     process.parentPort?.postMessage({
-      type: 'torrent-progress',
+      type: IPC_CHANNELS.TORRENT.PROGRESS,
       data: {
         numPeers: torrent.numPeers,
         downloaded: torrent.downloaded,
@@ -60,20 +75,10 @@ async function handleTorrent(torrent, instance) {
 
   // Handle torrent completion
   torrent.on('done', async () => {
-    const filePath = path.join(
-      process.env.TEMP || process.env.TMP || os.tmpdir(),
-      'webtorrent',
-      torrent.files[0].name
-    );
-
     await verifyDownload(filePath, torrent);
     clearInterval(progressInterval);
 
-    process.parentPort?.postMessage({ type: 'torrent-done' });
-    process.parentPort?.postMessage({
-      type: 'torrent-server-done',
-      data: { url, filePath },
-    });
+    process.parentPort?.postMessage({ type: IPC_CHANNELS.TORRENT.DONE });
 
     // Handle MKV files
     if (filePath.toLowerCase().endsWith('.mkv')) {
@@ -92,7 +97,7 @@ async function verifyDownload(filePath, torrent, maxAttempts = 10) {
     } catch (error) {
       log.warn(`Attempt ${attempt + 1}: File verification failed`, error);
     }
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
   throw new Error('File verification failed after maximum attempts');
 }
@@ -100,23 +105,23 @@ async function verifyDownload(filePath, torrent, maxAttempts = 10) {
 async function handleMkvFile(filePath) {
   try {
     // Small delay to ensure file is fully written
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     // Send MKV process event with correct type from IPC_CHANNELS
     process.parentPort?.postMessage({
       type: IPC_CHANNELS.TORRENT.MKV_PROCESS,
-      data: { 
+      data: {
         filePath,
-        status: 'ready_for_subtitles'
-      }
+        status: 'ready_for_subtitles',
+      },
     });
   } catch (error) {
     process.parentPort?.postMessage({
       type: IPC_CHANNELS.TORRENT.ERROR,
-      data: { 
+      data: {
         error: error.message,
-        filePath 
-      }
+        filePath,
+      },
     });
   }
 }
@@ -127,7 +132,7 @@ process.parentPort?.on('message', async (message) => {
     try {
       const { client, instance } = await initializeWebTorrentClient();
       client.add(message.data.torrentId, (torrent) => {
-        handleTorrent(torrent, instance).catch(error => {
+        handleTorrent(torrent, instance).catch((error) => {
           log.error('Error handling torrent:', error);
         });
       });
@@ -135,7 +140,7 @@ process.parentPort?.on('message', async (message) => {
       log.error('Error initializing WebTorrent:', error);
       process.parentPort?.postMessage({
         type: 'torrent-error',
-        data: { error: error.message }
+        data: { error: error.message },
       });
     }
   }
