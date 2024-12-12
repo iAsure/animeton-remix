@@ -29,7 +29,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
   }) => {
     const navigate = useNavigate();
     const [loadingEpisodeId, setLoadingEpisodeId] = useState<string | null>(
-      null
+      undefined
     );
 
     const { rssAnimes, isLoading, error } = useRSSData({
