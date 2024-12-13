@@ -44,6 +44,10 @@ const createEventHandler = (channel) => ({
       onExtracted: createEventHandler(IPC_CHANNELS.SUBTITLES.EXTRACTED),
       onError: createEventHandler(IPC_CHANNELS.SUBTITLES.ERROR),
     },
+
+    shell: {
+      openExternal: (url) => ipcRenderer.invoke(IPC_CHANNELS.SHELL.OPEN_EXTERNAL, url),
+    },
   };
 
   contextBridge.exposeInMainWorld('electron', electron);

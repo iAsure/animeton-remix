@@ -11,8 +11,9 @@ import log from 'electron-log';
 
 import { ModalProvider } from './context/ModalContext';
 
-import Header from '@components/core/header';
-import Fonts from '@components/core/fonts';
+import Header from '@components/core/Header';
+import Fonts from '@components/core/Fonts';
+import HelpButton from '@components/core/HelpButton';
 
 import './globals.css';
 
@@ -35,6 +36,7 @@ export default function App() {
         <NextUIProvider>
           <ModalProvider>
             <Header />
+            <HelpButton />
             <div className={`h-full w-full ${!isPlayerRoute ? 'mt-14' : ''}`}>
               <Outlet />
             </div>

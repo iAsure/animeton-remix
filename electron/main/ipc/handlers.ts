@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain, UtilityProcess } from 'electron';
+import { BrowserWindow, ipcMain, UtilityProcess, shell } from 'electron';
 import { IPC_CHANNELS } from '../../shared/constants/event-channels.js';
 import { setupTorrentHandlers } from '../services/torrent/handlers.js';
 import { SubtitlesService } from '../services/subtitles/service.js';
@@ -78,5 +78,22 @@ export function setupIpcHandlers(
 
   mainWindow.on('resize', () => {
     mainWindow.webContents.send(IPC_CHANNELS.WINDOW.RESIZE);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.SHELL.OPEN_EXTERNAL, async (_, url: string) => {
+    try {
+      const urlObj = new URL(url);
+      const allowedProtocols = ['http:', 'https:', 'discord:'];
+      
+      if (!allowedProtocols.includes(urlObj.protocol)) {
+        throw new Error('Invalid protocol');
+      }
+      
+      await shell.openExternal(url);
+      return true;
+    } catch (error) {
+      log.error('Failed to open external URL:', error);
+      return false;
+    }
   });
 }

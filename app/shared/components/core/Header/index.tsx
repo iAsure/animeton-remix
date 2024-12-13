@@ -14,7 +14,7 @@ import ClosedBetaModal from '@components/modals/ClosedBeta';
 import NewBadge from '@components/decoration/NewBadge';
 
 const isPlayerRoute = (path: string) => path.includes('/player');
-import { version as appVersion } from '../../../../package.json';
+import { version as appVersion } from '../../../../../package.json';
 
 const Header = () => {
   const navigate = useNavigate();

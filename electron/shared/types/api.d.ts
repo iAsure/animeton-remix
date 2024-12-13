@@ -59,8 +59,13 @@ export interface SubtitlesApi {
   onError: EventHandler<{ error: string }>;
 }
 
+export interface ShellApi {
+  openExternal: (url: string) => Promise<boolean>;
+}
+
 export interface Api {
   addTorrent: (torrentId: string) => void;
   torrent: TorrentApi;
   subtitles: SubtitlesApi;
+  shell: ShellApi;
 }

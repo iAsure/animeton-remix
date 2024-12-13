@@ -21,4 +21,7 @@ export const IPC_CHANNELS = {
     CONTROL: 'window-control',
     IS_MAXIMIZED: 'window-is-maximized',
   },
+  SHELL: {
+    OPEN_EXTERNAL: 'shell-open-external',
+  },
 };

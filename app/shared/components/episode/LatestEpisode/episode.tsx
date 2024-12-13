@@ -96,7 +96,7 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }: EpisodeCardProps) => {
       <Card className="flex flex-col relative overflow-hidden rounded-md border-1 border-zinc-900 bg-zinc-950/40 transition-all duration-300 hover:scale-[1.02]">
         <div className="aspect-[16/9] w-full relative">
           <CardBody
-            className="absolute inset-0 p-0 cursor-pointer"
+            className="absolute inset-0 p-0 cursor-pointer z-10"
             onClick={handlePlay}
           >
             <div className="relative w-full h-full">
@@ -111,8 +111,7 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }: EpisodeCardProps) => {
             </div>
 
             <div
-              className="absolute bottom-3 left-3 backdrop-blur-sm bg-zinc-950/20 px-1.5 py-0.5 rounded-lg"
-              style={{ zIndex: 1000 }}
+              className="absolute bottom-3 left-3 backdrop-blur-sm bg-zinc-950/20 px-1.5 py-0.5 rounded-lg z-50"
             >
               <FlagsList subtitles={anime?.torrent?.subtitles} />
             </div>
@@ -146,9 +145,8 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }: EpisodeCardProps) => {
           <div className="space-y-1">
             <div className="flex items-center justify-between gap-2">
               <h3
-                className="text-base font-medium line-clamp-1 hover:text-[#ff5680] cursor-pointer transition-colors"
+                className="text-base font-medium line-clamp-1 hover:text-[#ff5680] cursor-pointer transition-colors z-30"
                 onClick={handleAnimeClick}
-                style={{ zIndex: 1000 }}
               >
                 {anime?.title?.romaji}
               </h3>

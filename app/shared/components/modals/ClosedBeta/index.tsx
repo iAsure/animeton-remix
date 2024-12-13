@@ -57,7 +57,7 @@ const ClosedBetaModal = ({ onClose }: ClosedBetaModalProps) => {
                     <Button
                         className="bg-[#5865F2] text-white font-medium hover:opacity-90"
                         startContent={<Icon icon="ic:baseline-discord" width="20" height="20" />}
-                        onClick={() => window.open(`https://discord.gg/${DISCORD_INVITE_CODE}`, '_blank')}
+                        onClick={() => window.api.shell.openExternal(`https://discord.gg/${DISCORD_INVITE_CODE}`)}
                     >
                         Animeton
                     </Button>
