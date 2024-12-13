@@ -48,6 +48,14 @@ const createEventHandler = (channel) => ({
     shell: {
       openExternal: (url) => ipcRenderer.invoke(IPC_CHANNELS.SHELL.OPEN_EXTERNAL, url),
     },
+
+    config: {
+      get: (key) => ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET, key),
+      set: (key, value) => 
+        ipcRenderer.invoke(IPC_CHANNELS.CONFIG.SET, key, value),
+      update: (config) => ipcRenderer.invoke(IPC_CHANNELS.CONFIG.UPDATE, config),
+      onChange: createEventHandler(IPC_CHANNELS.CONFIG.CHANGED),
+    },
   };
 
   contextBridge.exposeInMainWorld('electron', electron);

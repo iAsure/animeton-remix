@@ -4,8 +4,9 @@ import { setupTorrentHandlers } from '../services/torrent/handlers.js';
 import { SubtitlesService } from '../services/subtitles/service.js';
 import log from 'electron-log';
 import { Worker as NodeWorker } from 'worker_threads';
+import { ConfigService } from '../services/config/service.js';
 
-export function setupIpcHandlers(
+export async function setupIpcHandlers(
   webTorrentProcess: UtilityProcess,
   subtitlesWorker: NodeWorker,
   mainWindow: BrowserWindow
@@ -17,6 +18,9 @@ export function setupIpcHandlers(
     mainWindow,
     subtitlesService
   );
+
+  const configService = new ConfigService();
+  await configService.initialize();
 
   // Register torrent handler
   ipcMain.on(IPC_CHANNELS.TORRENT.ADD, (_, arg) => {
@@ -44,28 +48,31 @@ export function setupIpcHandlers(
     return mainWindow.isMaximized();
   });
 
-  ipcMain.on(IPC_CHANNELS.WINDOW.CONTROL, (_, action: 'minimize' | 'maximize' | 'close') => {
-    switch (action) {
-      case 'minimize':
-        mainWindow.minimize();
-        break;
-      case 'maximize':
-        if (mainWindow.isFullScreen()) {
-          mainWindow.setFullScreen(false);
-          setTimeout(() => {
-            if (mainWindow.isFullScreen()) mainWindow.maximize();
-          }, 100);
-        } else if (mainWindow.isMaximized()) {
-          mainWindow.unmaximize();
-        } else {
-          mainWindow.maximize();
-        }
-        break;
-      case 'close':
-        mainWindow.close();
-        break;
+  ipcMain.on(
+    IPC_CHANNELS.WINDOW.CONTROL,
+    (_, action: 'minimize' | 'maximize' | 'close') => {
+      switch (action) {
+        case 'minimize':
+          mainWindow.minimize();
+          break;
+        case 'maximize':
+          if (mainWindow.isFullScreen()) {
+            mainWindow.setFullScreen(false);
+            setTimeout(() => {
+              if (mainWindow.isFullScreen()) mainWindow.maximize();
+            }, 100);
+          } else if (mainWindow.isMaximized()) {
+            mainWindow.unmaximize();
+          } else {
+            mainWindow.maximize();
+          }
+          break;
+        case 'close':
+          mainWindow.close();
+          break;
+      }
     }
-  });
+  );
 
   // Forward window state events to renderer
   mainWindow.on('maximize', () => {
@@ -84,16 +91,33 @@ export function setupIpcHandlers(
     try {
       const urlObj = new URL(url);
       const allowedProtocols = ['http:', 'https:', 'discord:'];
-      
+
       if (!allowedProtocols.includes(urlObj.protocol)) {
         throw new Error('Invalid protocol');
       }
-      
+
       await shell.openExternal(url);
       return true;
     } catch (error) {
       log.error('Failed to open external URL:', error);
       return false;
     }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.CONFIG.GET, async (_, key?: string) => {
+    return await configService.get(key);
+  });
+
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG.SET,
+    async (_, key: string, value: any) => {
+      await configService.set(key, value);
+      mainWindow.webContents.send(IPC_CHANNELS.CONFIG.CHANGED, { key, value });
+    }
+  );
+
+  ipcMain.handle(IPC_CHANNELS.CONFIG.UPDATE, async (_, config: any) => {
+    await configService.update(config);
+    mainWindow.webContents.send(IPC_CHANNELS.CONFIG.CHANGED, config);
   });
 }

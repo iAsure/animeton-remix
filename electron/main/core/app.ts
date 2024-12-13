@@ -55,7 +55,7 @@ export async function initializeApp() {
     
     const mainWindow = await setupWindow();
     
-    setupIpcHandlers(webTorrentProcess, subtitlesWorker, mainWindow);
+    await setupIpcHandlers(webTorrentProcess, subtitlesWorker, mainWindow);
 
     // Cleanup
     app.on('before-quit', async () => {

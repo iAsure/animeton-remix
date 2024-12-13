@@ -63,9 +63,17 @@ export interface ShellApi {
   openExternal: (url: string) => Promise<boolean>;
 }
 
+export interface ConfigApi {
+  get: (key?: string) => Promise<any>;
+  set: (key: string, value: any) => Promise<void>;
+  update: (config: any) => Promise<void>;
+  onChange: EventHandler<any>;
+}
+
 export interface Api {
   addTorrent: (torrentId: string) => void;
   torrent: TorrentApi;
   subtitles: SubtitlesApi;
   shell: ShellApi;
+  config: ConfigApi;
 }
