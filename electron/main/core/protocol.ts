@@ -25,8 +25,12 @@ export async function setupProtocol(build, viteDevServer) {
     const url = new URL(request.url);
     log.debug(`Handling HTTPS request: ${url.pathname}`);
 
-    // Allow direct access to External APIs
-    if (EXTERNAL_HOSTNAMES_ARRAY.includes(url.hostname)) {
+    // Check if URL is external (e.g. https://api.example.com) using regex
+    const isExternalUrl = /^(?:https?:\/\/)?(?:[\w-]+\.)+[\w-]+(?:\/|$)/i.test(url.hostname) && 
+                         !url.hostname.includes('localhost') && 
+                         !url.hostname.includes('127.0.0.1');
+    
+    if (isExternalUrl || EXTERNAL_HOSTNAMES_ARRAY.includes(url.hostname)) {
       return await net.fetch(request.url);
     }
 

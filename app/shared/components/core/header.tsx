@@ -57,6 +57,7 @@ const Header = () => {
       style={{
         opacity,
         transition: 'opacity 0.3s ease-in-out',
+        zIndex: 9999,
       }}
     >
       <div className="fixed w-full bg-zinc-950 overflow-hidden flex top-0 left-0 right-0 py-2 px-8 h-14 webkit-app-region-no-drag">
@@ -68,6 +69,7 @@ const Header = () => {
             {/* Navigate Buttons */}
             <div className="flex flex-row items-center">
               <button
+                onClick={handleHome}
                 className={`focus:outline-none p-1 hover:bg-zinc-800 rounded`}
                 style={{ zIndex: 9999 }}
               >
@@ -79,6 +81,7 @@ const Header = () => {
                 />
               </button>
               <button
+                onClick={handleBack}
                 className={`focus:outline-none p-1 hover:bg-zinc-800 rounded ${
                   canGoBack ? 'cursor-pointer' : 'cursor-default'
                 }`}

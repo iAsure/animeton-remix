@@ -136,7 +136,7 @@ const useHeaderNavigation = () => {
 
         historyRef.current.future.unshift(historyRef.current.current);
         historyRef.current.current = prevPage;
-        navigate(prevPage);
+        navigate(prevPage, { viewTransition: true });
 
         // Track back navigation
         // posthog?.capture('route_changed', {
@@ -169,7 +169,7 @@ const useHeaderNavigation = () => {
 
         historyRef.current.past.push(historyRef.current.current);
         historyRef.current.current = nextPage;
-        navigate(nextPage);
+        navigate(nextPage, { viewTransition: true });
 
         // Track forward navigation
         // posthog?.capture('route_changed', {
@@ -189,7 +189,7 @@ const useHeaderNavigation = () => {
       e?.preventDefault();
       if (!canGoHome) return;
 
-      navigate(HOME_PATH);
+      navigate(HOME_PATH, { viewTransition: true });
       setSearchTerm('');
       // eventBus.emit('searchTermChanged', '');
     },

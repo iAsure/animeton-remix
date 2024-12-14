@@ -10,11 +10,7 @@ import log from 'electron-log';
 
 import Header from '@/shared/components/core/header';
 
-import styles from '@/globals.css?url';
-
-export function links() {
-  return [{ rel: "stylesheet", href: styles }];
-}
+import './globals.css';
 
 export default function App() {
   log.info('Renderer initialized');
@@ -27,10 +23,12 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className="h-lvh max-h-lvh">
+      <body className="h-lvh max-h-lvh dark">
         <NextUIProvider>
           <Header />
-          <Outlet />
+          <div className="h-full w-full mt-14">
+            <Outlet />
+          </div>
           <ScrollRestoration />
           <Scripts />
         </NextUIProvider>
