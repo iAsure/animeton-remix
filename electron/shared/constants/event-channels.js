@@ -30,4 +30,11 @@ export const IPC_CHANNELS = {
     UPDATE: 'config:update',
     CHANGED: 'config:changed',
   },
+  UPDATER: {
+    DOWNLOADED: 'update-downloaded',
+    AVAILABLE: 'update-available',
+    NOT_AVAILABLE: 'update-not-available',
+    CHECKING_FOR_UPDATE: 'update-checking-for-update',
+    ERROR: 'update-error',
+  },
 };

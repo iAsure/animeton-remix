@@ -70,10 +70,19 @@ export interface ConfigApi {
   onChange: EventHandler<any>;
 }
 
+export interface UpdaterApi {
+  onError: EventHandler<{ error: string }>;
+  onChecking: EventHandler<void>;
+  onAvailable: EventHandler<void>;
+  onNotAvailable: EventHandler<void>;
+  onDownloaded: EventHandler<any>;
+}
+
 export interface Api {
   addTorrent: (torrentId: string) => void;
   torrent: TorrentApi;
   subtitles: SubtitlesApi;
   shell: ShellApi;
   config: ConfigApi;
+  updater: UpdaterApi;
 }

@@ -56,6 +56,14 @@ const createEventHandler = (channel) => ({
       update: (config) => ipcRenderer.invoke(IPC_CHANNELS.CONFIG.UPDATE, config),
       onChange: createEventHandler(IPC_CHANNELS.CONFIG.CHANGED),
     },
+
+    updater: {
+      onError: createEventHandler(IPC_CHANNELS.UPDATER.ERROR),
+      onChecking: createEventHandler(IPC_CHANNELS.UPDATER.CHECKING_FOR_UPDATE),
+      onAvailable: createEventHandler(IPC_CHANNELS.UPDATER.AVAILABLE),
+      onNotAvailable: createEventHandler(IPC_CHANNELS.UPDATER.NOT_AVAILABLE),
+      onDownloaded: createEventHandler(IPC_CHANNELS.UPDATER.DOWNLOADED),
+    },
   };
 
   contextBridge.exposeInMainWorld('electron', electron);
