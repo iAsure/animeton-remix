@@ -26,10 +26,15 @@ export async function setupProtocol(build, viteDevServer) {
     // log.debug(`Handling HTTPS request: ${url.pathname}`);
 
     // Check if URL is external
-    const isExternalUrl = url?.hostname !== 'remix'
-    
+    const isExternalUrl = url?.hostname !== 'remix';
+
     if (isExternalUrl || EXTERNAL_HOSTNAMES_ARRAY.includes(url.hostname)) {
-      return await net.fetch(request.url);
+      return await net.fetch(request.url, {
+        method: request.method,
+        headers: request.headers,
+        body: request.body,
+        duplex: 'half'
+      });
     }
 
     // Handle static files and dev server

@@ -19,7 +19,7 @@ export async function setupIpcHandlers(
     subtitlesService
   );
 
-  const configService = new ConfigService();
+  const configService = new ConfigService(mainWindow);
   await configService.initialize();
 
   // Register torrent handler
@@ -119,5 +119,9 @@ export async function setupIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.CONFIG.UPDATE, async (_, config: any) => {
     await configService.update(config);
     mainWindow.webContents.send(IPC_CHANNELS.CONFIG.CHANGED, config);
+  });
+
+  mainWindow.on('closed', () => {
+    configService.cleanup();
   });
 }

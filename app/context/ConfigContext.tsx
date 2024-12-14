@@ -10,7 +10,7 @@ interface ConfigContextType {
 
 const ConfigContext = createContext<ConfigContextType | null>(null);
 
-// Create dummy functions for server-side rendering
+// Dummy functions for server-side rendering
 const dummyApi = {
   get: async () => null,
   set: async () => {},
@@ -49,8 +49,34 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   const value = {
     config,
     getConfig: isClient ? window.api.config.get : dummyApi.get,
-    setConfig: isClient ? window.api.config.set : dummyApi.set,
-    updateConfig: isClient ? window.api.config.update : dummyApi.update,
+    setConfig: async (key: string, value: any) => {
+      if (!isClient) return;
+      await window.api.config.set(key, value);
+      
+      // Update local state immediately
+      setConfig((prev) => {
+        if (!prev) return null;
+        const keys = key.split('.');
+        const lastKey = keys.pop()!;
+        const newConfig = { ...prev };
+        let target = newConfig;
+        
+        keys.forEach((k) => {
+          if (!(k in target)) target[k] = {};
+          target = target[k];
+        });
+        
+        target[lastKey] = value;
+        return newConfig;
+      });
+    },
+    updateConfig: async (partialConfig: Partial<AppConfig>) => {
+      if (!isClient) return;
+      await window.api.config.update(partialConfig);
+      
+      // Update local state immediately
+      setConfig((prev) => prev ? { ...prev, ...partialConfig } : null);
+    },
   };
 
   return (
