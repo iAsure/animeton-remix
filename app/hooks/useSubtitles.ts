@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { defaultHeader } from '@/constants/subtitles';
-import { formatAssSubtitles } from '@/utils/subtitles';
+import { defaultHeader } from '@/shared/constants/subtitles';
+import { formatAssSubtitles } from '@/shared/utils/subtitles';
 
 import JASSUB from 'public/vendor/jassub/jassub.es.js';
 import log from 'electron-log';
@@ -66,8 +66,10 @@ export const useSubtitles = (
       _: any,
       result: { success: boolean; data: any[] }
     ) => {
-      if (result.success && Object.keys(result.data).length > 0) {
-        const firstSubtitles = result.data[0];
+      const subtitlesArray = Object.values(result.data);
+      
+      if (result.success && subtitlesArray.length > 0) {
+        const firstSubtitles = subtitlesArray[0];
 
         const assContent = formatAssSubtitles(firstSubtitles);
         loadSubtitles(assContent);

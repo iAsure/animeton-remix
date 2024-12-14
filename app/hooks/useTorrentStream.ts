@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import log from 'electron-log';
 
-import { prettyBytes } from '@/utils/strings';
+import { prettyBytes } from '@/shared/utils/strings';
 
 function useTorrentStream(torrentId: string) {
   const [torrent, setTorrent] = useState<any>(null)

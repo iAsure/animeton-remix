@@ -14,7 +14,7 @@ export const meta: MetaFunction = () => {
 
 export default function Index() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [torrentId] = useState('https://nyaa.si/download/1902712.torrent');
+  const [torrentId] = useState('https://nyaa.si/download/1849578.torrent');
   const [isVideoReady, setIsVideoReady] = useState(false);
 
   const {

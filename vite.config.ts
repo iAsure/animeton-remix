@@ -10,10 +10,17 @@ export default defineConfig({
     topLevelAwait(),
     remix({
       buildDirectory: 'build/app',
+      serverModuleFormat: 'esm',
     }),
     tsconfigPaths(),
   ],
   optimizeDeps: {
-    exclude: ['electron', 'electron/main', 'fsevents', 'jassub'],
+    exclude: [
+      'electron',
+      'electron/main',
+      '@electron/remote',
+      'fsevents',
+      'jassub',
+    ],
   },
 });

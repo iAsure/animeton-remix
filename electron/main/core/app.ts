@@ -1,4 +1,4 @@
-import { app } from 'electron';
+import { app, UtilityProcess } from 'electron';
 import log from 'electron-log';
 import { setupWindow } from './window.js';
 import { setupProtocol } from './protocol.js';
@@ -10,8 +10,8 @@ import { fileURLToPath } from "node:url";
 import { createServer } from 'vite';
 import { init as initUpdater } from './updater.js';
 
-let webTorrentProcess = null;
-let subtitlesWorker = null;
+let webTorrentProcess: UtilityProcess | null = null;
+let subtitlesWorker: Worker | null = null;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function initializeViteServer() {

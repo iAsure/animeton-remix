@@ -1,6 +1,11 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["app/**/*", "vite.config.ts", "electron/shared/types/preload.d.ts", "public/vendor/jassub/jassub.es.js"],
+  "include": [
+    "app/**/*",
+    "vite.config.ts",
+    "electron/shared/types/preload.d.ts",
+    "public/vendor/jassub/jassub.es.js"
+  ],
   "compilerOptions": {
     "composite": true,
     "noEmit": true,
@@ -18,9 +23,9 @@
     ],
     "paths": {
       "@/*": ["./app/*"],
-      "@utils/*": ["./app/utils/*"],
+      "@utils/*": ["app/shared/utils/*"],
       "@hooks/*": ["./app/hooks/*"],
-      "@constants/*": ["./app/constants/*"]
+      "@constants/*": ["app/shared/constants/*"]
     }
   }
 }

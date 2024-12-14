@@ -1,13 +1,23 @@
-import { ElectronAPI } from '@electron-toolkit/preload';
 import type { Api } from './api';
 
+// Custom electron API interface
+interface IpcApi {
+  send: (channel: string, data?: any) => void;
+  invoke: (channel: string, data?: any) => Promise<any>;
+  on: (channel: string, callback: (event: any, ...args: any[]) => void) => void;
+  once: (channel: string, callback: (event: any, ...args: any[]) => void) => void;
+  removeListener: (channel: string, callback: Function) => void;
+}
+
+interface CustomElectronAPI {
+  ipc: IpcApi;
+}
+
 declare global {
-  // This merges with the existing Window interface
   interface Window {
-    electron: ElectronAPI;
+    electron: CustomElectronAPI;
     api: Api;
   }
 }
 
-// Need to export something to make it a module
 export {}; 

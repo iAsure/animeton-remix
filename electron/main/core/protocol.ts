@@ -6,6 +6,7 @@ import log from 'electron-log';
 import { net } from 'electron';
 import { createRequestHandler } from '@remix-run/node';
 import { fileURLToPath } from 'node:url';
+import { EXTERNAL_HOSTNAMES_ARRAY } from '../../shared/constants/external-hostnames.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -24,6 +25,11 @@ export async function setupProtocol(build, viteDevServer) {
     const url = new URL(request.url);
     log.debug(`Handling HTTPS request: ${url.pathname}`);
 
+    // Allow direct access to External APIs
+    if (EXTERNAL_HOSTNAMES_ARRAY.includes(url.hostname)) {
+      return await net.fetch(request.url);
+    }
+
     // Handle static files and dev server
     if (
       url.pathname !== '/' &&
@@ -32,7 +38,7 @@ export async function setupProtocol(build, viteDevServer) {
       if (viteDevServer) {
         const staticFile = path.resolve(
           __dirname,
-          '../../../public' + url.pathname
+          '../../../../public' + url.pathname
         );
         if (
           await fsp
@@ -135,9 +141,9 @@ export function setupCSP(port, ses) {
         ...details.responseHeaders,
         'Content-Security-Policy': [
           `default-src 'self'; ` +
-            `script-src 'self'; ` +
+            `script-src 'self' 'unsafe-inline' https://api.iconify.design; ` +
             `media-src 'self' http://localhost:${port} blob:; ` +
-            `connect-src 'self' http://localhost:${port}; ` +
+            `connect-src 'self' http://localhost:${port} https://api.iconify.design; ` +
             `img-src 'self' data: http: https:; ` +
             `style-src 'self' 'unsafe-inline';`,
         ],

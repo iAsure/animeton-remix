@@ -8,7 +8,13 @@ import {
 import { NextUIProvider } from '@nextui-org/react';
 import log from 'electron-log';
 
-import '@/globals.css';
+import Header from '@/shared/components/core/header';
+
+import styles from '@/globals.css?url';
+
+export function links() {
+  return [{ rel: "stylesheet", href: styles }];
+}
 
 export default function App() {
   log.info('Renderer initialized');
@@ -23,6 +29,7 @@ export default function App() {
       </head>
       <body className="h-lvh max-h-lvh">
         <NextUIProvider>
+          <Header />
           <Outlet />
           <ScrollRestoration />
           <Scripts />

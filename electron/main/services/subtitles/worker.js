@@ -15,7 +15,7 @@ async function parseSubtitles(filePath) {
       for await (const chunk of stream) {
         yield chunk;
       }
-    }
+    },
   };
 
   const metadata = new Metadata(file);
@@ -23,7 +23,7 @@ async function parseSubtitles(filePath) {
 
   try {
     const tracks = await metadata.getTracks();
-    tracks.forEach(track => {
+    tracks.forEach((track) => {
       subtitles[track.number] = { track, cues: [] };
     });
 
@@ -62,24 +62,25 @@ parentPort?.on('message', async ({ filePath }) => {
   log.info('Subtitle worker received file:', filePath);
   try {
     const allSubtitles = await parseSubtitles(filePath);
-    
+
     // Filter subtitles to only include Spanish tracks
     const spanishSubtitles = Object.fromEntries(
-      Object.entries(allSubtitles).filter(([_, data]) => 
-        data.track.language === 'spa'
+      Object.entries(allSubtitles).filter(
+        ([_, data]) => data.track.language === 'spa'
       )
     );
 
     log.info('Spanish subtitles extracted successfully');
-    parentPort?.postMessage({ 
+
+    parentPort?.postMessage({
       type: 'complete',
-      data: spanishSubtitles
+      data: spanishSubtitles,
     });
   } catch (error) {
     log.error('Subtitle extraction failed:', error);
-    parentPort?.postMessage({ 
+    parentPort?.postMessage({
       type: 'error',
-      error: error.message 
+      error: error.message,
     });
   }
 });
