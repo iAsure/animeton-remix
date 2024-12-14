@@ -15,7 +15,7 @@ import './globals.css';
 export default function App() {
   log.info('Renderer initialized');
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -23,7 +23,7 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className="h-lvh max-h-lvh dark">
+      <body className="text-foreground bg-background">
         <NextUIProvider>
           <Header />
           <div className="h-full w-full mt-14">

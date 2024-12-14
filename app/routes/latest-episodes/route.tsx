@@ -1,7 +1,7 @@
 import LatestEpisodes from '@/shared/components/episode/LatestEpisode';
 
 const LatestEpisodesPage = () => (
-  <div className="py-6 bg-black">
+  <div className="py-6">
     <LatestEpisodes perPage={32} showViewMore={false} cardAnimation={true} />
   </div>
 );

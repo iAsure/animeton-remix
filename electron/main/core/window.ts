@@ -21,8 +21,10 @@ export async function setupWindow(partition = 'persist:partition'): Promise<Brow
   
   mainWindow = new BrowserWindow({
     icon: "./public/favicon.png",
-    width: 900,
+    width: 1800,
+    minWidth: 1350,
     height: 900,
+    minHeight: 750,
     frame: false,
     webPreferences: {
       partition,

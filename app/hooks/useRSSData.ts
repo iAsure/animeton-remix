@@ -16,7 +16,7 @@ interface Cache {
 interface RSSDataProps {
   page: number;
   perPage: number;
-  emptyState: boolean;
+  emptyState?: boolean;
 }
 
 interface RSSDataReturn {

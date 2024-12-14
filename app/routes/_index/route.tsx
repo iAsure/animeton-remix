@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import AnimeCarousel from '@components/anime/AnimeCarousel';
 // import { LatestEpisodes } from '@components/episode/LatestEpisodes';
 // import { AnimeSection } from '@components/anime/AnimeSection';
-import Spinner from '@components/decoration/spinner';
+import Spinner from '@components/decoration/Spinner';
 // import { Activation } from '@components/common/activation';
 
 import useAnimesData from '@hooks/useAnimesData';
@@ -36,7 +36,7 @@ export default function Index() {
   if (!animes) return <Spinner />;
 
   return (
-    <div className="dark min-h-screen bg-gray-100">
+    <div className="dark min-h-screen">
       <AnimeCarousel animes={animes} />
       {/* State-dependent components */}
       <LatestEpisodes sectionTitle={'Últimos Episodios'} />

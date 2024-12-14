@@ -87,9 +87,9 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }: EpisodeCardProps) => {
   const cardColor = getNeonColor(animeColors[0]);
 
   return (
-    <div className="max-w-[400px] px-2">
-      <Card className="flex flex-col relative overflow-visible rounded-md border border-zinc-900 bg-zinc-950">
-        <CardHeader className="flex flex-col truncate items-start justify-start relative">
+    <div className="w-full">
+      <Card className="flex flex-col relative overflow-hidden rounded-md border border-zinc-900 bg-zinc-950">
+        <CardHeader className="flex flex-col truncate items-start justify-start relative p-3">
           <div className="flex w-full items-center justify-between">
             <div className="flex flex-col flex-1 min-w-0">
               <p className="text-base font-medium truncate w-full cursor-pointer" onClick={handleAnimeClick}>
@@ -122,15 +122,16 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }: EpisodeCardProps) => {
 
           </div>
         </CardHeader>
-        <div className="transition-transform duration-300 hover:scale-105">
+        <div className="aspect-[16/9] w-full relative transition-transform duration-300 hover:scale-105">
           <CardBody
-            className="w-full h-full p-0 relative cursor-pointer rounded-sm"
+            className="absolute inset-0 p-0 cursor-pointer"
             onClick={handlePlay}
           >
             <img
               src={episodeImage}
               alt={anime?.title?.romaji}
-              className={`aspect-[16/9] w-full h-full object-cover ${isLoading && 'grayscale'}`}
+              className={`w-full h-full object-cover object-center ${isLoading && 'grayscale'}`}
+              loading="lazy"
             />
             <div className="flex flex-row gap-2 bg-slate-950/25 px-1 py-0.5 rounded-md absolute top-2 right-2 z-10">
               <FlagsList subtitles={anime?.torrent?.subtitles} />
@@ -161,7 +162,7 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }: EpisodeCardProps) => {
             )}
           </CardBody>
         </div>
-        <CardFooter>
+        <CardFooter className="p-3">
           <div className="flex justify-between items-center w-full">
             <div className="flex items-center">
               <Icon icon="gravity-ui:calendar" />

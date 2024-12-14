@@ -93,7 +93,8 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
       const card = (
         <EpisodeCard
           anime={anime}
-          isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
+          isLoading={false}
+          // isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
           onPlay={() => handlePlay(anime)}
         />
       );
@@ -122,7 +123,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
     };
 
     return (
-      <div className="relative flex flex-col items-center py-6 bg-black">
+      <div className="relative flex flex-col items-center py-6">
         {/* Background */}
         {/* <div
         className="absolute inset-0 bg-cover bg-center"
