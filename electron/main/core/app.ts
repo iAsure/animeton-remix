@@ -9,6 +9,7 @@ import path from 'path';
 import { fileURLToPath } from "node:url";
 import { createServer } from 'vite';
 import { init as initUpdater } from './updater.js';
+import { setupShortcuts, unregisterShortcuts } from './shortcuts.js';
 
 let webTorrentProcess: UtilityProcess | null = null;
 let subtitlesWorker: Worker | null = null;
@@ -56,12 +57,14 @@ export async function initializeApp() {
     const mainWindow = await setupWindow();
     
     await setupIpcHandlers(webTorrentProcess, subtitlesWorker, mainWindow);
+    setupShortcuts(mainWindow);
 
     // Cleanup
     app.on('before-quit', async () => {
       log.info('Cleaning up workers...');
+      unregisterShortcuts();
       if (subtitlesWorker) await subtitlesWorker.terminate();
-      if (webTorrentProcess) await webTorrentProcess.kill();
+      if (webTorrentProcess) webTorrentProcess.kill();
     });
 
     return { webTorrentProcess, subtitlesWorker };
