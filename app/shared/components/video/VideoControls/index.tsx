@@ -137,7 +137,7 @@ const VideoControls = ({ videoRef, isMouseMoving }: VideoControlsProps) => {
 
   return (
     <div 
-      className="fixed bottom-0 w-full bg-gradient-to-t from-black/95 via-black/75 to-transparent"
+      className="fixed bottom-0 w-full bg-gradient-to-t from-black/95 via-black/75 to-transparent z-50"
       style={{
         opacity: isMouseMoving ? 1 : 0,
         transition: 'opacity 0.3s ease-in-out',

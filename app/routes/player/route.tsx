@@ -6,8 +6,9 @@ import log from 'electron-log';
 import useTorrentStream from '@hooks/useTorrentStream';
 import useSubtitles from '@hooks/useSubtitles';
 
-import VideoSpinner from '@components/decoration/VideoSpinner';
-import VideoControls from '@components/core/VideoControls';
+import VideoSpinner from '@components/video/VideoSpinner';
+import VideoControls from '@components/video/VideoControls';
+import VideoPlayPauseOverlay from '@components/video/VideoPlayPauseOverlay';
 
 const Player = () => {
   const [searchParams] = useSearchParams();
@@ -16,6 +17,8 @@ const Player = () => {
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [isBuffering, setIsBuffering] = useState(true);
   const [isMouseMoving, setIsMouseMoving] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [lastAction, setLastAction] = useState<'play' | 'pause' | null>(null);
   let mouseTimer: NodeJS.Timeout;
 
   const {
@@ -31,9 +34,21 @@ const Player = () => {
     setIsVideoReady(true);
   }, []);
 
+  const handleVideoClick = useCallback(() => {
+    if (!videoRef.current) return;
+
+    if (videoRef.current.paused) {
+      videoRef.current.play();
+      setLastAction('play');
+    } else {
+      videoRef.current.pause();
+      setLastAction('pause');
+    }
+  }, []);
+
   const handleVideoPlay = useCallback(() => {
     if (videoRef.current) {
-      log.info('Playing video');
+      setIsPlaying(true);
       videoRef.current.play().catch((error) => {
         log.error('Error playing video', { error });
       });
@@ -77,12 +92,14 @@ const Player = () => {
           id="output"
           ref={videoRef}
           autoPlay
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain cursor-pointer"
+          onClick={handleVideoClick}
           onCanPlay={handleCanPlay}
           onPlay={handleVideoPlay}
           onWaiting={handleWaiting}
           crossOrigin="anonymous"
         />
+        <VideoPlayPauseOverlay isPlaying={isPlaying} lastAction={lastAction} />
         <VideoControls videoRef={videoRef} isMouseMoving={isMouseMoving} />
       </div>
       {isBuffering && (
