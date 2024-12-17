@@ -3,9 +3,10 @@ import { Icon } from '@iconify/react';
 
 interface VideoControlsProps {
   videoRef: React.RefObject<HTMLVideoElement>;
+  isMouseMoving: boolean;
 }
 
-const VideoControls = ({ videoRef }: VideoControlsProps) => {
+const VideoControls = ({ videoRef, isMouseMoving }: VideoControlsProps) => {
   const [videoState, setVideoState] = useState({
     isPlaying: false,
     currentTime: 0,
@@ -15,18 +16,7 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
     isFullscreen: false,
   });
 
-  const [isMouseMoving, setIsMouseMoving] = useState(true);
-  let mouseTimer: NodeJS.Timeout;
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleMouseMove = useCallback(() => {
-    setIsMouseMoving(true);
-    clearTimeout(mouseTimer);
-    mouseTimer = setTimeout(() => setIsMouseMoving(false), 3000);
-  }, []);
-
   const handleDragStart = useCallback((e: React.MouseEvent) => {
-    setIsDragging(true);
     document.addEventListener('mousemove', handleDrag);
     document.addEventListener('mouseup', handleDragEnd);
   }, []);
@@ -35,19 +25,24 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
     const video = videoRef.current;
     if (!video) return;
 
-    const progressBar = e.currentTarget as HTMLElement;
+    const progressBar = document.querySelector('.progress-bar-container');
+    if (!progressBar) return;
+
     const bounds = progressBar.getBoundingClientRect();
     const percent = Math.min(Math.max((e.clientX - bounds.left) / bounds.width, 0), 1);
+    
     video.currentTime = percent * video.duration;
+    setVideoState(prev => ({
+      ...prev,
+      currentTime: video.currentTime
+    }));
   }, [videoRef]);
 
   const handleDragEnd = useCallback(() => {
-    setIsDragging(false);
     document.removeEventListener('mousemove', handleDrag);
     document.removeEventListener('mouseup', handleDragEnd);
   }, [handleDrag]);
 
-  // Clean up event listeners
   useEffect(() => {
     return () => {
       document.removeEventListener('mousemove', handleDrag);
@@ -55,7 +50,6 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
     };
   }, [handleDrag]);
 
-  // Update video state
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -122,7 +116,6 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
   };
 
   const handleFullScreen = useCallback(() => {
-    // Use Electron IPC to control fullscreen
     window.electron.ipc.send(
       'window:set-fullscreen',
       !videoState.isFullscreen
@@ -149,11 +142,10 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
         opacity: isMouseMoving ? 1 : 0,
         transition: 'opacity 0.3s ease-in-out',
       }}
-      onMouseMove={handleMouseMove}
     >
       {/* Progress bar with draggable handle */}
       <div 
-        className="w-full h-1 bg-white/5 hover:h-1.5 transition-all duration-200 cursor-pointer group"
+        className="w-full h-1 bg-white/5 hover:h-1.5 transition-all duration-200 cursor-pointer group progress-bar-container"
         onClick={handleSeek}
       >
         <div className="relative w-full h-full">
@@ -164,9 +156,8 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
           />
           {/* Updated Draggable handle */}
           <div
-            className={`absolute h-4 w-4 bg-white rounded-full -top-1.5 -ml-2 
-                       group-hover:scale-110 transition-all cursor-grab
-                       ${isDragging ? 'scale-110 opacity-100' : 'group-hover:opacity-100 opacity-0'}`}
+            className="absolute w-2 h-2 group-hover:-top-1.5 -top-0.5 bg-white rounded-full shadow-lg transform -translate-x-1/2
+                   group-hover:w-4 group-hover:h-4 transition-all duration-200 cursor-grab"
             style={{ left: `${(videoState.currentTime / videoState.duration) * 100}%` }}
             onMouseDown={handleDragStart}
           />

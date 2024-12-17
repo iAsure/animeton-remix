@@ -15,6 +15,8 @@ const Player = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [isBuffering, setIsBuffering] = useState(true);
+  const [isMouseMoving, setIsMouseMoving] = useState(true);
+  let mouseTimer: NodeJS.Timeout;
 
   const {
     progress,
@@ -47,6 +49,12 @@ const Player = () => {
     handleVideoReady();
   }, [handleVideoReady]);
 
+  const handleMouseMove = useCallback(() => {
+    setIsMouseMoving(true);
+    clearTimeout(mouseTimer);
+    mouseTimer = setTimeout(() => setIsMouseMoving(false), 3000);
+  }, []);
+
   useEffect(() => {
     const handleTorrentServerDone = (event: any, data: any) => {
       const { url, filePath } = data;
@@ -63,7 +71,7 @@ const Player = () => {
   }, []);
 
   return (
-    <div className="player relative h-screen overflow-hidden">
+    <div className="player relative h-screen overflow-hidden" onMouseMove={handleMouseMove}>
       <div className="letterbox">
         <video
           id="output"
@@ -75,7 +83,7 @@ const Player = () => {
           onWaiting={handleWaiting}
           crossOrigin="anonymous"
         />
-        <VideoControls videoRef={videoRef} />
+        <VideoControls videoRef={videoRef} isMouseMoving={isMouseMoving} />
       </div>
       {isBuffering && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
