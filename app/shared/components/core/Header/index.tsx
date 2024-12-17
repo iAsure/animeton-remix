@@ -1,23 +1,29 @@
 import { Icon } from '@iconify/react';
 import { Divider, Skeleton, Tooltip } from '@nextui-org/react';
-import { useNavigate } from '@remix-run/react';
-import { useState } from 'react';
+import { useNavigate, useLocation } from '@remix-run/react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useHeaderNavigation } from '@/hooks/useHeaderNavigation';
 import { useHeaderTitle } from '@/hooks/useHeaderTitle';
 import { useWindowControls } from '@/hooks/useWindowControls';
 import { useUpdateDownload } from '@/hooks/useUpdateDownload';
+import { useSearchTermChange } from '@/hooks/useSearchTermChange';
 
 import { useModal } from '@/context/ModalContext';
+import useSearchStore from '@stores/search';
 
 import ClosedBetaModal from '@components/modals/ClosedBeta';
 import NewBadge from '@components/decoration/NewBadge';
+import SearchInput from '@components/core/SearchInput';
 
 const isPlayerRoute = (path: string) => path.includes('/player');
 import { version as appVersion } from '../../../../../package.json';
+import { debounce } from '@/shared/lib/utils';
 
 const Header = () => {
+  const { searchTerm, setSearchTerm } = useSearchStore();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { isMaximized, handleWindowControl } = useWindowControls();
   const {
@@ -29,14 +35,39 @@ const Header = () => {
     handleForward,
     handleHome,
     currentPath,
-    searchTerm,
-    setSearchTerm,
   } = useHeaderNavigation();
   const { headerTitle } = useHeaderTitle();
   const { updateDownloaded, handleUpdateClick } = useUpdateDownload();
   const { openModal } = useModal();
 
   const [opacity, setOpacity] = useState(1);
+
+  // Efficient debounced search handler
+  const debouncedEmitSearch = useCallback(
+    debounce((term) => {
+      if (currentPath !== '/popular-anime') {
+        navigate('/popular-anime', { viewTransition: true });
+      }
+    }, 500),
+    [currentPath]
+  );
+
+  const handleSearchChange = (term) => {
+    debouncedEmitSearch(term);
+    setSearchTerm(term);
+  };
+
+  useEffect(() => {
+    const currentPath = location.pathname;
+
+    const handleSearchTermChanged = (term) => {
+      if (term && currentPath !== '/popular-anime') {
+        navigate('/popular-anime', { viewTransition: true });
+      }
+    };
+
+    handleSearchTermChanged(searchTerm)
+  }, [location, searchTerm]);
 
   const handleClosedBeta = () => {
     openModal('closed-beta', ({ onClose }) => (
@@ -77,6 +108,7 @@ const Header = () => {
             <div className="flex flex-row items-center webkit-app-region-no-drag">
               <button
                 onClick={handleHome}
+                disabled={isHome}
                 className={`focus:outline-none p-1 hover:bg-zinc-800 rounded`}
                 style={{ zIndex: 9999 }}
               >
@@ -91,6 +123,7 @@ const Header = () => {
               </button>
               <button
                 onClick={handleBack}
+                disabled={!canGoBack}
                 className={`focus:outline-none p-1 hover:bg-zinc-800 rounded ${
                   canGoBack ? 'cursor-pointer' : 'cursor-default'
                 }`}
@@ -127,12 +160,9 @@ const Header = () => {
             <Divider orientation="vertical" className="bg-zinc-800 h-6 mr-1" />
 
             {/* Search Input */}
-            {/* {!isPlayerRoute(currentPath) && appIsActivated && !appIsBlocked && (
-              <SearchInput
-                searchTerm={searchTerm}
-                setSearchTerm={handleSearchChange}
-              />
-            )} */}
+            {!isPlayerRoute(currentPath) && appIsActivated && !appIsBlocked && (
+              <SearchInput searchTerm={searchTerm} setSearchTerm={handleSearchChange} />
+            )}
           </div>
 
           {/* Center Content: Navigation Links + Logo */}
@@ -142,7 +172,9 @@ const Header = () => {
             <NewBadge>
               <button
                 className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2 webkit-app-region-no-drag"
-                onClick={() => navigate('/popular-anime', { viewTransition: true })}
+                onClick={() =>
+                  navigate('/popular-anime', { viewTransition: true })
+                }
               >
                 <Icon
                   icon="gravity-ui:star"
@@ -198,7 +230,9 @@ const Header = () => {
             <NewBadge>
               <button
                 className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2 webkit-app-region-no-drag"
-                onClick={() => navigate('/latest-episodes', { viewTransition: true })}
+                onClick={() =>
+                  navigate('/latest-episodes', { viewTransition: true })
+                }
               >
                 <Icon
                   icon="majesticons:megaphone-line"

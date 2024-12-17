@@ -1,6 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from '@remix-run/react';
 
+import useSearchStore from '@stores/search';
+
 const PLAYER_PATH = '/player';
 const POPULAR_ANIME_PATH = '/popular-anime';
 const HOME_PATH = '/';
@@ -17,11 +19,12 @@ const useHeaderNavigation = () => {
     future: string[];
   }>({ past: [], current: null, future: [] });
 
+  const { setSearchTerm } = useSearchStore();
+
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
   const [canGoHome, setCanGoHome] = useState(false);
   const [isHome, setIsHome] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
 
   // Navigation state management
   useEffect(() => {
@@ -191,7 +194,6 @@ const useHeaderNavigation = () => {
 
       navigate(HOME_PATH, { viewTransition: true });
       setSearchTerm('');
-      // eventBus.emit('searchTermChanged', '');
     },
     [navigate, canGoHome]
   );
@@ -205,8 +207,6 @@ const useHeaderNavigation = () => {
     handleForward,
     handleHome,
     currentPath: location.pathname,
-    searchTerm,
-    setSearchTerm,
   };
 };
 
