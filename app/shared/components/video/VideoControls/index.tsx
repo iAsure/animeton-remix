@@ -147,6 +147,36 @@ const VideoControls = ({
     };
   }, []);
 
+  const handleVolumeScroll = useCallback(
+    (e: WheelEvent) => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      // Prevent default scroll behavior
+      e.preventDefault();
+
+      // Calculate new volume - decrease on scroll down, increase on scroll up
+      const delta = e.deltaY > 0 ? -0.05 : 0.05;
+      const newVolume = Math.max(0, Math.min(1, video.volume + delta));
+
+      video.volume = newVolume;
+      setVideoState((prev) => ({ ...prev, volume: newVolume }));
+    },
+    [videoRef]
+  );
+
+  // Add event listener for wheel event
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.addEventListener('wheel', handleVolumeScroll, { passive: false });
+
+    return () => {
+      video.removeEventListener('wheel', handleVolumeScroll);
+    };
+  }, [handleVolumeScroll]);
+
   return (
     <div
       className="fixed bottom-0 w-full bg-gradient-to-t from-black/95 via-black/75 to-transparent z-50"

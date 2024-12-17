@@ -12,8 +12,8 @@ import VideoPlayPauseOverlay from '@components/video/VideoPlayPauseOverlay';
 import usePlayerStore from '@stores/player';
 
 const Player = () => {
-  const { setIsMouseMoving } = usePlayerStore();
-  
+  const { isMouseMoving, setIsMouseMoving } = usePlayerStore();
+
   const [searchParams] = useSearchParams();
   const torrentUrl = searchParams.get('url');
 
@@ -25,11 +25,7 @@ const Player = () => {
   const [lastAction, setLastAction] = useState<'play' | 'pause' | null>(null);
   let mouseTimer: NodeJS.Timeout;
 
-  const {
-    progress,
-    downloadSpeed,
-    uploadSpeed,
-  } = useTorrentStream(torrentUrl);
+  const { progress, downloadSpeed, uploadSpeed } = useTorrentStream(torrentUrl);
 
   const { loadSubtitlesFromFile } = useSubtitles(videoRef, isVideoReady);
 
@@ -90,22 +86,26 @@ const Player = () => {
   }, []);
 
   return (
-    <div className="player relative h-screen overflow-hidden" onMouseMove={handleMouseMove}>
-      <div className="">
-        <video
-          id="output"
-          ref={videoRef}
-          autoPlay
-          className="w-full h-full object-contain cursor-pointer"
-          onClick={handleVideoClick}
-          onCanPlay={handleCanPlay}
-          onPlay={handleVideoPlay}
-          onWaiting={handleWaiting}
-          crossOrigin="anonymous"
-        />
-        <VideoPlayPauseOverlay isPlaying={isPlaying} lastAction={lastAction} />
-        <VideoControls videoRef={videoRef} loadSubtitlesFromFile={loadSubtitlesFromFile} />
-      </div>
+    <div
+      className={`absolute w-full h-full overflow-hidden ${!isMouseMoving ? 'cursor-none' : ''}`}
+      onMouseMove={handleMouseMove}
+    >
+      <video
+        id="output"
+        ref={videoRef}
+        autoPlay
+        className="w-full h-full max-w-[100vw] max-h-[100vh] flex bg-cover bg-center object-contain"
+        onClick={handleVideoClick}
+        onCanPlay={handleCanPlay}
+        onPlay={handleVideoPlay}
+        onWaiting={handleWaiting}
+        crossOrigin="anonymous"
+      />
+      <VideoPlayPauseOverlay isPlaying={isPlaying} lastAction={lastAction} />
+      <VideoControls
+        videoRef={videoRef}
+        loadSubtitlesFromFile={loadSubtitlesFromFile}
+      />
       {isBuffering && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
           <VideoSpinner
