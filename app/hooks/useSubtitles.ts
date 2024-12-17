@@ -23,10 +23,13 @@ const useSubtitles = (
         wasmUrl: '/vendor/jassub/jassub-worker.wasm',
         legacyWasmUrl: '/vendor/jassub/jassub-worker.wasm.js',
         modernWasmUrl: '/vendor/jassub/jassub-worker-modern.wasm',
-        debug: true,
+        debug: false,
         asyncRender: true,
         onDemandRender: true,
+        prescaleFactor: 0.8
       });
+
+      log.info('Subtitles renderer initialized');
 
       setSubtitlesRenderer(renderer);
     }

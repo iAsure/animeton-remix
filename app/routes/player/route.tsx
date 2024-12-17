@@ -9,14 +9,18 @@ import useSubtitles from '@hooks/useSubtitles';
 import VideoSpinner from '@components/video/VideoSpinner';
 import VideoControls from '@components/video/VideoControls';
 import VideoPlayPauseOverlay from '@components/video/VideoPlayPauseOverlay';
+import usePlayerStore from '@stores/player';
 
 const Player = () => {
+  const { setIsMouseMoving } = usePlayerStore();
+  
   const [searchParams] = useSearchParams();
   const torrentUrl = searchParams.get('url');
+
   const videoRef = useRef<HTMLVideoElement>(null);
+
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [isBuffering, setIsBuffering] = useState(true);
-  const [isMouseMoving, setIsMouseMoving] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [lastAction, setLastAction] = useState<'play' | 'pause' | null>(null);
   let mouseTimer: NodeJS.Timeout;
@@ -87,7 +91,7 @@ const Player = () => {
 
   return (
     <div className="player relative h-screen overflow-hidden" onMouseMove={handleMouseMove}>
-      <div className="letterbox">
+      <div className="">
         <video
           id="output"
           ref={videoRef}
@@ -100,7 +104,7 @@ const Player = () => {
           crossOrigin="anonymous"
         />
         <VideoPlayPauseOverlay isPlaying={isPlaying} lastAction={lastAction} />
-        <VideoControls videoRef={videoRef} isMouseMoving={isMouseMoving} />
+        <VideoControls videoRef={videoRef} loadSubtitlesFromFile={loadSubtitlesFromFile} />
       </div>
       {isBuffering && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">

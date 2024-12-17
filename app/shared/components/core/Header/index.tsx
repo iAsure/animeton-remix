@@ -8,8 +8,9 @@ import { useHeaderTitle } from '@/hooks/useHeaderTitle';
 import { useWindowControls } from '@/hooks/useWindowControls';
 import { useUpdateDownload } from '@/hooks/useUpdateDownload';
 
-import { useModal } from '@/context/ModalContext';
+import { useModal } from '@context/ModalContext';
 import useSearchStore from '@stores/search';
+import usePlayerStore from '@stores/player';
 
 import ClosedBetaModal from '@components/modals/ClosedBeta';
 import NewBadge from '@components/decoration/NewBadge';
@@ -21,6 +22,7 @@ import { debounce } from '@/shared/lib/utils';
 
 const Header = () => {
   const { searchTerm, setSearchTerm } = useSearchStore();
+  const { isMouseMoving } = usePlayerStore();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -38,8 +40,6 @@ const Header = () => {
   const { headerTitle } = useHeaderTitle();
   const { updateDownloaded, handleUpdateClick } = useUpdateDownload();
   const { openModal } = useModal();
-
-  const [opacity, setOpacity] = useState(1);
 
   // Efficient debounced search handler
   const debouncedEmitSearch = useCallback(
@@ -92,7 +92,7 @@ const Header = () => {
     <div
       className="header webkit-app-region-drag"
       style={{
-        opacity,
+        opacity: isMouseMoving ? 1 : 0,
         transition: 'opacity 0.3s ease-in-out',
         zIndex: 9999,
       }}
