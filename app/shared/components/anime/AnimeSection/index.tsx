@@ -25,10 +25,6 @@ interface AnimeSectionProps {
   viewMoreText?: string;
 }
 
-interface Anime {
-  id: string | number;
-}
-
 const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
   ({
     sectionTitle,
@@ -42,8 +38,8 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
     viewMoreText = false,
   }) => {
     const navigate = useNavigate();
-    const [filteredAnimes, setFilteredAnimes] = useState<Anime[]>([]);
-    const animes = useAnimesData({ perPage });
+    const [filteredAnimes, setFilteredAnimes] = useState<any[]>([]);
+    const { animes, isLoading: isLoadingAnimes, error: animesError } = useAnimesData({ perPage });
     const {
       searchAnimes,
       data: searchResults,
@@ -118,12 +114,16 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
     };
 
     const displayAnimes = searchTerm ? searchResults : filteredAnimes;
-    const isLoading = searchTerm ? isSearchLoading : false;
     const isEmpty = !displayAnimes?.length;
 
     const handleViewMore = () => {
       navigate('/popular-anime', { viewTransition: true });
     };
+
+    const isLoadingContent = (searchTerm && isSearchLoading) || (!searchTerm && isLoadingAnimes);
+    const error = searchTerm ? searchError : animesError;
+    const hasError = Boolean(error);
+    const hasNoResults = !isLoadingContent && !hasError && isEmpty;
 
     return (
       <div
@@ -160,7 +160,7 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
           </button>
         )}
 
-        {isLoading ? (
+        {isLoadingContent && (
           <div
             className={`grid ${gridClassName} gap-4 sm:gap-6 md:gap-8 justify-center items-center min-h-[400px] w-full`}
           >
@@ -168,19 +168,37 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
               <AnimeCardSkeleton key={`skeleton-${index}`} />
             ))}
           </div>
-        ) : isEmpty ? (
+        )}
+
+        {hasError && (
           <div className="flex flex-col justify-center items-center w-full min-h-[400px]">
             <Icon
               icon="gravity-ui:circle-xmark"
               width="128"
               height="128"
-              style={{ color: '#71717a' }}
+              className="text-zinc-500"
             />
             <p className="text-2xl font-bold text-zinc-500">
-              {searchError || 'No se encontraron animes'}
+              {error || 'Ha ocurrido un error'}
             </p>
           </div>
-        ) : (
+        )}
+
+        {hasNoResults && (
+          <div className="flex flex-col justify-center items-center w-full min-h-[400px]">
+            <Icon
+              icon="gravity-ui:circle-xmark"
+              width="128"
+              height="128"
+              className="text-zinc-500"
+            />
+            <p className="text-2xl font-bold text-zinc-500">
+              No se encontraron animes
+            </p>
+          </div>
+        )}
+
+        {!isLoadingContent && !hasError && !hasNoResults && (
           <div
             className={`grid ${gridClassName} gap-8 justify-center items-start min-h-[400px] w-full`}
           >

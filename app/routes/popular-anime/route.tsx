@@ -2,7 +2,7 @@ import AnimeSection from '@components/anime/AnimeSection';
 
 import useSearchStore from '@stores/search';
 
-const PopularAnimePage = ({ state }) => {
+const PopularAnimePage = () => {
   const { searchTerm } = useSearchStore();
 
   return (

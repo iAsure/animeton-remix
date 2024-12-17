@@ -42,8 +42,8 @@ const Header = () => {
   const { openModal } = useModal();
 
   // Efficient debounced search handler
-  const debouncedEmitSearch = useCallback(
-    debounce((term) => {
+  const debouncedNavigateOnSearch = useCallback(
+    debounce(() => {
       if (currentPath !== '/popular-anime') {
         navigate('/popular-anime', { viewTransition: true });
       }
@@ -52,7 +52,7 @@ const Header = () => {
   );
 
   const handleSearchChange = (term) => {
-    debouncedEmitSearch(term);
+    debouncedNavigateOnSearch();
     setSearchTerm(term);
   };
 

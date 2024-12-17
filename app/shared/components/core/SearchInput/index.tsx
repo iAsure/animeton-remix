@@ -3,6 +3,7 @@ import { Icon } from '@iconify/react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SearchInput = ({ searchTerm, setSearchTerm }) => {
+    const [visualSearchTerm, setVisualSearchTerm] = useState('');
     const [isExpanded, setIsExpanded] = useState(false);
     const inputRef = useRef(null);
     const containerRef = useRef(null);
@@ -42,6 +43,7 @@ const SearchInput = ({ searchTerm, setSearchTerm }) => {
     }, [searchTerm]);
 
     const handleSearch = (event) => {
+        setVisualSearchTerm(event.target.value);
         setSearchTerm(event.target.value);
     };
 
@@ -68,7 +70,7 @@ const SearchInput = ({ searchTerm, setSearchTerm }) => {
                                      rounded-full bg-white/10 backdrop-blur-sm focus:outline-none 
                                      focus:ring-1 focus:ring-white/30"
                             placeholder="Buscar"
-                            value={searchTerm}
+                            value={visualSearchTerm}
                             onChange={handleSearch}
                         />
                         {searchTerm && (

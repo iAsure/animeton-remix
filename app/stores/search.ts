@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
+import { debounce } from '@utils/functions';
 
 interface SearchStore {
   searchTerm: string | null;
@@ -9,7 +10,7 @@ interface SearchStore {
 const useSearchStore = create<SearchStore>()(
   subscribeWithSelector((set) => ({
     searchTerm: '',
-    setSearchTerm: (searchTerm) => set({ searchTerm }),
+    setSearchTerm: debounce((searchTerm) => set({ searchTerm }), 500),
   }))
 );
 

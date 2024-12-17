@@ -12,13 +12,14 @@ import Activation from '@components/core/Activation';
 import { useConfig } from '@context/ConfigContext';
 
 export default function Index() {
-  const animes = useAnimesData({ displayCount: 10 });
+  const { animes } = useAnimesData({ displayCount: 10 });
   const { config } = useConfig();
 
   const activationKey = config?.user?.activationKey;
 
   const { isValid, isLoading, validateKey } = useValidateKey(activationKey);
-  const needActivation = activationKey === undefined || (activationKey && !isValid);
+  const needActivation =
+    activationKey === undefined || (activationKey && !isValid);
 
   // useEffect(() => {
   //   if (!needActivation) {
