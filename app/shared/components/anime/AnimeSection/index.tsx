@@ -7,12 +7,9 @@ import useAnimesData from '@hooks/useAnimesData';
 import useSearchAnimes from '@hooks/useSearchAnimes';
 // import useModernBackground from '../../../hooks/useModernBackground';
 
-// import eventBus from '../../../lib/event-bus';
-
 import AnimeCard from './anime';
 import AnimeCardSkeleton from './skeleton';
 
-// Types
 interface AnimeSectionProps {
   sectionTitle?: string;
   searchTerm?: string;
