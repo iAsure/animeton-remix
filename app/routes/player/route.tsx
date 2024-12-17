@@ -20,10 +20,6 @@ const Player = () => {
     progress,
     downloadSpeed,
     uploadSpeed,
-    numPeers,
-    downloaded,
-    total,
-    remaining,
   } = useTorrentStream(torrentUrl);
 
   const { loadSubtitlesFromFile } = useSubtitles(videoRef, isVideoReady);
@@ -84,7 +80,7 @@ const Player = () => {
       {isBuffering && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
           <VideoSpinner
-            progress={downloaded}
+            progress={progress}
             downloadSpeed={downloadSpeed}
             uploadSpeed={uploadSpeed}
           />
