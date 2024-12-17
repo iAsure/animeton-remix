@@ -5,7 +5,9 @@ import log from 'electron-log';
 
 import useTorrentStream from '@hooks/useTorrentStream';
 import useSubtitles from '@hooks/useSubtitles';
+
 import VideoSpinner from '@components/decoration/VideoSpinner';
+import VideoControls from '@components/core/VideoControls';
 
 const Player = () => {
   const [searchParams] = useSearchParams();
@@ -70,13 +72,14 @@ const Player = () => {
         <video
           id="output"
           ref={videoRef}
+          autoPlay
           className="w-full h-full object-contain"
-          controls
           onCanPlay={handleCanPlay}
           onPlay={handleVideoPlay}
           onWaiting={handleWaiting}
           crossOrigin="anonymous"
         />
+        <VideoControls videoRef={videoRef} />
       </div>
       {isBuffering && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">

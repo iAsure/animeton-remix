@@ -87,6 +87,19 @@ export async function setupIpcHandlers(
     mainWindow.webContents.send(IPC_CHANNELS.WINDOW.RESIZE);
   });
 
+  ipcMain.on(IPC_CHANNELS.WINDOW.SET_FULLSCREEN, (_, shouldBeFullscreen) => {
+    mainWindow.setFullScreen(shouldBeFullscreen);
+  });
+
+  // Listen for fullscreen changes
+  mainWindow.on('enter-full-screen', () => {
+    mainWindow.webContents.send(IPC_CHANNELS.WINDOW.FULLSCREEN_CHANGE, true);
+  });
+
+  mainWindow.on('leave-full-screen', () => {
+    mainWindow.webContents.send(IPC_CHANNELS.WINDOW.FULLSCREEN_CHANGE, false);
+  });
+
   ipcMain.handle(IPC_CHANNELS.SHELL.OPEN_EXTERNAL, async (_, url: string) => {
     try {
       const urlObj = new URL(url);

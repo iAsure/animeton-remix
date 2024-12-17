@@ -20,6 +20,8 @@ export const IPC_CHANNELS = {
     RESIZE: 'window-resize',
     CONTROL: 'window-control',
     IS_MAXIMIZED: 'window-is-maximized',
+    SET_FULLSCREEN: 'window:set-fullscreen',
+    FULLSCREEN_CHANGE: 'window:fullscreen-change',
   },
   SHELL: {
     OPEN_EXTERNAL: 'shell-open-external',
