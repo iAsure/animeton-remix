@@ -7,7 +7,6 @@ import { useHeaderNavigation } from '@/hooks/useHeaderNavigation';
 import { useHeaderTitle } from '@/hooks/useHeaderTitle';
 import { useWindowControls } from '@/hooks/useWindowControls';
 import { useUpdateDownload } from '@/hooks/useUpdateDownload';
-import { useSearchTermChange } from '@/hooks/useSearchTermChange';
 
 import { useModal } from '@/context/ModalContext';
 import useSearchStore from '@stores/search';
