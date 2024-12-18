@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import usePlayerStore from '@stores/player';
 
