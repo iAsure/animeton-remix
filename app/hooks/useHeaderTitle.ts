@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 const defaultHeaderTitle = 'Beta cerrada';
 
-export const useHeaderTitle = () => {
+const useHeaderTitle = () => {
   const [headerTitle, setHeaderTitle] = useState(defaultHeaderTitle);
 
   useEffect(() => {
@@ -15,3 +15,5 @@ export const useHeaderTitle = () => {
 
   return { headerTitle };
 };
+
+export default useHeaderTitle;

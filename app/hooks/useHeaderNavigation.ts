@@ -210,4 +210,4 @@ const useHeaderNavigation = () => {
   };
 };
 
-export { useHeaderNavigation };
+export default useHeaderNavigation;

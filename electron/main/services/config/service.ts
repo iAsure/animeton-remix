@@ -21,8 +21,13 @@ export class ConfigService {
 
   private getDefaultConfig(): AppConfig {
     return {
-      user: {},
-      features: {},
+      user: {
+        activationKey: null,
+        discordId: null,
+      },
+      features: {
+        subtitlesIndicator: false,
+      },
       preferences: {
         theme: 'dark',
         language: 'es-la'
@@ -76,10 +81,37 @@ export class ConfigService {
     );
   }
 
+  private deepMergeDefaults(userConfig: any, defaultConfig: any): any {
+    const merged = { ...userConfig };
+    
+    for (const key in defaultConfig) {
+      if (!(key in merged)) {
+        merged[key] = defaultConfig[key];
+      } else if (
+        defaultConfig[key] && 
+        typeof defaultConfig[key] === 'object' && 
+        !Array.isArray(defaultConfig[key])
+      ) {
+        merged[key] = this.deepMergeDefaults(merged[key], defaultConfig[key]);
+      }
+    }
+    
+    return merged;
+  }
+
   private async loadConfig() {
     try {
       const data = await fs.readFile(this.configPath, 'utf-8');
-      this.config = { ...this.getDefaultConfig(), ...JSON.parse(data) };
+      const userConfig = JSON.parse(data);
+      const defaultConfig = this.getDefaultConfig();
+      
+      // Merge user config with defaults, ensuring new properties are added
+      this.config = this.deepMergeDefaults(userConfig, defaultConfig);
+      
+      // Save if new defaults were added
+      if (JSON.stringify(userConfig) !== JSON.stringify(this.config)) {
+        await this.saveConfig();
+      }
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         this.config = this.getDefaultConfig();

@@ -1,12 +1,12 @@
 export interface UserConfig {
-  discordId?: string;
-  activationKey?: string;
-  username?: string;
+  discordId?: string | null;
+  activationKey?: string | null;
 }
 
 export interface AppConfig {
   user: UserConfig;
   features: {
+    subtitlesIndicator: boolean;
     [key: string]: boolean;
   };
   preferences: {

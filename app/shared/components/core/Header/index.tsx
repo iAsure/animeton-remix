@@ -1,14 +1,17 @@
 import { Icon } from '@iconify/react';
 import { Divider, Skeleton, Tooltip } from '@nextui-org/react';
 import { useNavigate, useLocation } from '@remix-run/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 
-import { useHeaderNavigation } from '@/hooks/useHeaderNavigation';
-import { useHeaderTitle } from '@/hooks/useHeaderTitle';
-import { useWindowControls } from '@/hooks/useWindowControls';
-import { useUpdateDownload } from '@/hooks/useUpdateDownload';
+import useHeaderNavigation from '@hooks/useHeaderNavigation';
+import useHeaderTitle from '@hooks/useHeaderTitle';
+import useWindowControls from '@hooks/useWindowControls';
+import useUpdateDownload from '@hooks/useUpdateDownload';
+import useDiscordUser from '@hooks/useDiscordUser';
 
 import { useModal } from '@context/ModalContext';
+import { useConfig } from '@context/ConfigContext';
+
 import useSearchStore from '@stores/search';
 import usePlayerStore from '@stores/player';
 
@@ -26,6 +29,13 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const { openModal } = useModal();
+  const { config } = useConfig();
+
+  const { data: userData, isLoading: isLoadingUserData } = useDiscordUser(
+    config?.user?.discordId
+  );
+
   const { isMaximized, handleWindowControl } = useWindowControls();
   const {
     canGoBack,
@@ -39,7 +49,6 @@ const Header = () => {
   } = useHeaderNavigation();
   const { headerTitle } = useHeaderTitle();
   const { updateDownloaded, handleUpdateClick } = useUpdateDownload();
-  const { openModal } = useModal();
 
   // Efficient debounced search handler
   const debouncedNavigateOnSearch = useCallback(
@@ -65,7 +74,7 @@ const Header = () => {
       }
     };
 
-    handleSearchTermChanged(searchTerm)
+    handleSearchTermChanged(searchTerm);
   }, [location, searchTerm]);
 
   const handleClosedBeta = () => {
@@ -74,19 +83,8 @@ const Header = () => {
     ));
   };
 
-  const appIsActivated = true;
-  const appUserDiscordId = '1234567890';
-  const appIsBlocked = false;
-  const isLoadingUserData = false;
-  const userData = {
-    discord: {
-      avatarURL: 'https://placehold.co/400x400.png',
-      username: 'John Doe',
-    },
-    user: {
-      coins: 100,
-    },
-  };
+  const appIsActivated = config?.user?.activationKey;
+  const appUserDiscordId = config?.user?.discordId;
 
   return (
     <div
@@ -159,8 +157,11 @@ const Header = () => {
             <Divider orientation="vertical" className="bg-zinc-800 h-6 mr-1" />
 
             {/* Search Input */}
-            {!isPlayerRoute(currentPath) && appIsActivated && !appIsBlocked && (
-              <SearchInput searchTerm={searchTerm} setSearchTerm={handleSearchChange} />
+            {!isPlayerRoute(currentPath) && appIsActivated && (
+              <SearchInput
+                searchTerm={searchTerm}
+                setSearchTerm={handleSearchChange}
+              />
             )}
           </div>
 
@@ -247,7 +248,7 @@ const Header = () => {
           {/* Window Controls and Discord User */}
           <div className="flex flex-row items-center gap-4 justify-end">
             {/* Discord User */}
-            {appIsActivated && appUserDiscordId && !appIsBlocked && (
+            {appIsActivated && appUserDiscordId && (
               <div className="flex items-center gap-3 bg-zinc-900/50 rounded-full px-3 py-1.5 webkit-app-region-no-drag">
                 {isLoadingUserData ? (
                   <Skeleton className="w-24" />

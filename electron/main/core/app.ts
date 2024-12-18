@@ -1,15 +1,17 @@
-import { app, UtilityProcess } from 'electron';
-import log from 'electron-log';
-import { setupWindow } from './window.js';
-import { setupProtocol } from './protocol.js';
-import { setupIpcHandlers } from '../ipc/handlers.js';
-import { Worker } from 'worker_threads';
-import { utilityProcess } from 'electron';
 import path from 'path';
 import { fileURLToPath } from "node:url";
+import { app, UtilityProcess, utilityProcess } from 'electron';
+import { Worker } from 'worker_threads';
 import { createServer } from 'vite';
-import { init as initUpdater } from './updater.js';
+import log from 'electron-log';
+
+import { APP_ID } from '../../shared/constants/config.js';
+
+import { setupIpcHandlers } from '../ipc/handlers.js';
+import { setupProtocol } from './protocol.js';
 import { setupShortcuts, unregisterShortcuts } from './shortcuts.js';
+import { init as initUpdater } from './updater.js';
+import { setupWindow } from './window.js';
 
 let webTorrentProcess: UtilityProcess | null = null;
 let subtitlesWorker: Worker | null = null;
@@ -43,8 +45,8 @@ export async function initializeApp() {
       // @ts-ignore
       : () => import("../../../app/server/index.js");
 
-    log.info(`Starting app with build ID: ${process.env.APP_ID}`);
-    app.setAppUserModelId(process.env.APP_ID);
+    log.info(`Starting app with build ID: ${APP_ID}`);
+    app.setAppUserModelId(APP_ID);
 
     await setupProtocol(build, viteDevServer);
 

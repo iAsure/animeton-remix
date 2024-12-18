@@ -3,6 +3,8 @@ import { Icon } from '@iconify/react';
 
 import usePlayerStore from '@stores/player';
 
+import { useConfig } from '@context/ConfigContext';
+
 import { videoFormatTime } from '@utils/strings';
 
 import SubtitleSelector from '@components/video/SubtitleSelector';
@@ -11,9 +13,7 @@ interface VideoControlsProps {
   videoRef: React.RefObject<HTMLVideoElement>;
 }
 
-const VideoControls = ({
-  videoRef,
-}: VideoControlsProps) => {
+const VideoControls = ({ videoRef }: VideoControlsProps) => {
   const {
     isPlaying,
     currentTime,
@@ -29,6 +29,7 @@ const VideoControls = ({
     availableSubtitles,
     subtitleRanges,
   } = usePlayerStore();
+  const { config } = useConfig();
 
   const [showSubtitleSelector, setShowSubtitleSelector] = useState(false);
 
@@ -205,19 +206,22 @@ const VideoControls = ({
       }}
     >
       {/* Subtitle ranges indicator */}
-      <div className="w-full h-0.5 bg-transparent mb-5">
-        {subtitleRanges.map((range, index) => (
-          <div
-            key={index}
-            className="absolute h-3"
-            style={{
-              left: `${(range.start / duration) * 100}%`,
-              width: `${((range.end - range.start) / duration) * 100}%`,
-              background: 'linear-gradient(to bottom, rgba(59, 130, 246, 0.7), rgba(0, 0, 0, 0))'
-            }}
-          />
-        ))}
-      </div>
+      {config.features.subtitlesIndicator && (
+        <div className="w-full h-0.5 bg-transparent mb-5">
+          {subtitleRanges.map((range, index) => (
+            <div
+              key={index}
+              className="absolute h-3"
+              style={{
+                left: `${(range.start / duration) * 100}%`,
+                width: `${((range.end - range.start) / duration) * 100}%`,
+                background:
+                  'linear-gradient(to bottom, rgba(59, 130, 246, 0.7), rgba(0, 0, 0, 0))',
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Progress bar with draggable handle */}
       <div
@@ -296,14 +300,16 @@ const VideoControls = ({
         <div className="flex items-center space-x-4">
           {/* Subtitles button */}
           <div className="relative subtitle-selector-container">
-            <button 
+            <button
               className="p-2 text-white/90 hover:text-white transition-all"
               onClick={() => setShowSubtitleSelector(!showSubtitleSelector)}
               disabled={availableSubtitles.length === 0}
             >
               <Icon
                 icon="mingcute:subtitle-fill"
-                className={`pointer-events-none ${availableSubtitles.length === 0 ? 'opacity-50' : ''}`}
+                className={`pointer-events-none ${
+                  availableSubtitles.length === 0 ? 'opacity-50' : ''
+                }`}
                 width="24"
                 height="24"
               />

@@ -1,6 +1,6 @@
 {
   "name": "animeton",
-  "version": "0.0.21",
+  "version": "0.1.0",
   "type": "module",
   "description": "Anime torrent player",
   "license": "MIT",
@@ -85,7 +85,7 @@
     "icon": "public/favicon.ico",
     "copyright": "Copyright © 2024 Tiahui Tech",
     "files": [
-      "electron/**/*",
+      "build/**/*",
       "public/**/*",
       "node_modules/**/*",
       "!node_modules/@nextui-org/*/src/**/*",
