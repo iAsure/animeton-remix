@@ -1,4 +1,5 @@
 import { useState, useEffect, memo } from 'react';
+import { useNavigate } from '@remix-run/react';
 
 import useRSSData from '@hooks/useRSSData';
 
@@ -12,6 +13,7 @@ interface LatestEpisodesSidebarProps {
 }
 
 const LatestEpisodesSidebar = memo(({ state, bannerColors, sectionTitle }: LatestEpisodesSidebarProps) => {
+  const navigate = useNavigate();
   const [loadingEpisodeId, setLoadingEpisodeId] = useState<string | null>(null);
 
   const { rssAnimes, isLoading, error } = useRSSData({
@@ -25,22 +27,12 @@ const LatestEpisodesSidebar = memo(({ state, bannerColors, sectionTitle }: Lates
     }
   }, [error, state]);
 
-  const handlePlay = (anime: any) => {
-    // const infoHash = anime?.torrent?.infoHash;
-    // if (!infoHash) {
-    //   return sendNotification(state, { message: 'Episodio no disponible.' });
-    // }
+  const handlePlay = (episode) => {
+    const infoHash = episode?.torrent?.infoHash;
 
-    // if (loadingEpisodeId) {
-    //   return sendNotification(state, { 
-    //     title: 'Wow, espera!', 
-    //     message: 'Ya estamos cargando un episodio.', 
-    //     type: 'alert' 
-    //   });
-    // }
-
-    // setLoadingEpisodeId(infoHash);
-    // TorrentPlayer.playTorrent(anime, state, setLoadingEpisodeId);
+    setLoadingEpisodeId(infoHash);
+    const encodedUrl = encodeURIComponent(episode?.torrent?.link);
+    navigate(`/player?url=${encodedUrl}`, { viewTransition: true });
   };
 
   return (
@@ -58,8 +50,7 @@ const LatestEpisodesSidebar = memo(({ state, bannerColors, sectionTitle }: Lates
             <Episode
               key={`rss-episode-${i}`}
               anime={anime}
-              isLoading={false}
-              // isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
+              isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
               onPlay={() => handlePlay(anime)}
             />
           ))}

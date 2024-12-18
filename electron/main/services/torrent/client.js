@@ -107,7 +107,9 @@ async function verifyDownload(filePath, torrent, maxAttempts = 10) {
 async function handleMkvFile(filePath) {
   try {
     // Verify file exists before processing
-    await fs.promises.access(filePath);
+    await fs.promises.access(filePath).catch(() => {
+      return;
+    });
 
     process.parentPort?.postMessage({
       type: IPC_CHANNELS.TORRENT.MKV_PROCESS,
