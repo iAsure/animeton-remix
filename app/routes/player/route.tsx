@@ -105,7 +105,6 @@ const Player = () => {
       <VideoPlayPauseOverlay />
       <VideoControls
         videoRef={videoRef}
-        loadSubtitlesFromFile={loadSubtitlesFromFile}
       />
       {isBuffering && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">

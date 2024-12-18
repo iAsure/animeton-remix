@@ -9,12 +9,10 @@ import SubtitleSelector from '@components/video/SubtitleSelector';
 
 interface VideoControlsProps {
   videoRef: React.RefObject<HTMLVideoElement>;
-  loadSubtitlesFromFile: (file: File) => void;
 }
 
 const VideoControls = ({
   videoRef,
-  loadSubtitlesFromFile,
 }: VideoControlsProps) => {
   const {
     isPlaying,
@@ -29,6 +27,7 @@ const VideoControls = ({
     setFullscreen,
     setPlayLastAction,
     availableSubtitles,
+    subtitleRanges,
   } = usePlayerStore();
 
   const [showSubtitleSelector, setShowSubtitleSelector] = useState(false);
@@ -205,6 +204,21 @@ const VideoControls = ({
         transition: 'opacity 0.3s ease-in-out',
       }}
     >
+      {/* Subtitle ranges indicator */}
+      <div className="w-full h-0.5 bg-transparent mb-5">
+        {subtitleRanges.map((range, index) => (
+          <div
+            key={index}
+            className="absolute h-3"
+            style={{
+              left: `${(range.start / duration) * 100}%`,
+              width: `${((range.end - range.start) / duration) * 100}%`,
+              background: 'linear-gradient(to bottom, rgba(59, 130, 246, 0.7), rgba(0, 0, 0, 0))'
+            }}
+          />
+        ))}
+      </div>
+
       {/* Progress bar with draggable handle */}
       <div
         className="w-full h-1 bg-white/5 hover:h-1.5 transition-all duration-200 cursor-pointer group progress-bar-container"

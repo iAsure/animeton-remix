@@ -14,7 +14,14 @@ const useSubtitles = (
   const [subtitlesRenderer, setSubtitlesRenderer] = useState<JASSUB | null>(
     null
   );
-  const { setAvailableSubtitles, setSelectedSubtitleTrack, subtitleContent, setSubtitleContent } = usePlayerStore();
+  const {
+    duration,
+    subtitleContent,
+    setAvailableSubtitles,
+    setSelectedSubtitleTrack,
+    setSubtitleContent,
+    updateSubtitleRanges
+  } = usePlayerStore();
 
   const initializeSubtitlesRenderer = useCallback(() => {
     if (videoRef.current && !subtitlesRenderer && isVideoReady) {
@@ -112,6 +119,12 @@ const useSubtitles = (
       subtitlesRenderer.setTrack(subtitleContent);
     }
   }, [subtitleContent, subtitlesRenderer]);
+
+  useEffect(() => {
+    if (subtitleContent) {
+      updateSubtitleRanges();
+    }
+  }, [subtitleContent, duration]);
 
   return {
     loadSubtitles,
