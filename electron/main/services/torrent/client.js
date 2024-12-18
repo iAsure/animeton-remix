@@ -55,6 +55,8 @@ async function handleTorrent(torrent, instance) {
     data: { url, filePath },
   });
 
+  await handleMkvFile(filePath);
+
   // Setup progress updates
   const progressInterval = setInterval(() => {
     process.parentPort?.postMessage({
@@ -104,10 +106,9 @@ async function verifyDownload(filePath, torrent, maxAttempts = 10) {
 
 async function handleMkvFile(filePath) {
   try {
-    // Small delay to ensure file is fully written
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Verify file exists before processing
+    await fs.promises.access(filePath);
 
-    // Send MKV process event with correct type from IPC_CHANNELS
     process.parentPort?.postMessage({
       type: IPC_CHANNELS.TORRENT.MKV_PROCESS,
       data: {

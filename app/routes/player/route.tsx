@@ -12,7 +12,8 @@ import VideoPlayPauseOverlay from '@components/video/VideoPlayPauseOverlay';
 import usePlayerStore from '@stores/player';
 
 const Player = () => {
-  const { isMouseMoving, setIsMouseMoving } = usePlayerStore();
+  const { isMouseMoving, setMouseMoving, setIsPlaying, setPlayLastAction } =
+    usePlayerStore();
 
   const [searchParams] = useSearchParams();
   const torrentUrl = searchParams.get('url');
@@ -21,8 +22,6 @@ const Player = () => {
 
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [isBuffering, setIsBuffering] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [lastAction, setLastAction] = useState<'play' | 'pause' | null>(null);
   let mouseTimer: NodeJS.Timeout;
 
   const { progress, downloadSpeed, uploadSpeed } = useTorrentStream(torrentUrl);
@@ -39,10 +38,10 @@ const Player = () => {
 
     if (videoRef.current.paused) {
       videoRef.current.play();
-      setLastAction('play');
+      setPlayLastAction('play');
     } else {
       videoRef.current.pause();
-      setLastAction('pause');
+      setPlayLastAction('pause');
     }
   }, []);
 
@@ -65,9 +64,9 @@ const Player = () => {
   }, [handleVideoReady]);
 
   const handleMouseMove = useCallback(() => {
-    setIsMouseMoving(true);
+    setMouseMoving(true);
     clearTimeout(mouseTimer);
-    mouseTimer = setTimeout(() => setIsMouseMoving(false), 3000);
+    mouseTimer = setTimeout(() => setMouseMoving(false), 3000);
   }, []);
 
   useEffect(() => {
@@ -87,7 +86,9 @@ const Player = () => {
 
   return (
     <div
-      className={`absolute w-full h-full overflow-hidden ${!isMouseMoving ? 'cursor-none' : ''}`}
+      className={`absolute w-full h-full overflow-hidden ${
+        !isMouseMoving ? 'cursor-none' : ''
+      }`}
       onMouseMove={handleMouseMove}
     >
       <video
@@ -101,7 +102,7 @@ const Player = () => {
         onWaiting={handleWaiting}
         crossOrigin="anonymous"
       />
-      <VideoPlayPauseOverlay isPlaying={isPlaying} lastAction={lastAction} />
+      <VideoPlayPauseOverlay />
       <VideoControls
         videoRef={videoRef}
         loadSubtitlesFromFile={loadSubtitlesFromFile}

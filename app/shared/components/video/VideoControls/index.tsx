@@ -11,16 +11,19 @@ const VideoControls = ({
   videoRef,
   loadSubtitlesFromFile,
 }: VideoControlsProps) => {
-  const { isMouseMoving } = usePlayerStore();
-
-  const [videoState, setVideoState] = useState({
-    isPlaying: false,
-    currentTime: 0,
-    duration: 0,
-    volume: 1,
-    isMuted: false,
-    isFullscreen: false,
-  });
+  const {
+    isPlaying,
+    currentTime,
+    duration,
+    volume,
+    isFullscreen,
+    isMouseMoving,
+    setIsPlaying,
+    setPlaybackState,
+    setVolume,
+    setFullscreen,
+    setPlayLastAction,
+  } = usePlayerStore();
 
   const handleDragStart = useCallback((e: React.MouseEvent) => {
     document.addEventListener('mousemove', handleDrag);
@@ -42,10 +45,6 @@ const VideoControls = ({
       );
 
       video.currentTime = percent * video.duration;
-      setVideoState((prev) => ({
-        ...prev,
-        currentTime: video.currentTime,
-      }));
     },
     [videoRef]
   );
@@ -67,18 +66,11 @@ const VideoControls = ({
     if (!video) return;
 
     const updateTime = () => {
-      setVideoState((prev) => ({
-        ...prev,
-        currentTime: video.currentTime,
-        duration: video.duration,
-      }));
+      setPlaybackState(video.currentTime, video.duration);
     };
 
     const updatePlayingState = () => {
-      setVideoState((prev) => ({
-        ...prev,
-        isPlaying: !video.paused,
-      }));
+      setIsPlaying(!video.paused);
     };
 
     video.addEventListener('timeupdate', updateTime);
@@ -90,15 +82,32 @@ const VideoControls = ({
       video.removeEventListener('play', updatePlayingState);
       video.removeEventListener('pause', updatePlayingState);
     };
-  }, [videoRef]);
+  }, [videoRef, setPlaybackState, setIsPlaying]);
+
+  // Space key handler
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && e.target === document.body) {
+        e.preventDefault();
+        handlePlayPause();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, []);
 
   const handlePlayPause = () => {
     const video = videoRef.current;
     if (!video) return;
 
     if (video.paused) {
+      setPlayLastAction('play');
+      setIsPlaying(true);
       video.play();
     } else {
+      setPlayLastAction('pause');
+      setIsPlaying(false);
       video.pause();
     }
   };
@@ -109,7 +118,7 @@ const VideoControls = ({
 
     const newVolume = parseFloat(e.target.value);
     video.volume = newVolume;
-    setVideoState((prev) => ({ ...prev, volume: newVolume }));
+    setVolume(newVolume);
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -128,13 +137,13 @@ const VideoControls = ({
   };
 
   const handleFullScreen = useCallback(() => {
-    window.electron.ipc.send('window:set-fullscreen', !videoState.isFullscreen);
-  }, [videoState.isFullscreen]);
+    window.electron.ipc.send('window:set-fullscreen', !isFullscreen);
+  }, [isFullscreen]);
 
   // Listen for fullscreen changes from Electron
   useEffect(() => {
     const handleFullscreenChange = (_: any, isFullscreen: boolean) => {
-      setVideoState((prev) => ({ ...prev, isFullscreen }));
+      setFullscreen(isFullscreen);
     };
 
     window.electron.ipc.on('window:fullscreen-change', handleFullscreenChange);
@@ -152,17 +161,14 @@ const VideoControls = ({
       const video = videoRef.current;
       if (!video) return;
 
-      // Prevent default scroll behavior
       e.preventDefault();
-
-      // Calculate new volume - decrease on scroll down, increase on scroll up
       const delta = e.deltaY > 0 ? -0.05 : 0.05;
       const newVolume = Math.max(0, Math.min(1, video.volume + delta));
 
       video.volume = newVolume;
-      setVideoState((prev) => ({ ...prev, volume: newVolume }));
+      setVolume(newVolume);
     },
-    [videoRef]
+    [videoRef, setVolume]
   );
 
   // Add event listener for wheel event
@@ -195,7 +201,7 @@ const VideoControls = ({
           <div
             className="absolute h-full bg-white/60"
             style={{
-              width: `${(videoState.currentTime / videoState.duration) * 100}%`,
+              width: `${(currentTime / duration) * 100}%`,
             }}
           />
           {/* Updated Draggable handle */}
@@ -203,7 +209,7 @@ const VideoControls = ({
             className="absolute w-2 h-2 group-hover:-top-1.5 -top-0.5 bg-white rounded-full shadow-lg transform -translate-x-1/2
                    group-hover:w-4 group-hover:h-4 transition-all duration-200 cursor-grab"
             style={{
-              left: `${(videoState.currentTime / videoState.duration) * 100}%`,
+              left: `${(currentTime / duration) * 100}%`,
             }}
             onMouseDown={handleDragStart}
           />
@@ -225,9 +231,7 @@ const VideoControls = ({
           >
             <Icon
               icon={
-                videoState.isPlaying
-                  ? 'fluent:pause-48-filled'
-                  : 'fluent:play-48-filled'
+                isPlaying ? 'fluent:pause-48-filled' : 'fluent:play-48-filled'
               }
               className="pointer-events-none"
               width="32"
@@ -248,7 +252,7 @@ const VideoControls = ({
               min="0"
               max="1"
               step="0.05"
-              value={videoState.volume}
+              value={volume}
               onChange={handleVolumeChange}
               className="w-24 h-1 bg-white/25 rounded-full appearance-none cursor-pointer"
             />
@@ -256,8 +260,7 @@ const VideoControls = ({
 
           {/* Time display */}
           <div className="text-white/90 text-sm">
-            {formatTime(videoState.currentTime)} /{' '}
-            {formatTime(videoState.duration)}
+            {formatTime(currentTime)} / {formatTime(duration)}
           </div>
         </div>
 
@@ -292,7 +295,7 @@ const VideoControls = ({
           >
             <Icon
               icon={
-                videoState.isFullscreen
+                isFullscreen
                   ? 'mingcute:fullscreen-exit-fill'
                   : 'mingcute:fullscreen-fill'
               }
