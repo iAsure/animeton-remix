@@ -47,6 +47,7 @@ const createEventHandler = (channel) => ({
 
     shell: {
       openExternal: (url) => ipcRenderer.invoke(IPC_CHANNELS.SHELL.OPEN_EXTERNAL, url),
+      openPath: (filePath) => ipcRenderer.invoke(IPC_CHANNELS.SHELL.OPEN_FILE_PATH, filePath),
     },
 
     config: {

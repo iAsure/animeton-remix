@@ -1,8 +1,10 @@
-import { BrowserWindow, ipcMain, UtilityProcess, shell } from 'electron';
+import { BrowserWindow, ipcMain, UtilityProcess, shell, app } from 'electron';
 import { IPC_CHANNELS } from '../../shared/constants/event-channels.js';
 import { setupTorrentHandlers } from '../services/torrent/handlers.js';
 import { SubtitlesService } from '../services/subtitles/service.js';
 import log from 'electron-log';
+import path from 'path';
+import os from 'os';
 import { Worker as NodeWorker } from 'worker_threads';
 import { ConfigService } from '../services/config/service.js';
 
@@ -116,6 +118,31 @@ export async function setupIpcHandlers(
       return false;
     }
   });
+
+  ipcMain.handle(
+    IPC_CHANNELS.SHELL.OPEN_FILE_PATH,
+    async (_, filePath: string) => {
+      const PRESET_PATHS = {
+        logs: () => path.join(app.getPath('userData'), 'logs'),
+        downloads: () => path.join(process.env.TEMP || process.env.TMP || os.tmpdir(), 'webtorrent'),
+        userData: () => app.getPath('userData'),
+      } as const;
+
+      type PresetPath = keyof typeof PRESET_PATHS;
+
+      try {
+        if (filePath in PRESET_PATHS) {
+          const resolvedPath = PRESET_PATHS[filePath as PresetPath]();
+          return await shell.openPath(resolvedPath);
+        }
+
+        return await shell.openPath(filePath);
+      } catch (error) {
+        log.error('Failed to open file path:', error);
+        return `Failed to open path: ${error.message}`;
+      }
+    }
+  );
 
   ipcMain.handle(IPC_CHANNELS.CONFIG.GET, async (_, key?: string) => {
     return await configService.get(key);

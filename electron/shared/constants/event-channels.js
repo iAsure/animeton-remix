@@ -25,6 +25,7 @@ export const IPC_CHANNELS = {
   },
   SHELL: {
     OPEN_EXTERNAL: 'shell-open-external',
+    OPEN_FILE_PATH: 'shell-open-file-path',
   },
   CONFIG: {
     GET: 'config:get',

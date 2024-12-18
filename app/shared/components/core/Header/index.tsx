@@ -18,6 +18,7 @@ import usePlayerStore from '@stores/player';
 import ClosedBetaModal from '@components/modals/ClosedBeta';
 import NewBadge from '@components/decoration/NewBadge';
 import SearchInput from '@components/core/SearchInput';
+import UserBadge from '@components/core/Header/UserBadge';
 
 const isPlayerRoute = (path: string) => path.includes('/player');
 import { version as appVersion } from '../../../../../package.json';
@@ -249,36 +250,7 @@ const Header = () => {
           <div className="flex flex-row items-center gap-4 justify-end">
             {/* Discord User */}
             {appIsActivated && appUserDiscordId && (
-              <div className="flex items-center gap-3 bg-zinc-900/50 rounded-full px-3 py-1.5 webkit-app-region-no-drag">
-                {isLoadingUserData ? (
-                  <Skeleton className="w-24" />
-                ) : (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <img
-                        src={userData?.discord?.avatarURL}
-                        alt={userData?.discord?.username}
-                        className="w-6 h-6 rounded-full"
-                      />
-                      <span className="text-white text-sm font-medium">
-                        {userData?.discord?.username}
-                      </span>
-                    </div>
-                    <Tooltip content="¡Consigue mas interactuando en discord!">
-                      <div className="flex items-center gap-1 bg-zinc-800/80 rounded-full px-2 py-0.5">
-                        <img
-                          src={'icons/coin.png'}
-                          alt="coin"
-                          className="w-3.5 h-3.5"
-                        />
-                        <span className="text-white text-xs font-medium">
-                          {userData?.user?.coins || 0}
-                        </span>
-                      </div>
-                    </Tooltip>
-                  </>
-                )}
-              </div>
+              <UserBadge discordId={appUserDiscordId} />
             )}
 
             {updateDownloaded && (
