@@ -14,7 +14,11 @@ interface PlayerStore {
   isFullscreen: boolean;
   isMouseMoving: boolean;
   playLastAction: 'play' | 'pause' | null;
-  subtitles: string | null;
+
+  // Subtitles
+  availableSubtitles: any[];
+  selectedSubtitleTrack: any | null;
+  subtitleContent: string | null;
 
   // Actions
   setIsPlaying: (isPlaying: boolean) => void;
@@ -24,7 +28,11 @@ interface PlayerStore {
   setFullscreen: (isFullscreen: boolean) => void;
   setMouseMoving: (isMouseMoving: boolean) => void;
   setPlayLastAction: (action: 'play' | 'pause' | null) => void;
-  setSubtitles: (subtitles: string | null) => void;
+
+  // Subtitles
+  setAvailableSubtitles: (subtitles: any[]) => void;
+  setSelectedSubtitleTrack: (track: any | null) => void;
+  setSubtitleContent: (content: string | null) => void;
 }
 
 const usePlayerStore = create<PlayerStore>((set) => ({
@@ -37,7 +45,9 @@ const usePlayerStore = create<PlayerStore>((set) => ({
   isFullscreen: false,
   isMouseMoving: true,
   playLastAction: null,
-  subtitles: null,
+  availableSubtitles: [],
+  selectedSubtitleTrack: null,
+  subtitleContent: null,
 
   // Actions
   setIsPlaying: (isPlaying) => set({ isPlaying }),
@@ -47,7 +57,9 @@ const usePlayerStore = create<PlayerStore>((set) => ({
   setFullscreen: (isFullscreen) => set({ isFullscreen }),
   setMouseMoving: (isMouseMoving) => set({ isMouseMoving }),
   setPlayLastAction: (playLastAction) => set({ playLastAction }),
-  setSubtitles: (subtitles) => set({ subtitles }),
+  setAvailableSubtitles: (availableSubtitles) => set({ availableSubtitles }),
+  setSelectedSubtitleTrack: (selectedSubtitleTrack) => set({ selectedSubtitleTrack }),
+  setSubtitleContent: (subtitleContent) => set({ subtitleContent }),
 }));
 
 export default usePlayerStore;

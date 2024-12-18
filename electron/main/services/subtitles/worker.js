@@ -63,18 +63,9 @@ parentPort?.on('message', async ({ filePath }) => {
   try {
     const allSubtitles = await parseSubtitles(filePath);
 
-    // Filter subtitles to only include Spanish tracks
-    const spanishSubtitles = Object.fromEntries(
-      Object.entries(allSubtitles).filter(
-        ([_, data]) => data.track.language === 'spa'
-      )
-    );
-
-    log.info('Spanish subtitles extracted successfully');
-
     parentPort?.postMessage({
       type: 'complete',
-      data: spanishSubtitles,
+      data: allSubtitles,
     });
   } catch (error) {
     log.error('Subtitle extraction failed:', error);

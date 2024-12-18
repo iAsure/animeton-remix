@@ -5,6 +5,7 @@ import { formatAssSubtitles } from '@/shared/utils/subtitles';
 
 import JASSUB from 'public/vendor/jassub/jassub.es.js';
 import log from 'electron-log';
+import usePlayerStore from '@stores/player';
 
 const useSubtitles = (
   videoRef: React.RefObject<HTMLVideoElement>,
@@ -13,6 +14,7 @@ const useSubtitles = (
   const [subtitlesRenderer, setSubtitlesRenderer] = useState<JASSUB | null>(
     null
   );
+  const { setAvailableSubtitles, setSelectedSubtitleTrack, subtitleContent, setSubtitleContent } = usePlayerStore();
 
   const initializeSubtitlesRenderer = useCallback(() => {
     if (videoRef.current && !subtitlesRenderer && isVideoReady) {
@@ -72,10 +74,22 @@ const useSubtitles = (
       const subtitlesArray = Object.values(result.data);
       
       if (result.success && subtitlesArray.length > 0) {
-        const firstSubtitles = subtitlesArray[0];
+        // Parse all subtitles and store them
+        const parsedSubtitles = subtitlesArray.map(subtitle => ({
+          ...subtitle,
+          parsedContent: formatAssSubtitles(subtitle)
+        }));
+        
+        setAvailableSubtitles(parsedSubtitles);
 
-        const assContent = formatAssSubtitles(firstSubtitles);
-        loadSubtitles(assContent);
+        // Find Spanish/Latin America subtitle
+        const defaultSubtitle = parsedSubtitles.find(
+          sub => sub.track.language === 'spa' || 
+          (sub.track.name && sub.track.name.includes('Lat'))
+        ) || parsedSubtitles[0];
+
+        setSelectedSubtitleTrack(defaultSubtitle);
+        setSubtitleContent(defaultSubtitle.parsedContent);
         log.info('Subtitles loaded into renderer');
       }
     };
@@ -92,6 +106,12 @@ const useSubtitles = (
       window.api.subtitles.onError.unsubscribe(handleError);
     };
   }, [loadSubtitles]);
+
+  useEffect(() => {
+    if (subtitleContent !== null && subtitlesRenderer) {
+      subtitlesRenderer.setTrack(subtitleContent);
+    }
+  }, [subtitleContent, subtitlesRenderer]);
 
   return {
     loadSubtitles,

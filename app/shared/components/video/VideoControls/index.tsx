@@ -1,6 +1,11 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { Icon } from '@iconify/react';
+
 import usePlayerStore from '@stores/player';
+
+import { videoFormatTime } from '@utils/strings';
+
+import SubtitleSelector from '@components/video/SubtitleSelector';
 
 interface VideoControlsProps {
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -23,7 +28,10 @@ const VideoControls = ({
     setVolume,
     setFullscreen,
     setPlayLastAction,
+    availableSubtitles,
   } = usePlayerStore();
+
+  const [showSubtitleSelector, setShowSubtitleSelector] = useState(false);
 
   const handleDragStart = useCallback((e: React.MouseEvent) => {
     document.addEventListener('mousemove', handleDrag);
@@ -130,12 +138,6 @@ const VideoControls = ({
     video.currentTime = percent * video.duration;
   };
 
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
   const handleFullScreen = useCallback(() => {
     window.electron.ipc.send('window:set-fullscreen', !isFullscreen);
   }, [isFullscreen]);
@@ -182,6 +184,18 @@ const VideoControls = ({
       video.removeEventListener('wheel', handleVolumeScroll);
     };
   }, [handleVolumeScroll]);
+
+  // Close subtitle selector when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!(e.target as Element)?.closest('.subtitle-selector-container')) {
+        setShowSubtitleSelector(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div
@@ -260,32 +274,27 @@ const VideoControls = ({
 
           {/* Time display */}
           <div className="text-white/90 text-sm">
-            {formatTime(currentTime)} / {formatTime(duration)}
+            {videoFormatTime(currentTime)} / {videoFormatTime(duration)}
           </div>
         </div>
 
         {/* Right controls */}
         <div className="flex items-center space-x-4">
           {/* Subtitles button */}
-          <div className="relative">
-            <input
-              type="file"
-              accept=".srt,.ass,.ssa,.vtt"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) loadSubtitlesFromFile(file);
-              }}
-              className="absolute inset-0 w-full opacity-0 cursor-pointer"
-              title="Load subtitles"
-            />
-            <button className="p-2 text-white/90 hover:text-white transition-all">
+          <div className="relative subtitle-selector-container">
+            <button 
+              className="p-2 text-white/90 hover:text-white transition-all"
+              onClick={() => setShowSubtitleSelector(!showSubtitleSelector)}
+              disabled={availableSubtitles.length === 0}
+            >
               <Icon
                 icon="mingcute:subtitle-fill"
-                className="pointer-events-none"
+                className={`pointer-events-none ${availableSubtitles.length === 0 ? 'opacity-50' : ''}`}
                 width="24"
                 height="24"
               />
             </button>
+            {showSubtitleSelector && <SubtitleSelector />}
           </div>
 
           {/* Fullscreen button */}

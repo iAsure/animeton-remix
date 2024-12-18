@@ -92,7 +92,7 @@ const Header = () => {
     <div
       className="header webkit-app-region-drag"
       style={{
-        opacity: isMouseMoving ? 1 : 0,
+        opacity: isPlayerRoute(currentPath) && !isMouseMoving ? 0 : 1,
         transition: 'opacity 0.3s ease-in-out',
         zIndex: 9999,
       }}
