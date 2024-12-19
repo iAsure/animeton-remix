@@ -5,6 +5,11 @@ interface SubtitleRange {
   end: number;
 }
 
+interface SubtitleStatus {
+  status: 'idle' | 'loading' | 'ready' | 'error';
+  message?: string;
+}
+
 interface PlayerStore {
   // Playback state
   isPlaying: boolean;
@@ -24,6 +29,7 @@ interface PlayerStore {
   availableSubtitles: any[];
   selectedSubtitleTrack: any | null;
   subtitleContent: string | null;
+  subtitleStatus: SubtitleStatus;
 
   // Subtitle ranges
   subtitleRanges: SubtitleRange[];
@@ -41,9 +47,13 @@ interface PlayerStore {
   setAvailableSubtitles: (subtitles: any[]) => void;
   setSelectedSubtitleTrack: (track: any | null) => void;
   setSubtitleContent: (content: string | null) => void;
+  setSubtitleStatus: (status: SubtitleStatus) => void;
 
   // Subtitle ranges
   updateSubtitleRanges: () => void;
+
+  // Add reset action
+  reset: () => void;
 }
 
 const usePlayerStore = create<PlayerStore>((set, get) => ({
@@ -60,6 +70,7 @@ const usePlayerStore = create<PlayerStore>((set, get) => ({
   selectedSubtitleTrack: null,
   subtitleContent: null,
   subtitleRanges: [],
+  subtitleStatus: { status: 'idle' },
 
   // Actions
   setIsPlaying: (isPlaying) => set({ isPlaying }),
@@ -72,6 +83,7 @@ const usePlayerStore = create<PlayerStore>((set, get) => ({
   setAvailableSubtitles: (availableSubtitles) => set({ availableSubtitles }),
   setSelectedSubtitleTrack: (selectedSubtitleTrack) => set({ selectedSubtitleTrack }),
   setSubtitleContent: (subtitleContent) => set({ subtitleContent }),
+  setSubtitleStatus: (status) => set({ subtitleStatus: status }),
 
   updateSubtitleRanges: () => {
     const { subtitleContent, duration } = get();
@@ -102,6 +114,22 @@ const usePlayerStore = create<PlayerStore>((set, get) => ({
     const mergedRanges = mergeTimeRanges(ranges);
     set({ subtitleRanges: mergedRanges });
   },
+
+  reset: () => set({
+    isPlaying: false,
+    currentTime: 0,
+    duration: 0,
+    volume: 1,
+    isMuted: false,
+    isFullscreen: false,
+    isMouseMoving: true,
+    playLastAction: null,
+    availableSubtitles: [],
+    selectedSubtitleTrack: null,
+    subtitleContent: null,
+    subtitleRanges: [],
+    subtitleStatus: { status: 'idle' }
+  }),
 }));
 
 // Helper functions

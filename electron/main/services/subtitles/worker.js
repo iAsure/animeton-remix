@@ -4,6 +4,11 @@ import path from 'path';
 import log from 'electron-log';
 
 async function parseSubtitles(filePath) {
+  if (!fs.existsSync(filePath)) {
+    log.error('File not found:', filePath);
+    throw new Error('File not found: ' + path.basename(filePath));
+  }
+  
   const { default: Metadata } = await import('matroska-metadata');
   log.info('Initializing parser for file:', path.basename(filePath));
 

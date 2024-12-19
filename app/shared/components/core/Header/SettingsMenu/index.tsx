@@ -29,6 +29,13 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
     [setConfig]
   );
 
+  const handleSubtitlesStatusChange = useCallback(
+    async (isSelected: boolean) => {
+      await setConfig('features.subtitlesStatus', isSelected);
+    },
+    [setConfig]
+  );
+
   return (
     <div
       ref={menuRef}
@@ -46,12 +53,22 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
           />
           <h3 className="text-zinc-400 text-xs font-medium">CARACTERÍSTICAS</h3>
         </div>
-        <div className="flex items-center justify-between gap-2">
+
+        <div className="flex items-center justify-between gap-2 mb-1">
           <span className="text-zinc-200 text-sm">Indicador de Subtítulos</span>
           <Switch
             size="sm"
             isSelected={config?.features?.subtitlesIndicator}
             onValueChange={handleSubtitlesIndicatorChange}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-zinc-200 text-sm">Estatus de Subtítulos</span>
+          <Switch
+            size="sm"
+            isSelected={config?.features?.subtitlesStatus}
+            onValueChange={handleSubtitlesStatusChange}
           />
         </div>
       </div>
@@ -70,7 +87,7 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
           <h3 className="text-zinc-400 text-xs font-medium">UTILIDADES</h3>
         </div>
 
-        <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center justify-between gap-2 mb-1">
           <span className="text-zinc-200 text-sm">Archivos de registro</span>
           <button
             onClick={() => window.api.shell.openPath('logs')}

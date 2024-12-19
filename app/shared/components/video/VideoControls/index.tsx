@@ -206,7 +206,7 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
       }}
     >
       {/* Subtitle ranges indicator */}
-      {config.features.subtitlesIndicator && (
+      {config?.features?.subtitlesIndicator && (
         <div className="w-full h-0.5 bg-transparent mb-5">
           {subtitleRanges.map((range, index) => (
             <div

@@ -19,7 +19,7 @@ export default function Index() {
 
   const { isValid, isLoading, validateKey } = useValidateKey(activationKey);
   const needActivation =
-    activationKey === null || (activationKey && !isValid);
+    !activationKey || (activationKey && !isValid);
 
   // useEffect(() => {
   //   if (!needActivation) {

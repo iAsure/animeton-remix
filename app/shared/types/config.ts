@@ -7,6 +7,7 @@ export interface AppConfig {
   user: UserConfig;
   features: {
     subtitlesIndicator: boolean;
+    subtitlesStatus: boolean;
     [key: string]: boolean;
   };
   preferences: {

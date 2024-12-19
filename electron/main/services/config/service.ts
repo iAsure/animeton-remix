@@ -27,6 +27,7 @@ export class ConfigService {
       },
       features: {
         subtitlesIndicator: false,
+        subtitlesStatus: false,
       },
       preferences: {
         theme: 'dark',

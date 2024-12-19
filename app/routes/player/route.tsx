@@ -9,11 +9,16 @@ import useSubtitles from '@hooks/useSubtitles';
 import VideoSpinner from '@components/video/VideoSpinner';
 import VideoControls from '@components/video/VideoControls';
 import VideoPlayPauseOverlay from '@components/video/VideoPlayPauseOverlay';
+import SubtitleStatus from '@/shared/components/video/SubtitleStatus';
+
 import usePlayerStore from '@stores/player';
 
+import { useConfig } from '@context/ConfigContext';
+
 const Player = () => {
-  const { isMouseMoving, setMouseMoving, setIsPlaying, setPlayLastAction } =
+  const { isMouseMoving, setMouseMoving, setIsPlaying, setPlayLastAction, reset } =
     usePlayerStore();
+  const { config } = useConfig();
 
   const [searchParams] = useSearchParams();
   const torrentUrl = searchParams.get('url');
@@ -26,7 +31,7 @@ const Player = () => {
 
   const { progress, downloadSpeed, uploadSpeed } = useTorrentStream(torrentUrl);
 
-  const { loadSubtitlesFromFile } = useSubtitles(videoRef, isVideoReady);
+  useSubtitles(videoRef, isVideoReady);
 
   const handleVideoReady = useCallback(() => {
     log.info('Video ready');
@@ -81,8 +86,9 @@ const Player = () => {
 
     return () => {
       window.api.torrent.onServerDone.unsubscribe(handleTorrentServerDone);
+      reset();
     };
-  }, []);
+  }, [reset]);
 
   return (
     <div
@@ -102,10 +108,9 @@ const Player = () => {
         onWaiting={handleWaiting}
         crossOrigin="anonymous"
       />
+      {config?.features?.subtitlesStatus && <SubtitleStatus />}
       <VideoPlayPauseOverlay />
-      <VideoControls
-        videoRef={videoRef}
-      />
+      <VideoControls videoRef={videoRef} />
       {isBuffering && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
           <VideoSpinner
