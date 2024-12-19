@@ -3,12 +3,19 @@ import fs from 'fs';
 import path from 'path';
 import log from 'electron-log';
 
+let isProcessing = false;
+
 async function parseSubtitles(filePath) {
+  if (isProcessing) {
+    return null;
+  }
+  isProcessing = true;
+
   if (!fs.existsSync(filePath)) {
     log.error('File not found:', filePath);
     throw new Error('File not found: ' + path.basename(filePath));
   }
-  
+
   const { default: Metadata } = await import('matroska-metadata');
   log.info('Initializing parser for file:', path.basename(filePath));
 
@@ -40,7 +47,7 @@ async function parseSubtitles(filePath) {
 
     if (file.name.endsWith('.mkv') || file.name.endsWith('.webm')) {
       const fileStream = file[Symbol.asyncIterator]();
-      await processStream(metadata, fileStream);
+      await processStream(metadata, fileStream).catch(() => {});
       return subtitles;
     } else {
       throw new Error('Unsupported file format: ' + file.name);
@@ -48,17 +55,14 @@ async function parseSubtitles(filePath) {
   } catch (error) {
     log.error('Error parsing subtitles:', error);
     throw error;
+  } finally {
+    isProcessing = false;
   }
 }
 
 async function processStream(metadata, fileStream) {
-  try {
-    for await (const chunk of metadata.parseStream(fileStream)) {
-      // Process chunks
-    }
-  } catch (error) {
-    log.warn('Error parsing subtitle chunk:', error);
-    // Continue processing despite errors
+  for await (const chunk of metadata.parseStream(fileStream)) {
+    // Process chunks
   }
 }
 

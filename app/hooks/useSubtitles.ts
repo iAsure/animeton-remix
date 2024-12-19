@@ -7,12 +7,6 @@ import JASSUB from 'public/vendor/jassub/jassub.es.js';
 import log from 'electron-log';
 import usePlayerStore from '@stores/player';
 
-interface ExtractionState {
-  status: 'idle' | 'extracting' | 'retrying' | 'completed' | 'error';
-  error?: string;
-  attempts: number;
-}
-
 const useSubtitles = (
   videoRef: React.RefObject<HTMLVideoElement>,
   isVideoReady: boolean
@@ -20,22 +14,25 @@ const useSubtitles = (
   const [subtitlesRenderer, setSubtitlesRenderer] = useState<JASSUB | null>(
     null
   );
-  const [lastSubContent, setLastSubContent] = useState<string | null>(null);
-  const [consecutiveMatches, setConsecutiveMatches] = useState(0);
-  const [videoFilePath, setVideoFilePath] = useState<string | null>(null);
-  const [extractionState, setExtractionState] = useState<ExtractionState>({
-    status: 'idle',
-    attempts: 0
-  });
 
   const {
     duration,
     subtitleContent,
+    availableSubtitles,
+    subtitleRanges,
     setAvailableSubtitles,
     setSelectedSubtitleTrack,
     setSubtitleContent,
     updateSubtitleRanges,
-    setSubtitleStatus
+    setSubtitleStatus,
+    consecutiveMatches,
+    videoFilePath,
+    extractionState,
+    lastSegmentCount,
+    setConsecutiveMatches,
+    setVideoFilePath,
+    setExtractionState,
+    setLastSegmentCount
   } = usePlayerStore();
 
   const initializeSubtitlesRenderer = useCallback(() => {
@@ -154,17 +151,19 @@ const useSubtitles = (
 
   const extractSubtitles = useCallback((filePath: string) => {
     if (extractionState.status === 'idle' || extractionState.status === 'retrying') {
+      const now = Date.now();
       setExtractionState(prev => ({
         status: 'extracting',
-        attempts: prev.attempts + 1
+        attempts: prev.attempts + 1,
+        lastAttemptTime: now,
+        progress: 0
       }));
       
       window.api.subtitles.extractSubtitles(filePath);
-      log.info('Starting subtitle extraction, attempt:', extractionState.attempts + 1);
       
       setSubtitleStatus({ 
         status: 'loading',
-        message: `Extrayendo subtítulos (Intento ${extractionState.attempts + 1})`
+        message: `Analizando archivo...`
       });
     }
   }, [extractionState.status, extractionState.attempts]);
@@ -181,49 +180,64 @@ const useSubtitles = (
     if (!subtitleContent || !duration) return;
     if (extractionState.status === 'completed') return;
 
-    const MAX_ATTEMPTS = 5;
-    const RETRY_DELAY = 10000;
+    const MAX_ATTEMPTS = 15;
+    const REQUIRED_MATCHES = 2;
+    
+    // Calculate current segments count
+    const currentSegments = subtitleRanges.length;
 
-    if (subtitleContent === lastSubContent) {
+    if (currentSegments > 0 && currentSegments === lastSegmentCount) {
       setConsecutiveMatches(prev => prev + 1);
+      
+      // Update progress more aggressively early on
+      setExtractionState(prev => ({
+        ...prev,
+        progress: Math.min((prev.progress || 0) + (100 / (REQUIRED_MATCHES * 1.5)), 100)
+      }));
+
+      // Update status message
+      setSubtitleStatus({ 
+        status: 'loading',
+        message: `Analizando subtítulos... ${Math.round(extractionState.progress || 0)}%`
+      });
     } else {
       setConsecutiveMatches(0);
-      setLastSubContent(subtitleContent);
+      setLastSegmentCount(currentSegments);
 
       if (extractionState.attempts < MAX_ATTEMPTS) {
-        setExtractionState(prev => ({ ...prev, status: 'retrying' }));
+        // Adjust retry delay based on attempt number
+        const retryDelay = getRetryDelay(extractionState.attempts);
         
+        setExtractionState(prev => ({ 
+          ...prev, 
+          status: 'retrying',
+          progress: Math.max((prev.progress || 0), 20)
+        }));
+
         const timer = setTimeout(() => {
-          if (videoRef.current?.src) {
-            extractSubtitles(videoRef.current.src);
+          if (videoFilePath) {
+            extractSubtitles(videoFilePath);
           }
-        }, RETRY_DELAY);
+        }, retryDelay);
 
         return () => clearTimeout(timer);
       }
     }
 
-    // Update extraction status
-    // @ts-ignore
-    if (consecutiveMatches >= 2 && extractionState.status !== 'completed') {
-      setExtractionState(prev => ({ ...prev, status: 'completed' }));
-      log.info('Subtitle extraction completed successfully');
+    if (consecutiveMatches >= REQUIRED_MATCHES && currentSegments > 0) {
+      setExtractionState(prev => ({ 
+        ...prev, 
+        status: 'completed',
+        progress: 100,
+        successfulTracks: availableSubtitles.length
+      }));
+      
       setSubtitleStatus({ 
         status: 'ready',
         message: 'Subtítulos cargados correctamente'
       });
-    } else if (extractionState.attempts >= MAX_ATTEMPTS) {
-      setExtractionState(prev => ({ 
-        ...prev, 
-        status: 'error',
-        error: 'Max extraction attempts reached'
-      }));
-      setSubtitleStatus({ 
-        status: 'error',
-        message: 'No se pudieron cargar todos los subtítulos'
-      });
     }
-  }, [subtitleContent, duration, lastSubContent, consecutiveMatches, extractionState.attempts]);
+  }, [subtitleContent, duration, lastSegmentCount, consecutiveMatches, extractionState, subtitleRanges, availableSubtitles]);
 
   // Handle extraction errors
   useEffect(() => {
@@ -243,6 +257,11 @@ const useSubtitles = (
     window.api.subtitles.onError.subscribe(handleError);
     return () => window.api.subtitles.onError.unsubscribe(handleError);
   }, []);
+
+  const getRetryDelay = (attempt: number): number => {
+    if (attempt < 3) return 5000;
+    return Math.min(1000 * Math.pow(1.5, attempt - 3), 5000);
+  };
 
   return {
     loadSubtitles,

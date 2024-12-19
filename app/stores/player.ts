@@ -10,6 +10,16 @@ interface SubtitleStatus {
   message?: string;
 }
 
+// Add ExtractionState interface
+interface ExtractionState {
+  status: 'idle' | 'extracting' | 'retrying' | 'completed' | 'error';
+  error?: string;
+  attempts: number;
+  progress?: number;
+  lastAttemptTime?: number;
+  successfulTracks?: number;
+}
+
 interface PlayerStore {
   // Playback state
   isPlaying: boolean;
@@ -34,6 +44,12 @@ interface PlayerStore {
   // Subtitle ranges
   subtitleRanges: SubtitleRange[];
 
+  // Add new subtitle extraction states
+  consecutiveMatches: number;
+  videoFilePath: string | null;
+  extractionState: ExtractionState;
+  lastSegmentCount: number | null;
+
   // Actions
   setIsPlaying: (isPlaying: boolean) => void;
   setPlaybackState: (currentTime: number, duration: number) => void;
@@ -54,6 +70,12 @@ interface PlayerStore {
 
   // Add reset action
   reset: () => void;
+
+  // Add new actions
+  setConsecutiveMatches: (valueOrFn: number | ((prev: number) => number)) => void;
+  setVideoFilePath: (path: string | null) => void;
+  setExtractionState: (stateOrFn: ExtractionState | ((prev: ExtractionState) => ExtractionState)) => void;
+  setLastSegmentCount: (count: number | null) => void;
 }
 
 const usePlayerStore = create<PlayerStore>((set, get) => ({
@@ -71,6 +93,15 @@ const usePlayerStore = create<PlayerStore>((set, get) => ({
   subtitleContent: null,
   subtitleRanges: [],
   subtitleStatus: { status: 'idle' },
+
+  // Add new initial states
+  consecutiveMatches: 0,
+  videoFilePath: null,
+  extractionState: {
+    status: 'idle',
+    attempts: 0
+  },
+  lastSegmentCount: null,
 
   // Actions
   setIsPlaying: (isPlaying) => set({ isPlaying }),
@@ -128,8 +159,30 @@ const usePlayerStore = create<PlayerStore>((set, get) => ({
     selectedSubtitleTrack: null,
     subtitleContent: null,
     subtitleRanges: [],
-    subtitleStatus: { status: 'idle' }
+    subtitleStatus: { status: 'idle' },
+    consecutiveMatches: 0,
+    videoFilePath: null,
+    extractionState: {
+      status: 'idle',
+      attempts: 0
+    },
+    lastSegmentCount: null
   }),
+
+  // Add new actions
+  setConsecutiveMatches: (valueOrFn: number | ((prev: number) => number)) => 
+    set((state) => ({
+      consecutiveMatches: typeof valueOrFn === 'function' 
+        ? valueOrFn(state.consecutiveMatches)
+        : valueOrFn
+    })),
+  setVideoFilePath: (path) => set({ videoFilePath: path }),
+  setExtractionState: (stateOrFn) => set((state) => ({
+    extractionState: typeof stateOrFn === 'function' 
+      ? stateOrFn(state.extractionState)
+      : stateOrFn
+  })),
+  setLastSegmentCount: (count) => set({ lastSegmentCount: count }),
 }));
 
 // Helper functions

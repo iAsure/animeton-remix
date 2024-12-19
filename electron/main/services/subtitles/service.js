@@ -5,9 +5,18 @@ export class SubtitlesService {
   constructor(subtitlesWorker, mainWindow) {
     this.worker = subtitlesWorker;
     this.mainWindow = mainWindow;
+    this.lastExtraction = 0;
+    this.MIN_EXTRACTION_INTERVAL = 2000;
   }
 
   async processFile(filePath) {
+    
+    const now = Date.now();
+    if (now - this.lastExtraction < this.MIN_EXTRACTION_INTERVAL) {
+      return null;
+    }
+    this.lastExtraction = now;
+
     try {
       const result = await this.extractSubtitles(filePath);
       if (!result.success) {

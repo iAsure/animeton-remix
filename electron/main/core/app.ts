@@ -2,7 +2,6 @@ import path from 'path';
 import { fileURLToPath } from "node:url";
 import { app, UtilityProcess, utilityProcess } from 'electron';
 import { Worker } from 'worker_threads';
-import { createServer } from 'vite';
 import log from 'electron-log';
 
 import { APP_ID } from '../../shared/constants/config.js';
@@ -20,17 +19,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 async function initializeViteServer() {
   if (!process.env.DEV) return undefined;
   
-  const viteDevServer = await createServer({
-    server: {
-      strictPort: true,
-      hmr: {
-        host: "localhost",
-        port: 8888,
-        clientPort: 8888,
-        protocol: "ws",
+  const viteDevServer = await import("vite").then((vite) =>
+    vite.createServer({
+      server: {
+        strictPort: true,
+        hmr: {
+          host: "localhost",
+          port: 8888,
+          clientPort: 8888,
+          protocol: "ws",
+        },
       },
-    },
-  });
+    })
+  );
 
   await viteDevServer.listen(5173);
   return viteDevServer;
@@ -53,7 +54,7 @@ export async function initializeApp() {
     initUpdater();
     
     // Initialize processes
-    webTorrentProcess = utilityProcess.fork('electron/main/services/torrent/client.js');
+    webTorrentProcess = utilityProcess.fork(path.join(__dirname, '../services/torrent/client.js'));
     subtitlesWorker = new Worker(path.join(__dirname, '../services/subtitles/worker.js'));
     
     const mainWindow = await setupWindow();

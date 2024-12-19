@@ -1,7 +1,7 @@
 import { Icon } from '@iconify/react';
 import { Switch } from '@nextui-org/react';
 import { useConfig } from '@context/ConfigContext';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface SettingsMenuProps {
   onClose: () => void;
@@ -10,6 +10,7 @@ interface SettingsMenuProps {
 const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const { config, setConfig } = useConfig();
+  const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -21,6 +22,19 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
+
+  useEffect(() => {
+    const checkDevTools = async () => {
+      const isOpen = await window.api.shell.isDevToolsOpened();
+      setIsDevToolsOpen(isOpen);
+    };
+    checkDevTools();
+  }, []);
+
+  const handleToggleDevTools = async () => {
+    await window.api.shell.toggleDevTools();
+    setIsDevToolsOpen(!isDevToolsOpen);
+  };
 
   const handleSubtitlesIndicatorChange = useCallback(
     async (isSelected: boolean) => {
@@ -98,7 +112,7 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
           </button>
         </div>
 
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2 mb-1">
           <span className="text-zinc-200 text-sm">Carpeta de descargas</span>
           <button
             onClick={() => window.api.shell.openPath('downloads')}
@@ -109,6 +123,16 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
           </button>
         </div>
 
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-zinc-200 text-sm">Consola de desarrollo</span>
+          <button
+            onClick={handleToggleDevTools}
+            className="text-sm px-3 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-md transition-colors flex items-center gap-2"
+          >
+            <Icon icon="gravity-ui:code" className="text-zinc-400" />
+            <span>{isDevToolsOpen ? 'Cerrar' : 'Abrir'}</span>
+          </button>
+        </div>
       </div>
 
       <div className="my-2 border-t border-zinc-800" />

@@ -45,7 +45,6 @@ const AnimeDetails: React.FC<AnimeDetailsProps> = ({ state }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  log.debug('idAnilist', idAnilist);
   const anime = useAnimeDetails(idAnilist);
 
   const animeImage = anime?.coverImage?.extraLarge || anime?.bannerImage;

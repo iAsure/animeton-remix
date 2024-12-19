@@ -62,6 +62,8 @@ export interface SubtitlesApi {
 export interface ShellApi {
   openExternal: (url: string) => Promise<boolean>;
   openPath: (path: string) => Promise<boolean>;
+  toggleDevTools: () => Promise<void>;
+  isDevToolsOpened: () => Promise<boolean>;
 }
 
 export interface ConfigApi {

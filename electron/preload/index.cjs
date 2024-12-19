@@ -1,5 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+ipcRenderer.setMaxListeners(20);
+
 const createEventHandler = (channel) => ({
   subscribe: (callback) => ipcRenderer.on(channel, callback),
   unsubscribe: (callback) => ipcRenderer.removeListener(channel, callback),
@@ -24,7 +26,7 @@ const createEventHandler = (channel) => ({
   const api = {
     addTorrent: (torrentId) => {
       ipcRenderer.send(IPC_CHANNELS.TORRENT.ADD, {
-        action: 'add-torrent',
+        action: torrentId === 'destroy' ? 'destroy' : 'add-torrent',
         torrentId,
       });
     },
@@ -48,6 +50,8 @@ const createEventHandler = (channel) => ({
     shell: {
       openExternal: (url) => ipcRenderer.invoke(IPC_CHANNELS.SHELL.OPEN_EXTERNAL, url),
       openPath: (filePath) => ipcRenderer.invoke(IPC_CHANNELS.SHELL.OPEN_FILE_PATH, filePath),
+      toggleDevTools: () => ipcRenderer.invoke(IPC_CHANNELS.SHELL.TOGGLE_DEV_TOOLS),
+      isDevToolsOpened: () => ipcRenderer.invoke(IPC_CHANNELS.SHELL.IS_DEV_TOOLS_OPENED),
     },
 
     config: {

@@ -9,6 +9,23 @@ import { IPC_CHANNELS } from '../../../shared/constants/event-channels.js';
 let activeClient = null;
 let progressInterval = null;
 
+const ANNOUNCE = [
+  atob('d3NzOi8vdHJhY2tlci5vcGVud2VidG9ycmVudC5jb20='),
+  atob('d3NzOi8vdHJhY2tlci53ZWJ0b3JyZW50LmRldg=='),
+  atob('d3NzOi8vdHJhY2tlci5maWxlcy5mbTo3MDczL2Fubm91bmNl'),
+  atob('d3NzOi8vdHJhY2tlci5idG9ycmVudC54eXov'),
+  atob('dWRwOi8vb3Blbi5zdGVhbHRoLnNpOjgwL2Fubm91bmNl'),
+  atob('aHR0cDovL255YWEudHJhY2tlci53Zjo3Nzc3L2Fubm91bmNl'),
+  atob('dWRwOi8vdHJhY2tlci5vcGVudHJhY2tyLm9yZzoxMzM3L2Fubm91bmNl'),
+  atob('dWRwOi8vZXhvZHVzLmRlc3luYy5jb206Njk2OS9hbm5vdW5jZQ=='),
+  atob('dWRwOi8vdHJhY2tlci5jb3BwZXJzdXJmZXIudGs6Njk2OS9hbm5vdW5jZQ=='),
+  atob('dWRwOi8vOS5yYXJiZy50bzoyNzEwL2Fubm91bmNl'),
+  atob('dWRwOi8vdHJhY2tlci50b3JyZW50LmV1Lm9yZzo0NTEvYW5ub3VuY2U='),
+  atob('aHR0cDovL29wZW4uYWNnbnh0cmFja2VyLmNvbTo4MC9hbm5vdW5jZQ=='),
+  atob('aHR0cDovL2FuaWRleC5tb2U6Njk2OS9hbm5vdW5jZQ=='),
+  atob('aHR0cDovL3RyYWNrZXIuYW5pcmVuYS5jb206ODAvYW5ub3VuY2U='),
+];
+
 async function cleanup() {
   if (progressInterval) {
     clearInterval(progressInterval);
@@ -23,10 +40,12 @@ async function initializeWebTorrentClient() {
   await cleanup();
   const { default: WebTorrent } = await import('webtorrent');
   activeClient = new WebTorrent({
-    downloadLimit: -1,
-    uploadLimit: -1,
+    downloadLimit: 5 * 1048576 || 0,
+    uploadLimit: 5 * 1572864 || 0,
+    torrentPort: 0,
     maxConns: 100,
-    webSeeds: true
+    dht: true,
+    natUpnp: true,
   });
   const instance = activeClient.createServer();
 
@@ -55,8 +74,6 @@ async function handleTorrent(torrent, instance) {
     data: { url, filePath },
   });
 
-  await handleMkvFile(filePath);
-
   // Setup progress updates
   const progressInterval = setInterval(() => {
     process.parentPort?.postMessage({
@@ -68,9 +85,9 @@ async function handleTorrent(torrent, instance) {
         progress: torrent.progress,
         downloadSpeed: torrent.downloadSpeed,
         uploadSpeed: torrent.uploadSpeed,
-        remaining: torrent.done
-          ? 'Done.'
-          : humanizeDuration(torrent.timeRemaining),
+        remaining: torrent.done ? 'Done' : humanizeDuration(torrent.timeRemaining),
+        isBuffering: torrent.progress < 0.01,
+        ready: torrent.progress > 0.01
       },
     });
   }, 500);
@@ -84,7 +101,7 @@ async function handleTorrent(torrent, instance) {
 
     // Handle MKV files
     if (filePath.toLowerCase().endsWith('.mkv')) {
-      await handleMkvFile(filePath);
+      await handleMkvSubtitles(filePath);
     }
   });
 }
@@ -104,7 +121,7 @@ async function verifyDownload(filePath, torrent, maxAttempts = 10) {
   throw new Error('File verification failed after maximum attempts');
 }
 
-async function handleMkvFile(filePath) {
+async function handleMkvSubtitles(filePath) {
   try {
     // Verify file exists before processing
     await fs.promises.access(filePath).catch(() => {
@@ -134,7 +151,7 @@ process.parentPort?.on('message', async (message) => {
   if (message.data?.action === 'add-torrent') {
     try {
       const { client, instance } = await initializeWebTorrentClient();
-      client.add(message.data.torrentId, (torrent) => {
+      client.add(message.data.torrentId, { announce: ANNOUNCE }, (torrent) => {
         handleTorrent(torrent, instance).catch((error) => {
           log.error('Error handling torrent:', error);
         });

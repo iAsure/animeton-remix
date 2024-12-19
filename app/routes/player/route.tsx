@@ -26,12 +26,32 @@ const Player = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const [isVideoReady, setIsVideoReady] = useState(false);
-  const [isBuffering, setIsBuffering] = useState(true);
+  const [isLocalBuffering, setIsLocalBuffering] = useState(false);
   let mouseTimer: NodeJS.Timeout;
 
-  const { progress, downloadSpeed, uploadSpeed } = useTorrentStream(torrentUrl);
+  const {
+    progress,
+    downloadSpeed,
+    uploadSpeed,
+    isBuffering: torrentBuffering,
+    ready: torrentReady,
+    error: torrentError
+  } = useTorrentStream(torrentUrl);
+
+  const isBuffering = (torrentBuffering || isLocalBuffering) || !torrentReady;
 
   useSubtitles(videoRef, isVideoReady);
+
+  useEffect(() => {
+    if (torrentError) {
+      log.error('Torrent error:', torrentError);
+      // You could show a toast/notification here
+    }
+  }, [torrentError]);
+
+  const handleVideoWaiting = useCallback(() => {
+    setIsLocalBuffering(true);
+  }, []);
 
   const handleVideoReady = useCallback(() => {
     log.info('Video ready');
@@ -48,7 +68,7 @@ const Player = () => {
       videoRef.current.pause();
       setPlayLastAction('pause');
     }
-  }, []);
+  }, [setPlayLastAction]);
 
   const handleVideoPlay = useCallback(() => {
     if (videoRef.current) {
@@ -57,14 +77,10 @@ const Player = () => {
         log.error('Error playing video', { error });
       });
     }
-  }, []);
-
-  const handleWaiting = useCallback(() => {
-    setIsBuffering(true);
-  }, []);
+  }, [setIsPlaying]);
 
   const handleCanPlay = useCallback(() => {
-    setIsBuffering(false);
+    setIsLocalBuffering(false);
     handleVideoReady();
   }, [handleVideoReady]);
 
@@ -72,7 +88,7 @@ const Player = () => {
     setMouseMoving(true);
     clearTimeout(mouseTimer);
     mouseTimer = setTimeout(() => setMouseMoving(false), 3000);
-  }, []);
+  }, [setMouseMoving]);
 
   useEffect(() => {
     const handleTorrentServerDone = (event: any, data: any) => {
@@ -86,6 +102,7 @@ const Player = () => {
 
     return () => {
       window.api.torrent.onServerDone.unsubscribe(handleTorrentServerDone);
+      clearTimeout(mouseTimer);
       reset();
     };
   }, [reset]);
@@ -105,19 +122,26 @@ const Player = () => {
         onClick={handleVideoClick}
         onCanPlay={handleCanPlay}
         onPlay={handleVideoPlay}
-        onWaiting={handleWaiting}
+        onWaiting={handleVideoWaiting}
         crossOrigin="anonymous"
       />
       {config?.features?.subtitlesStatus && <SubtitleStatus />}
       <VideoPlayPauseOverlay />
       <VideoControls videoRef={videoRef} />
-      {isBuffering && (
+      {isLocalBuffering && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
           <VideoSpinner
             progress={progress}
             downloadSpeed={downloadSpeed}
             uploadSpeed={uploadSpeed}
           />
+        </div>
+      )}
+      {torrentError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+          <div className="text-red-500 text-lg">
+            Error loading video: {torrentError}
+          </div>
         </div>
       )}
     </div>

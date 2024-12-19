@@ -26,8 +26,12 @@ export async function setupIpcHandlers(
 
   // Register torrent handler
   ipcMain.on(IPC_CHANNELS.TORRENT.ADD, (_, arg) => {
-    log.debug('Torrent action received:', arg.action);
-    webTorrentProcess.postMessage(arg);
+    log.debug('Torrent action received:', arg);
+    const message = {
+      action: arg.action,
+      torrentId: arg.torrentId
+    };
+    webTorrentProcess.postMessage(message);
   });
 
   // Handle WebTorrent process messages
@@ -159,6 +163,18 @@ export async function setupIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.CONFIG.UPDATE, async (_, config: any) => {
     await configService.update(config);
     mainWindow.webContents.send(IPC_CHANNELS.CONFIG.CHANGED, config);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.SHELL.TOGGLE_DEV_TOOLS, async () => {
+    if (mainWindow.webContents.isDevToolsOpened()) {
+      mainWindow.webContents.closeDevTools();
+    } else {
+      mainWindow.webContents.openDevTools({ mode: 'detach' });
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.SHELL.IS_DEV_TOOLS_OPENED, () => {
+    return mainWindow.webContents.isDevToolsOpened();
   });
 
   mainWindow.on('closed', () => {
