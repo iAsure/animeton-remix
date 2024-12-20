@@ -3,13 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import log from 'electron-log';
 
-let isProcessing = false;
-
 async function parseSubtitles(filePath) {
-  if (isProcessing) {
-    return null;
-  }
-  isProcessing = true;
 
   if (!fs.existsSync(filePath)) {
     log.error('File not found:', filePath);
@@ -55,8 +49,6 @@ async function parseSubtitles(filePath) {
   } catch (error) {
     log.error('Error parsing subtitles:', error);
     throw error;
-  } finally {
-    isProcessing = false;
   }
 }
 

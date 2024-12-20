@@ -48,10 +48,7 @@ const SubtitleStatus = () => {
           {extractionState.status === 'extracting' && (
             <InfoRow>
               <span>
-                Extrayendo subtítulos...{' '}
-                {extractionState.progress
-                  ? `${Math.round(extractionState.progress)}%`
-                  : ''}
+                Extrayendo subtítulos...
               </span>
             </InfoRow>
           )}

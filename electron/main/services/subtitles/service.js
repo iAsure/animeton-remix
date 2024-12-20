@@ -5,23 +5,11 @@ export class SubtitlesService {
   constructor(subtitlesWorker, mainWindow) {
     this.worker = subtitlesWorker;
     this.mainWindow = mainWindow;
-    this.lastExtraction = 0;
-    this.MIN_EXTRACTION_INTERVAL = 2000;
   }
 
   async processFile(filePath) {
     log.info('Processing subs on file:', filePath);
     
-    const now = Date.now();
-    if (now - this.lastExtraction < this.MIN_EXTRACTION_INTERVAL) {
-      log.info('Skipping extraction due to interval:', this.MIN_EXTRACTION_INTERVAL);
-      this.mainWindow?.webContents.send(IPC_CHANNELS.SUBTITLES.ERROR, {
-        error: 'Extraction requested too soon'
-      });
-      return { success: false, error: 'Extraction requested too soon' };
-    }
-    this.lastExtraction = now;
-
     try {
       const result = await this.extractSubtitles(filePath);
       log.info('Extraction completed with result:', result);

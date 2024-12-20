@@ -38,6 +38,7 @@ const createEventHandler = (channel) => ({
       onFile: createEventHandler(IPC_CHANNELS.TORRENT.FILE),
       onError: createEventHandler(IPC_CHANNELS.TORRENT.ERROR),
       onMkvProcess: createEventHandler(IPC_CHANNELS.TORRENT.MKV_PROCESS),
+      onDownloadRanges: createEventHandler(IPC_CHANNELS.TORRENT.DOWNLOAD_RANGES),
     },
 
     subtitles: {

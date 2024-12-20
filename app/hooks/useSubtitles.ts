@@ -284,11 +284,6 @@ const useSubtitles = (
         
         if (newConsecutiveMatches >= REQUIRED_MATCHES) {
           log.info('Required matches reached, completing extraction');
-          
-          if (retryTimerRef.current) {
-            clearInterval(retryTimerRef.current);
-            retryTimerRef.current = null;
-          }
 
           setExtractionState({ 
             status: 'completed',
@@ -317,59 +312,7 @@ const useSubtitles = (
       }
     }
   }, [subtitleContent, extractionState.status === 'extracting']);
-
-  const retryTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    if (!subtitleContent || !duration) return;
-    if (extractionState.status === 'completed') {
-      if (retryTimerRef.current) {
-        clearInterval(retryTimerRef.current);
-        retryTimerRef.current = null;
-      }
-      return;
-    }
-
-    const MAX_ATTEMPTS = 15;
-    const RETRY_TIMEOUT = 10000;
-
-    retryTimerRef.current = setInterval(() => {
-      if (extractionState.status !== 'extracting' && extractionState.status !== 'completed') {
-        const timeSinceLastAttempt = Date.now() - (extractionState.lastAttemptTime || 0);
-
-        if (timeSinceLastAttempt >= RETRY_TIMEOUT) {
-          if (extractionState.attempts < MAX_ATTEMPTS && videoFilePath) {
-            log.info('Initiating retry for subtitle extraction');
-            setExtractionState(prev => ({
-              ...prev,
-              status: 'retrying'
-            }));
-            extractSubtitles(videoFilePath);
-          } else {
-            log.warn('Max attempts reached or no file path available');
-            setExtractionState(prev => ({
-              ...prev,
-              status: 'error',
-              error: 'Max attempts reached'
-            }));
-            
-            if (retryTimerRef.current) {
-              clearInterval(retryTimerRef.current);
-              retryTimerRef.current = null;
-            }
-          }
-        }
-      }
-    }, RETRY_TIMEOUT);
-
-    return () => {
-      if (retryTimerRef.current) {
-        clearInterval(retryTimerRef.current);
-        retryTimerRef.current = null;
-      }
-    };
-  }, [subtitleContent, duration, extractionState.status]);
-
+  
   // Handle extraction errors
   useEffect(() => {
     const handleError = (_: any, result: { error: string }) => {

@@ -1,10 +1,20 @@
 import { IPC_CHANNELS } from '../../../shared/constants/event-channels.js';
 import log from 'electron-log';
 
-export function setupTorrentHandlers(webTorrentProcess, mainWindow, subtitlesService) {
+export function setupTorrentHandlers(
+  webTorrentProcess,
+  mainWindow,
+  subtitlesService
+) {
   return {
     [IPC_CHANNELS.TORRENT.PROGRESS]: (data) => {
       mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.PROGRESS, data);
+    },
+
+    [IPC_CHANNELS.TORRENT.DOWNLOAD_RANGES]: (data) => {
+      if (!data.ranges) return;
+      
+      mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.DOWNLOAD_RANGES, data);
     },
 
     [IPC_CHANNELS.TORRENT.DONE]: () => {
@@ -23,11 +33,11 @@ export function setupTorrentHandlers(webTorrentProcess, mainWindow, subtitlesSer
     [IPC_CHANNELS.TORRENT.MKV_PROCESS]: async (data) => {
       log.info('Processing MKV file:', data.filePath);
       mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.MKV_PROCESS, data);
-      
+
       // Process subtitles if available
       if (subtitlesService) {
         await subtitlesService.processFile(data.filePath);
       }
-    }
+    },
   };
 }

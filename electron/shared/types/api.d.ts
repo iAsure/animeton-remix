@@ -20,6 +20,21 @@ export interface EventHandler<T = any> {
   unsubscribe: (callback: (event: IpcRendererEvent, data: T) => void) => void;
 }
 
+export interface TorrentFileProgress {
+  startPiece: number;
+  endPiece: number;
+  numPieces: number;
+  numPiecesPresent: number;
+}
+
+export interface TorrentRangeData {
+  ranges: { start: number; end: number }[];
+  downloaded: number;
+  total: number;
+  progress: number;
+  fileProgress: TorrentFileProgress;
+}
+
 export interface TorrentApi {
   addTorrent: (torrentId: string) => void;
   onProgress: EventHandler<TorrentProgress>;
@@ -28,6 +43,7 @@ export interface TorrentApi {
   onFile: EventHandler<any>;
   onError: EventHandler<{ error: string }>;
   onMkvProcess: EventHandler<TorrentMkvProcess>;
+  onDownloadRanges: EventHandler<TorrentRangeData>;
 }
 
 export interface SubtitleCue {

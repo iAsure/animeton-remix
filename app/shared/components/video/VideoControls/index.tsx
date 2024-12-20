@@ -28,6 +28,8 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
     setPlayLastAction,
     availableSubtitles,
     subtitleRanges,
+    torrentRanges,
+    torrentProgress
   } = usePlayerStore();
   const { config } = useConfig();
 
@@ -205,6 +207,31 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
         transition: 'opacity 0.3s ease-in-out',
       }}
     >
+      {/* Torrent download indicator */}
+      <div className="w-full h-0.5 bg-transparent mb-1">
+        {torrentRanges.map((range, index) => (
+          <div
+            key={`torrent-${index}`}
+            className="absolute h-3"
+            style={{
+              left: `${range.start * 100}%`,
+              width: `${(range.end - range.start) * 100}%`,
+              background: 'linear-gradient(to bottom, rgba(255, 86, 128, 0.7), rgba(0, 0, 0, 0))',
+              cursor: 'pointer',
+            }}
+          />
+        ))}
+        {torrentProgress > 0 && (
+          <div 
+            className="absolute bottom-0 h-0.5 bg-rose-500/50"
+            style={{
+              width: `${torrentProgress * 100}%`,
+              transition: 'width 0.5s ease-out'
+            }}
+          />
+        )}
+      </div>
+
       {/* Subtitle ranges indicator */}
       {config?.features?.subtitlesIndicator && (
         <div className="w-full h-0.5 bg-transparent mb-5">

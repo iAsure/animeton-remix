@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import log from 'electron-log';
 import { prettyBytes } from '@/shared/utils/strings';
+import usePlayerStore from '@stores/player';
 
 interface TorrentStreamState {
   progress: number;
@@ -14,6 +15,7 @@ interface TorrentStreamState {
   ready: boolean;
   error: string | null;
   url?: string;
+  fileProgress?: any;
 }
 
 const INITIAL_STATE: TorrentStreamState = {
@@ -33,6 +35,7 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000;
 
 const useTorrentStream = (torrentId: string) => {
+  const { setTorrentRanges, setTorrentProgress } = usePlayerStore();
   const [state, setState] = useState<TorrentStreamState>(INITIAL_STATE);
   const [retryCount, setRetryCount] = useState(0);
 
@@ -92,6 +95,21 @@ const useTorrentStream = (torrentId: string) => {
       }));
     };
 
+    const handleDownloadRanges = (_: any, data: any) => {
+      if (!isMounted.current) return;
+      
+      // Update the store with the new ranges and progress
+      setTorrentRanges(data.ranges);
+      setTorrentProgress(data.progress);
+
+      // Update state with file-specific progress info if needed
+      setState(prev => ({
+        ...prev,
+        fileProgress: data.fileProgress,
+        progress: Math.round(data.progress * 100 * 100) / 100
+      }));
+    };
+
     const handleServerDone = (_: any, data: any) => {
       setState(prev => ({
         ...prev,
@@ -116,6 +134,7 @@ const useTorrentStream = (torrentId: string) => {
 
     // Subscribe to events
     window.api.torrent.onProgress.subscribe(handleProgress);
+    window.api.torrent.onDownloadRanges.subscribe(handleDownloadRanges);
     window.api.torrent.onServerDone.subscribe(handleServerDone);
     window.api.torrent.onError.subscribe(handleError);
 
@@ -126,6 +145,7 @@ const useTorrentStream = (torrentId: string) => {
     return () => {
       clearTimeout(timeoutId);
       window.api.torrent.onProgress.unsubscribe(handleProgress);
+      window.api.torrent.onDownloadRanges.unsubscribe(handleDownloadRanges);
       window.api.torrent.onServerDone.unsubscribe(handleServerDone);
       window.api.torrent.onError.unsubscribe(handleError);
       

@@ -20,6 +20,18 @@ interface ExtractionState {
   successfulTracks?: number;
 }
 
+interface TorrentRange {
+  start: number;  // Percentage (0-1)
+  end: number;    // Percentage (0-1)
+}
+
+interface TorrentFileProgress {
+  startPiece: number;
+  endPiece: number;
+  numPieces: number;
+  numPiecesPresent: number;
+}
+
 interface PlayerStore {
   // Playback state
   isPlaying: boolean;
@@ -50,6 +62,11 @@ interface PlayerStore {
   extractionState: ExtractionState;
   lastSegmentCount: number | null;
 
+  // Torrent state
+  torrentRanges: TorrentRange[];
+  torrentProgress: number;
+  torrentFileProgress: TorrentFileProgress | null;
+
   // Actions
   setIsPlaying: (isPlaying: boolean) => void;
   setPlaybackState: (currentTime: number, duration: number) => void;
@@ -76,6 +93,11 @@ interface PlayerStore {
   setVideoFilePath: (path: string | null) => void;
   setExtractionState: (stateOrFn: ExtractionState | ((prev: ExtractionState) => ExtractionState)) => void;
   setLastSegmentCount: (count: number | null) => void;
+
+  // Torrent actions
+  setTorrentRanges: (ranges: TorrentRange[]) => void;
+  setTorrentProgress: (progress: number) => void;
+  setTorrentFileProgress: (progress: TorrentFileProgress | null) => void;
 }
 
 const usePlayerStore = create<PlayerStore>((set, get) => ({
@@ -102,6 +124,11 @@ const usePlayerStore = create<PlayerStore>((set, get) => ({
     attempts: 0
   },
   lastSegmentCount: null,
+
+  // Initial torrent state
+  torrentRanges: [],
+  torrentProgress: 0,
+  torrentFileProgress: null,
 
   // Actions
   setIsPlaying: (isPlaying) => set({ isPlaying }),
@@ -179,7 +206,12 @@ const usePlayerStore = create<PlayerStore>((set, get) => ({
       lastAttemptTime: undefined,
       successfulTracks: undefined
     },
-    lastSegmentCount: null
+    lastSegmentCount: null,
+
+    // Reset torrent state
+    torrentRanges: [],
+    torrentProgress: 0,
+    torrentFileProgress: null,
   }),
 
   // Add new actions
@@ -196,6 +228,11 @@ const usePlayerStore = create<PlayerStore>((set, get) => ({
       : stateOrFn
   })),
   setLastSegmentCount: (count) => set({ lastSegmentCount: count }),
+
+  // Torrent actions
+  setTorrentRanges: (ranges) => set({ torrentRanges: ranges }),
+  setTorrentProgress: (progress) => set({ torrentProgress: progress }),
+  setTorrentFileProgress: (progress) => set({ torrentFileProgress: progress }),
 }));
 
 // Helper functions

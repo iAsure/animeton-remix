@@ -76,6 +76,62 @@ async function handleTorrent(torrent, instance) {
 
   // Setup progress updates
   const progressInterval = setInterval(() => {
+    // Calculate downloaded ranges based on file pieces
+    const ranges = [];
+    let lastStart = null;
+    
+    // Get the first file (assuming single file torrent for now)
+    const file = torrent.files[0];
+    const startPiece = file._startPiece;
+    const endPiece = file._endPiece;
+    const numPieces = endPiece - startPiece + 1;
+
+    // Analyze pieces for this specific file
+    for (let piece = startPiece; piece <= endPiece; piece++) {
+      const piecePresent = torrent.bitfield.get(piece);
+      const normalizedPiece = piece - startPiece;
+      
+      if (piecePresent && lastStart === null) {
+        // Start new range
+        lastStart = normalizedPiece / numPieces;
+      } else if (!piecePresent && lastStart !== null) {
+        // End current range
+        ranges.push({
+          start: lastStart,
+          end: normalizedPiece / numPieces
+        });
+        lastStart = null;
+      }
+    }
+
+    // Handle last range if exists
+    if (lastStart !== null) {
+      ranges.push({
+        start: lastStart,
+        end: 1
+      });
+    }
+
+    // Send download ranges
+    process.parentPort?.postMessage({
+      type: IPC_CHANNELS.TORRENT.DOWNLOAD_RANGES,
+      data: {
+        ranges,
+        downloaded: torrent.downloaded,
+        total: torrent.length,
+        progress: torrent.progress,
+        // Add file-specific info
+        fileProgress: {
+          startPiece,
+          endPiece,
+          numPieces,
+          numPiecesPresent: ranges.reduce((acc, range) => 
+            acc + Math.round((range.end - range.start) * numPieces), 0)
+        }
+      },
+    });
+
+    // Regular progress update remains the same
     process.parentPort?.postMessage({
       type: IPC_CHANNELS.TORRENT.PROGRESS,
       data: {
