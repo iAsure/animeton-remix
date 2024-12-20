@@ -69,9 +69,27 @@ async function processStream(metadata, fileStream) {
 // Message handler
 parentPort?.on('message', async ({ filePath }) => {
   log.info('Subtitle worker received file:', filePath);
+  
+  // Add validation for filePath
+  if (!filePath) {
+    log.error('No file path provided to worker');
+    parentPort?.postMessage({
+      type: 'error',
+      error: 'No file path provided'
+    });
+    return;
+  }
+
   try {
     const allSubtitles = await parseSubtitles(filePath);
+    
+    // Validate subtitles result
+    if (!allSubtitles || Object.keys(allSubtitles).length === 0) {
+      throw new Error('No subtitles found in file');
+    }
 
+    log.info('Subtitles extracted successfully:', Object.keys(allSubtitles).length, 'tracks found');
+    
     parentPort?.postMessage({
       type: 'complete',
       data: allSubtitles,
@@ -80,7 +98,7 @@ parentPort?.on('message', async ({ filePath }) => {
     log.error('Subtitle extraction failed:', error);
     parentPort?.postMessage({
       type: 'error',
-      error: error.message,
+      error: error.message || 'Unknown error in subtitle worker'
     });
   }
 });

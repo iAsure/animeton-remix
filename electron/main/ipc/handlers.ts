@@ -46,7 +46,25 @@ export async function setupIpcHandlers(
 
   // Register subtitle extraction handler
   ipcMain.handle(IPC_CHANNELS.SUBTITLES.EXTRACT, async (_, filePath) => {
-    return subtitlesService.processFile(filePath);
+    log.info('Main process: Received extract request for:', filePath);
+    
+    if (!filePath) {
+      const error = new Error('No file path provided');
+      log.error(error);
+      throw error;
+    }
+
+    try {
+      const result = await subtitlesService.processFile(filePath);
+      log.info('Main process: Extraction result:', result);
+      return result;
+    } catch (error) {
+      log.error('Main process: Extraction failed:', error);
+      mainWindow.webContents.send(IPC_CHANNELS.SUBTITLES.ERROR, {
+        error: error.message || 'Unknown error during subtitle extraction'
+      });
+      throw error;
+    }
   });
 
   // Window control handlers

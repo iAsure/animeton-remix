@@ -41,8 +41,14 @@ const createEventHandler = (channel) => ({
     },
 
     subtitles: {
-      extractSubtitles: (filePath) =>
-        ipcRenderer.invoke(IPC_CHANNELS.SUBTITLES.EXTRACT, filePath),
+      extractSubtitles: (filePath) => {
+        console.log('Preload: Calling extractSubtitles with:', filePath);
+        return ipcRenderer.invoke(IPC_CHANNELS.SUBTITLES.EXTRACT, filePath)
+          .catch(error => {
+            console.error('Preload: Extract subtitles failed:', error);
+            throw error;
+          });
+      },
       onExtracted: createEventHandler(IPC_CHANNELS.SUBTITLES.EXTRACTED),
       onError: createEventHandler(IPC_CHANNELS.SUBTITLES.ERROR),
     },

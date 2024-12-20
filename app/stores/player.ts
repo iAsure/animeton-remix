@@ -147,24 +147,37 @@ const usePlayerStore = create<PlayerStore>((set, get) => ({
   },
 
   reset: () => set({
+    // Playback state
     isPlaying: false,
     currentTime: 0,
     duration: 0,
+    
+    // Volume state
     volume: 1,
     isMuted: false,
+    
+    // UI state
     isFullscreen: false,
     isMouseMoving: true,
     playLastAction: null,
+
+    // Subtitles state
     availableSubtitles: [],
     selectedSubtitleTrack: null,
     subtitleContent: null,
     subtitleRanges: [],
     subtitleStatus: { status: 'idle' },
+
+    // Extraction state
     consecutiveMatches: 0,
     videoFilePath: null,
     extractionState: {
       status: 'idle',
-      attempts: 0
+      attempts: 0,
+      error: undefined,
+      progress: undefined,
+      lastAttemptTime: undefined,
+      successfulTracks: undefined
     },
     lastSegmentCount: null
   }),
