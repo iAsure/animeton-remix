@@ -97,6 +97,28 @@ export interface UpdaterApi {
   onDownloaded: EventHandler<any>;
 }
 
+export interface DiscordActivity {
+  timestamps?: { start: number };
+  details?: string;
+  state?: string;
+  assets?: {
+    small_image?: string;
+    small_text?: string;
+    large_image?: string;
+    large_text?: string;
+  };
+  buttons?: Array<{
+    label: string;
+    url: string;
+  }>;
+}
+
+export interface DiscordApi {
+  setActivity: (activity: { activity: DiscordActivity }) => void;
+  setShowStatus: (show: boolean) => void;
+  onW2GLink: EventHandler<string>;
+}
+
 export interface Api {
   addTorrent: (torrentId: string) => void;
   torrent: TorrentApi;
@@ -104,4 +126,5 @@ export interface Api {
   shell: ShellApi;
   config: ConfigApi;
   updater: UpdaterApi;
+  discord: DiscordApi;
 }

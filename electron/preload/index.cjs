@@ -76,6 +76,16 @@ const createEventHandler = (channel) => ({
       onNotAvailable: createEventHandler(IPC_CHANNELS.UPDATER.NOT_AVAILABLE),
       onDownloaded: createEventHandler(IPC_CHANNELS.UPDATER.DOWNLOADED),
     },
+
+    discord: {
+      setActivity: (activity) => {
+        ipcRenderer.send('discord', activity);
+      },
+      setShowStatus: (show) => {
+        ipcRenderer.send('show-discord-status', show);
+      },
+      onW2GLink: createEventHandler('w2glink'),
+    },
   };
 
   contextBridge.exposeInMainWorld('electron', electron);

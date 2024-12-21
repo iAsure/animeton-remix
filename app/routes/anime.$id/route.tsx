@@ -1,11 +1,10 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
-import log from 'electron-log';
 
 import useExtractColor from '@hooks/useExtractColor';
 // import useModernBackground from '@hooks/useModernBackground';
-// import useCanvasRpcFrame from '@hooks/useCanvasRpcFrame';
+import useCanvasRpcFrame from '@hooks/useCanvasRpcFrame';
 import useAnimeDetails from '@hooks/useAnimeDetails';
 
 import AnimeOverview from '@components/anime/AnimeOverview';
@@ -14,6 +13,7 @@ import AnimeEpisodesList from '@components/episode/EpisodeList';
 import LatestEpisodesSidebar from '@components/episode/LatestEpisodesSidebar';
 
 import Spinner from '@components/decoration/Spinner';
+import DiscordStatus from '@components/core/DiscordStatus';
 
 interface AnimeDetailsProps {
   state: {
@@ -50,20 +50,7 @@ const AnimeDetails: React.FC<AnimeDetailsProps> = ({ state }) => {
   const animeImage = anime?.coverImage?.extraLarge || anime?.bannerImage;
   const bannerImage = anime?.bannerImage || anime?.coverImage?.extraLarge;
 
-  //   const rpcFrame = useCanvasRpcFrame({ imageUrl: animeImage });
-
-  //   useEffect(() => {
-  //     if (rpcFrame && anime) {
-  //       const animeTitle = anime?.title?.romaji;
-
-  //     //   state.window.title = animeTitle;
-  //     //   dispatch('updateDiscordRPC', {
-  //     //     state: 'Viendo detalles',
-  //     //     details: animeTitle,
-  //     //     assets: { large_image: rpcFrame, small_image: 'animeton' },
-  //     //   });
-  //     }
-  //   }, [state.window, anime, rpcFrame]);
+  const rpcFrame = useCanvasRpcFrame({ imageUrl: animeImage }) || null;
 
   const { animeColors, textColor } = useExtractColor(animeImage);
   const { animeColors: bannerColors } = useExtractColor(bannerImage);
@@ -91,6 +78,14 @@ const AnimeDetails: React.FC<AnimeDetailsProps> = ({ state }) => {
 
   return (
     <div className="flex flex-row justify-between items-start overflow-hidden">
+      <DiscordStatus
+        options={{
+          details: anime?.title?.romaji,
+          state: 'Viendo detalles',
+          assets: { large_image: rpcFrame },
+        }}
+      />
+
       <div className="relative w-full overflow-hidden">
         <AnimeOverview
           anime={anime}

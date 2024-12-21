@@ -11,6 +11,8 @@ import { setupProtocol } from './protocol.js';
 import { setupShortcuts, unregisterShortcuts } from './shortcuts.js';
 import { init as initUpdater } from './updater.js';
 import { setupWindow } from './window.js';
+import { cleanupTorrentFiles } from '../services/torrent/autoclean.js';
+import { DiscordRPC } from './discord.js';
 
 let webTorrentProcess: UtilityProcess | null = null;
 let subtitlesWorker: Worker | null = null;
@@ -48,6 +50,8 @@ export async function initializeApp() {
 
     log.info(`Starting app with build ID: ${APP_ID}`);
     app.setAppUserModelId(APP_ID);
+    
+    await cleanupTorrentFiles();
 
     await setupProtocol(build, viteDevServer);
 
@@ -58,6 +62,7 @@ export async function initializeApp() {
     subtitlesWorker = new Worker(path.join(__dirname, '../services/subtitles/worker.js'));
     
     const mainWindow = await setupWindow();
+    const discordRPC = new DiscordRPC(mainWindow);
     
     await setupIpcHandlers(webTorrentProcess, subtitlesWorker, mainWindow);
     setupShortcuts(mainWindow);
@@ -66,11 +71,12 @@ export async function initializeApp() {
     app.on('before-quit', async () => {
       log.info('Cleaning up workers...');
       unregisterShortcuts();
+      discordRPC.destroy();
       if (subtitlesWorker) await subtitlesWorker.terminate();
       if (webTorrentProcess) webTorrentProcess.kill();
     });
 
-    return { webTorrentProcess, subtitlesWorker };
+    return { webTorrentProcess, subtitlesWorker, discordRPC };
   } catch (error) {
     log.error('Failed to initialize application:', error);
     throw error;

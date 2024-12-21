@@ -8,6 +8,7 @@ import Spinner from '@components/decoration/Spinner';
 import LatestEpisodes from '@components/episode/LatestEpisode';
 import AnimeSection from '@components/anime/AnimeSection';
 import Activation from '@components/core/Activation';
+import DiscordStatus from '@components/core/DiscordStatus';
 
 import { useConfig } from '@context/ConfigContext';
 
@@ -40,6 +41,8 @@ export default function Index() {
 
   return (
     <div className="dark min-h-screen">
+      <DiscordStatus options={{ details: 'En el inicio' }} />
+
       <AnimeCarousel animes={animes} />
       <LatestEpisodes sectionTitle={'Últimos Episodios'} />
       <AnimeSection
