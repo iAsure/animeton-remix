@@ -19,6 +19,7 @@ const useExtractColor = (image: string) => {
 
   const getAnimeColor = useCallback(async () => {
     if (!image) return;
+
     const colors = await extractColors(image, {
       pixels: 100000,
       distance: 0.15,

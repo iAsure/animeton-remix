@@ -1,5 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+ipcRenderer.setMaxListeners(20);
+
 const createEventHandler = (channel) => ({
   subscribe: (callback) => ipcRenderer.on(channel, callback),
   unsubscribe: (callback) => ipcRenderer.removeListener(channel, callback),
@@ -24,7 +26,7 @@ const createEventHandler = (channel) => ({
   const api = {
     addTorrent: (torrentId) => {
       ipcRenderer.send(IPC_CHANNELS.TORRENT.ADD, {
-        action: 'add-torrent',
+        action: torrentId === 'destroy' ? 'destroy' : 'add-torrent',
         torrentId,
       });
     },
@@ -36,17 +38,27 @@ const createEventHandler = (channel) => ({
       onFile: createEventHandler(IPC_CHANNELS.TORRENT.FILE),
       onError: createEventHandler(IPC_CHANNELS.TORRENT.ERROR),
       onMkvProcess: createEventHandler(IPC_CHANNELS.TORRENT.MKV_PROCESS),
+      onDownloadRanges: createEventHandler(IPC_CHANNELS.TORRENT.DOWNLOAD_RANGES),
     },
 
     subtitles: {
-      extractSubtitles: (filePath) =>
-        ipcRenderer.invoke(IPC_CHANNELS.SUBTITLES.EXTRACT, filePath),
+      extractSubtitles: (filePath) => {
+        console.log('Preload: Calling extractSubtitles with:', filePath);
+        return ipcRenderer.invoke(IPC_CHANNELS.SUBTITLES.EXTRACT, filePath)
+          .catch(error => {
+            console.error('Preload: Extract subtitles failed:', error);
+            throw error;
+          });
+      },
       onExtracted: createEventHandler(IPC_CHANNELS.SUBTITLES.EXTRACTED),
       onError: createEventHandler(IPC_CHANNELS.SUBTITLES.ERROR),
     },
 
     shell: {
       openExternal: (url) => ipcRenderer.invoke(IPC_CHANNELS.SHELL.OPEN_EXTERNAL, url),
+      openPath: (filePath) => ipcRenderer.invoke(IPC_CHANNELS.SHELL.OPEN_FILE_PATH, filePath),
+      toggleDevTools: () => ipcRenderer.invoke(IPC_CHANNELS.SHELL.TOGGLE_DEV_TOOLS),
+      isDevToolsOpened: () => ipcRenderer.invoke(IPC_CHANNELS.SHELL.IS_DEV_TOOLS_OPENED),
     },
 
     config: {
@@ -63,6 +75,16 @@ const createEventHandler = (channel) => ({
       onAvailable: createEventHandler(IPC_CHANNELS.UPDATER.AVAILABLE),
       onNotAvailable: createEventHandler(IPC_CHANNELS.UPDATER.NOT_AVAILABLE),
       onDownloaded: createEventHandler(IPC_CHANNELS.UPDATER.DOWNLOADED),
+    },
+
+    discord: {
+      setActivity: (activity) => {
+        ipcRenderer.send('discord', activity);
+      },
+      setShowStatus: (show) => {
+        ipcRenderer.send('show-discord-status', show);
+      },
+      onW2GLink: createEventHandler('w2glink'),
     },
   };
 

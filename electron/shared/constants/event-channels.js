@@ -8,6 +8,7 @@ export const IPC_CHANNELS = {
     ERROR: 'torrent-error',
     MKV_PROCESS: 'process-mkv',
     MKV_ERROR: 'process-mkv-error',
+    DOWNLOAD_RANGES: 'torrent-download-ranges',
   },
   SUBTITLES: {
     EXTRACT: 'extract-subtitles',
@@ -20,9 +21,14 @@ export const IPC_CHANNELS = {
     RESIZE: 'window-resize',
     CONTROL: 'window-control',
     IS_MAXIMIZED: 'window-is-maximized',
+    SET_FULLSCREEN: 'window:set-fullscreen',
+    FULLSCREEN_CHANGE: 'window:fullscreen-change',
   },
   SHELL: {
     OPEN_EXTERNAL: 'shell-open-external',
+    OPEN_FILE_PATH: 'shell-open-file-path',
+    TOGGLE_DEV_TOOLS: 'shell-toggle-dev-tools',
+    IS_DEV_TOOLS_OPENED: 'shell-is-dev-tools-opened',
   },
   CONFIG: {
     GET: 'config:get',

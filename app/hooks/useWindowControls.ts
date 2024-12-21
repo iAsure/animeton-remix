@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { IPC_CHANNELS } from '@constants/event-channels';
 
-export const useWindowControls = () => {
+const useWindowControls = () => {
   const [isMaximized, setIsMaximized] = useState(false);
 
   useEffect(() => {
@@ -36,3 +36,5 @@ export const useWindowControls = () => {
 
   return { isMaximized, handleWindowControl };
 };
+
+export default useWindowControls;

@@ -3,7 +3,7 @@ import { useModal } from '@context/ModalContext';
 
 import UpdateDownloadedModal from '@components/modals/UpdateDownloaded';
 
-export function useUpdateDownload() {
+const useUpdateDownload = () => {
   const { openModal } = useModal();
 
   const [updateDownloaded, setUpdateDownloaded] = useState(false);
@@ -28,3 +28,5 @@ export function useUpdateDownload() {
 
   return { updateDownloaded, handleUpdateClick };
 }
+
+export default useUpdateDownload;

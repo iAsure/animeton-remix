@@ -53,14 +53,8 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
 
     const handlePlay = (anime) => {
       const infoHash = anime?.torrent?.infoHash;
-      // if (!infoHash) {
-      //   return sendNotification(state, { message: 'Episodio no disponible.' });
-      // }
-      // if (loadingEpisodeId) {
-      //   return sendNotification(state, { title: 'Wow, espera!', message: 'Ya estamos cargando un episodio.', type: 'alert' });
-      // }
+
       setLoadingEpisodeId(infoHash);
-      // TorrentPlayer.playTorrent(anime, state, setLoadingEpisodeId);
       const encodedUrl = encodeURIComponent(anime?.torrent?.link);
       navigate(`/player?url=${encodedUrl}`, { viewTransition: true });
     };
@@ -68,18 +62,16 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
     const cardVariants = {
       hidden: {
         opacity: 0,
-        y: 10,
-        scale: 0.98,
+        y: 15,
       },
       visible: {
         opacity: 1,
         y: 0,
-        scale: 1,
         transition: {
           type: 'spring',
-          duration: 0.4,
+          duration: 0.3,
           bounce: 0.1,
-          staggerChildren: 0.07,
+          staggerChildren: 0.03,
         },
       },
     };
@@ -100,7 +92,8 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
           whileInView="visible"
           viewport={{
             once: true,
-            margin: '-20% 0px',
+            margin: '-10% 0px',
+            amount: 0.1,
           }}
           variants={cardVariants}
           className="will-change-transform"
@@ -149,8 +142,8 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
           </button>
         )}
 
-        <div className="relative mx-auto w-full max-w-[90%]">
-          <div className="grid grid-cols-4 gap-8 w-full place-items-center">
+        <div className="relative mx-auto max-w-[90%]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 w-full">
             {isLoading || !rssAnimes
               ? Array.from({ length: perPage }).map((_, i) => (
                   <EpisodeCardSkeleton key={i} />

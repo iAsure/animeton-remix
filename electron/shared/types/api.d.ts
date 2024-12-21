@@ -20,6 +20,21 @@ export interface EventHandler<T = any> {
   unsubscribe: (callback: (event: IpcRendererEvent, data: T) => void) => void;
 }
 
+export interface TorrentFileProgress {
+  startPiece: number;
+  endPiece: number;
+  numPieces: number;
+  numPiecesPresent: number;
+}
+
+export interface TorrentRangeData {
+  ranges: { start: number; end: number }[];
+  downloaded: number;
+  total: number;
+  progress: number;
+  fileProgress: TorrentFileProgress;
+}
+
 export interface TorrentApi {
   addTorrent: (torrentId: string) => void;
   onProgress: EventHandler<TorrentProgress>;
@@ -28,6 +43,7 @@ export interface TorrentApi {
   onFile: EventHandler<any>;
   onError: EventHandler<{ error: string }>;
   onMkvProcess: EventHandler<TorrentMkvProcess>;
+  onDownloadRanges: EventHandler<TorrentRangeData>;
 }
 
 export interface SubtitleCue {
@@ -61,6 +77,9 @@ export interface SubtitlesApi {
 
 export interface ShellApi {
   openExternal: (url: string) => Promise<boolean>;
+  openPath: (path: string) => Promise<boolean>;
+  toggleDevTools: () => Promise<void>;
+  isDevToolsOpened: () => Promise<boolean>;
 }
 
 export interface ConfigApi {
@@ -78,6 +97,28 @@ export interface UpdaterApi {
   onDownloaded: EventHandler<any>;
 }
 
+export interface DiscordActivity {
+  timestamps?: { start: number };
+  details?: string;
+  state?: string;
+  assets?: {
+    small_image?: string;
+    small_text?: string;
+    large_image?: string;
+    large_text?: string;
+  };
+  buttons?: Array<{
+    label: string;
+    url: string;
+  }>;
+}
+
+export interface DiscordApi {
+  setActivity: (activity: { activity: DiscordActivity }) => void;
+  setShowStatus: (show: boolean) => void;
+  onW2GLink: EventHandler<string>;
+}
+
 export interface Api {
   addTorrent: (torrentId: string) => void;
   torrent: TorrentApi;
@@ -85,4 +126,5 @@ export interface Api {
   shell: ShellApi;
   config: ConfigApi;
   updater: UpdaterApi;
+  discord: DiscordApi;
 }

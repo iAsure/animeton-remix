@@ -1,82 +1,163 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import log from 'electron-log';
-
 import { prettyBytes } from '@/shared/utils/strings';
+import usePlayerStore from '@stores/player';
+
+interface TorrentStreamState {
+  progress: number;
+  downloadSpeed: string;
+  uploadSpeed: string;
+  numPeers: number;
+  downloaded: string;
+  total: string;
+  remaining: string;
+  isBuffering: boolean;
+  ready: boolean;
+  error: string | null;
+  url?: string;
+  fileProgress?: any;
+}
+
+const INITIAL_STATE: TorrentStreamState = {
+  progress: 0,
+  downloadSpeed: '0 B/s',
+  uploadSpeed: '0 B/s',
+  numPeers: 0,
+  downloaded: '0 B',
+  total: '0 B',
+  remaining: 'Calculating...',
+  isBuffering: true,
+  ready: false,
+  error: null
+};
+
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 2000;
 
 const useTorrentStream = (torrentId: string) => {
-  const [progress, setProgress] = useState<number>(0)
-  const [downloadSpeed, setDownloadSpeed] = useState<string>('0 b/s')
-  const [uploadSpeed, setUploadSpeed] = useState<string>('0 b/s')
-  const [numPeers, setNumPeers] = useState<number>(0)
-  const [downloaded, setDownloaded] = useState<string>('0 B')
-  const [total, setTotal] = useState<string>('0 B')
-  const [remaining, setRemaining] = useState<string>('Remaining')
+  const { setTorrentRanges, setTorrentProgress } = usePlayerStore();
+  const [state, setState] = useState<TorrentStreamState>(INITIAL_STATE);
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Track if component is mounted
+  const isMounted = useRef(true);
 
   useEffect(() => {
-    log.info('Starting torrent stream', { torrentId });
-    window.api.addTorrent(torrentId)
-
-    const handleTorrentProgress = (event: any, data: any) => {
-      // log.debug('Torrent progress update', {
-      //   progress: Math.round(data.progress * 100 * 100) / 100,
-      //   downloadSpeed: prettyBytes(data.downloadSpeed) + '/s',
-      //   peers: data.numPeers
-      // });
-
-      const {
-        numPeers,
-        downloaded,
-        total,
-        progress,
-        downloadSpeed,
-        uploadSpeed,
-        remaining
-      } = data
-
-      setNumPeers(numPeers)
-      setDownloaded(prettyBytes(downloaded))
-      setTotal(prettyBytes(total))
-      setProgress(Math.round(progress * 100 * 100) / 100)
-      setDownloadSpeed(prettyBytes(downloadSpeed) + '/s')
-      setUploadSpeed(prettyBytes(uploadSpeed) + '/s')
-      setRemaining(remaining)
-    }
-
-    const handleTorrentDone = () => {
-      log.info('Torrent download completed', { torrentId });
-      document.body.className += ' is-seed'
-    }
-
-    const handleTorrentError = (event: any, data: any) => {
-      log.error('Torrent error occurred', { 
-        torrentId, 
-        error: data.message 
-      });
-      console.error('Torrent error:', data.message)
-      alert('Error: ' + data.message)
-    }
-
-    window.api.torrent.onProgress.subscribe(handleTorrentProgress)
-    window.api.torrent.onDone.subscribe(handleTorrentDone)
-    window.api.torrent.onError.subscribe(handleTorrentError)
-
+    isMounted.current = true;
     return () => {
-      log.info('Cleaning up torrent stream', { torrentId });
-      window.api.torrent.onProgress.unsubscribe(handleTorrentProgress)
-      window.api.torrent.onDone.unsubscribe(handleTorrentDone)
-      window.api.torrent.onError.unsubscribe(handleTorrentError)
-    }
-  }, [torrentId])
+      isMounted.current = false;
+    };
+  }, []);
 
-  return {
-    progress,
-    downloadSpeed,
-    uploadSpeed,
-    numPeers,
-    downloaded,
-    total,
-    remaining
-  }
-}
+  const startTorrent = useCallback(async () => {
+    if (!torrentId || !isMounted.current) return;
+
+    try {
+      log.info('Starting torrent stream', { torrentId, attempt: retryCount + 1 });
+      setState(prev => ({ ...prev, error: null, isBuffering: true }));
+      window.api.addTorrent(torrentId);
+    } catch (error) {
+      if (!isMounted.current) return;
+      
+      log.error('Error starting torrent:', error);
+      if (retryCount < MAX_RETRIES) {
+        setTimeout(() => {
+          if (isMounted.current) {
+            setRetryCount(prev => prev + 1);
+          }
+        }, RETRY_DELAY);
+      } else {
+        setState(prev => ({
+          ...prev,
+          error: 'Failed to start torrent after multiple attempts',
+          isBuffering: false
+        }));
+      }
+    }
+  }, [torrentId, retryCount]);
+
+  useEffect(() => {
+    if (!torrentId) return;
+
+    const handleProgress = (_: any, data: any) => {
+      if (!isMounted.current) return;
+      setState(prev => ({
+        ...prev,
+        progress: Math.round(data.progress * 100 * 100) / 100,
+        downloadSpeed: prettyBytes(data.downloadSpeed) + '/s',
+        uploadSpeed: prettyBytes(data.uploadSpeed) + '/s',
+        numPeers: data.numPeers,
+        downloaded: prettyBytes(data.downloaded),
+        total: prettyBytes(data.total),
+        remaining: data.remaining === 'Done' ? 'Complete' : data.remaining,
+        isBuffering: data.isBuffering,
+        ready: data.ready
+      }));
+    };
+
+    const handleDownloadRanges = (_: any, data: any) => {
+      if (!isMounted.current) return;
+      
+      // Update the store with the new ranges and progress
+      setTorrentRanges(data.ranges);
+      setTorrentProgress(data.progress);
+
+      // Update state with file-specific progress info if needed
+      setState(prev => ({
+        ...prev,
+        fileProgress: data.fileProgress,
+        progress: Math.round(data.progress * 100 * 100) / 100
+      }));
+    };
+
+    const handleServerDone = (_: any, data: any) => {
+      setState(prev => ({
+        ...prev,
+        url: data.url,
+        ready: true
+      }));
+    };
+
+    const handleError = (_: any, error: any) => {
+      log.error('Torrent error:', error);
+      setState(prev => ({
+        ...prev,
+        error: error.message || 'Unknown error occurred',
+        isBuffering: false
+      }));
+
+      // Retry on specific errors
+      if (retryCount < MAX_RETRIES && error.message?.includes('Invalid torrent')) {
+        setTimeout(() => setRetryCount(prev => prev + 1), RETRY_DELAY);
+      }
+    };
+
+    // Subscribe to events
+    window.api.torrent.onProgress.subscribe(handleProgress);
+    window.api.torrent.onDownloadRanges.subscribe(handleDownloadRanges);
+    window.api.torrent.onServerDone.subscribe(handleServerDone);
+    window.api.torrent.onError.subscribe(handleError);
+
+    // Start torrent with a small delay to avoid race conditions
+    const timeoutId = setTimeout(() => startTorrent(), 100);
+
+    // Cleanup
+    return () => {
+      clearTimeout(timeoutId);
+      window.api.torrent.onProgress.unsubscribe(handleProgress);
+      window.api.torrent.onDownloadRanges.unsubscribe(handleDownloadRanges);
+      window.api.torrent.onServerDone.unsubscribe(handleServerDone);
+      window.api.torrent.onError.unsubscribe(handleError);
+      
+      // Only destroy if we're unmounting
+      if (!isMounted.current) {
+        window.api.addTorrent('destroy');
+      }
+      setState(INITIAL_STATE);
+    };
+  }, [torrentId, startTorrent]);
+
+  return state;
+};
 
 export default useTorrentStream;

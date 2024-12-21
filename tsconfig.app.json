@@ -28,7 +28,8 @@
       "@hooks/*": ["./app/hooks/*"],
       "@constants/*": ["app/shared/constants/*"],
       "@components/*": ["app/shared/components/*"],
-      "@context/*": ["app/context/*"]
+      "@context/*": ["app/context/*"],
+      "@stores/*": ["app/stores/*"]
     }
   }
 }

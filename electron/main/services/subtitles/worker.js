@@ -4,6 +4,12 @@ import path from 'path';
 import log from 'electron-log';
 
 async function parseSubtitles(filePath) {
+
+  if (!fs.existsSync(filePath)) {
+    log.error('File not found:', filePath);
+    throw new Error('File not found: ' + path.basename(filePath));
+  }
+
   const { default: Metadata } = await import('matroska-metadata');
   log.info('Initializing parser for file:', path.basename(filePath));
 
@@ -35,7 +41,7 @@ async function parseSubtitles(filePath) {
 
     if (file.name.endsWith('.mkv') || file.name.endsWith('.webm')) {
       const fileStream = file[Symbol.asyncIterator]();
-      await processStream(metadata, fileStream);
+      await processStream(metadata, fileStream).catch(() => {});
       return subtitles;
     } else {
       throw new Error('Unsupported file format: ' + file.name);
@@ -47,40 +53,44 @@ async function parseSubtitles(filePath) {
 }
 
 async function processStream(metadata, fileStream) {
-  try {
-    for await (const chunk of metadata.parseStream(fileStream)) {
-      // Process chunks
-    }
-  } catch (error) {
-    log.warn('Error parsing subtitle chunk:', error);
-    // Continue processing despite errors
+  for await (const chunk of metadata.parseStream(fileStream)) {
+    // Process chunks
   }
 }
 
 // Message handler
 parentPort?.on('message', async ({ filePath }) => {
   log.info('Subtitle worker received file:', filePath);
+  
+  // Add validation for filePath
+  if (!filePath) {
+    log.error('No file path provided to worker');
+    parentPort?.postMessage({
+      type: 'error',
+      error: 'No file path provided'
+    });
+    return;
+  }
+
   try {
     const allSubtitles = await parseSubtitles(filePath);
+    
+    // Validate subtitles result
+    if (!allSubtitles || Object.keys(allSubtitles).length === 0) {
+      throw new Error('No subtitles found in file');
+    }
 
-    // Filter subtitles to only include Spanish tracks
-    const spanishSubtitles = Object.fromEntries(
-      Object.entries(allSubtitles).filter(
-        ([_, data]) => data.track.language === 'spa'
-      )
-    );
-
-    log.info('Spanish subtitles extracted successfully');
-
+    log.info('Subtitles extracted successfully:', Object.keys(allSubtitles).length, 'tracks found');
+    
     parentPort?.postMessage({
       type: 'complete',
-      data: spanishSubtitles,
+      data: allSubtitles,
     });
   } catch (error) {
     log.error('Subtitle extraction failed:', error);
     parentPort?.postMessage({
       type: 'error',
-      error: error.message,
+      error: error.message || 'Unknown error in subtitle worker'
     });
   }
 });

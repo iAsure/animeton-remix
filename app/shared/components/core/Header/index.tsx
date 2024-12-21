@@ -1,23 +1,41 @@
 import { Icon } from '@iconify/react';
 import { Divider, Skeleton, Tooltip } from '@nextui-org/react';
-import { useNavigate } from '@remix-run/react';
-import { useState } from 'react';
+import { useNavigate, useLocation } from '@remix-run/react';
+import { useCallback, useEffect } from 'react';
 
-import { useHeaderNavigation } from '@/hooks/useHeaderNavigation';
-import { useHeaderTitle } from '@/hooks/useHeaderTitle';
-import { useWindowControls } from '@/hooks/useWindowControls';
-import { useUpdateDownload } from '@/hooks/useUpdateDownload';
+import useHeaderNavigation from '@hooks/useHeaderNavigation';
+import useHeaderTitle from '@hooks/useHeaderTitle';
+import useWindowControls from '@hooks/useWindowControls';
+import useUpdateDownload from '@hooks/useUpdateDownload';
+import useDiscordUser from '@hooks/useDiscordUser';
 
-import { useModal } from '@/context/ModalContext';
+import { useModal } from '@context/ModalContext';
+import { useConfig } from '@context/ConfigContext';
+
+import useSearchStore from '@stores/search';
+import usePlayerStore from '@stores/player';
 
 import ClosedBetaModal from '@components/modals/ClosedBeta';
 import NewBadge from '@components/decoration/NewBadge';
+import SearchInput from '@components/core/SearchInput';
+import UserBadge from '@components/core/Header/UserBadge';
 
 const isPlayerRoute = (path: string) => path.includes('/player');
 import { version as appVersion } from '../../../../../package.json';
+import { debounce } from '@/shared/lib/utils';
 
 const Header = () => {
+  const { searchTerm, setSearchTerm } = useSearchStore();
+  const { isMouseMoving } = usePlayerStore();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const { openModal } = useModal();
+  const { config } = useConfig();
+
+  const { data: userData, isLoading: isLoadingUserData } = useDiscordUser(
+    config?.user?.discordId
+  );
 
   const { isMaximized, handleWindowControl } = useWindowControls();
   const {
@@ -29,14 +47,36 @@ const Header = () => {
     handleForward,
     handleHome,
     currentPath,
-    searchTerm,
-    setSearchTerm,
   } = useHeaderNavigation();
   const { headerTitle } = useHeaderTitle();
   const { updateDownloaded, handleUpdateClick } = useUpdateDownload();
-  const { openModal } = useModal();
 
-  const [opacity, setOpacity] = useState(1);
+  // Efficient debounced search handler
+  const debouncedNavigateOnSearch = useCallback(
+    debounce(() => {
+      if (currentPath !== '/popular-anime') {
+        navigate('/popular-anime', { viewTransition: true });
+      }
+    }, 500),
+    [currentPath]
+  );
+
+  const handleSearchChange = (term) => {
+    debouncedNavigateOnSearch();
+    setSearchTerm(term);
+  };
+
+  useEffect(() => {
+    const currentPath = location.pathname;
+
+    const handleSearchTermChanged = (term) => {
+      if (term && currentPath !== '/popular-anime') {
+        navigate('/popular-anime', { viewTransition: true });
+      }
+    };
+
+    handleSearchTermChanged(searchTerm);
+  }, [location, searchTerm]);
 
   const handleClosedBeta = () => {
     openModal('closed-beta', ({ onClose }) => (
@@ -44,25 +84,14 @@ const Header = () => {
     ));
   };
 
-  const appIsActivated = true;
-  const appUserDiscordId = '1234567890';
-  const appIsBlocked = false;
-  const isLoadingUserData = false;
-  const userData = {
-    discord: {
-      avatarURL: 'https://placehold.co/400x400.png',
-      username: 'John Doe',
-    },
-    user: {
-      coins: 100,
-    },
-  };
+  const appIsActivated = config?.user?.activationKey;
+  const appUserDiscordId = config?.user?.discordId;
 
   return (
     <div
       className="header webkit-app-region-drag"
       style={{
-        opacity,
+        opacity: isPlayerRoute(currentPath) && !isMouseMoving ? 0 : 1,
         transition: 'opacity 0.3s ease-in-out',
         zIndex: 9999,
       }}
@@ -77,6 +106,7 @@ const Header = () => {
             <div className="flex flex-row items-center webkit-app-region-no-drag">
               <button
                 onClick={handleHome}
+                disabled={isHome}
                 className={`focus:outline-none p-1 hover:bg-zinc-800 rounded`}
                 style={{ zIndex: 9999 }}
               >
@@ -91,6 +121,7 @@ const Header = () => {
               </button>
               <button
                 onClick={handleBack}
+                disabled={!canGoBack}
                 className={`focus:outline-none p-1 hover:bg-zinc-800 rounded ${
                   canGoBack ? 'cursor-pointer' : 'cursor-default'
                 }`}
@@ -127,12 +158,12 @@ const Header = () => {
             <Divider orientation="vertical" className="bg-zinc-800 h-6 mr-1" />
 
             {/* Search Input */}
-            {/* {!isPlayerRoute(currentPath) && appIsActivated && !appIsBlocked && (
+            {!isPlayerRoute(currentPath) && appIsActivated && (
               <SearchInput
                 searchTerm={searchTerm}
                 setSearchTerm={handleSearchChange}
               />
-            )} */}
+            )}
           </div>
 
           {/* Center Content: Navigation Links + Logo */}
@@ -142,7 +173,9 @@ const Header = () => {
             <NewBadge>
               <button
                 className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2 webkit-app-region-no-drag"
-                onClick={() => navigate('/popular-anime', { viewTransition: true })}
+                onClick={() =>
+                  navigate('/popular-anime', { viewTransition: true })
+                }
               >
                 <Icon
                   icon="gravity-ui:star"
@@ -198,7 +231,9 @@ const Header = () => {
             <NewBadge>
               <button
                 className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2 webkit-app-region-no-drag"
-                onClick={() => navigate('/latest-episodes', { viewTransition: true })}
+                onClick={() =>
+                  navigate('/latest-episodes', { viewTransition: true })
+                }
               >
                 <Icon
                   icon="majesticons:megaphone-line"
@@ -214,37 +249,8 @@ const Header = () => {
           {/* Window Controls and Discord User */}
           <div className="flex flex-row items-center gap-4 justify-end">
             {/* Discord User */}
-            {appIsActivated && appUserDiscordId && !appIsBlocked && (
-              <div className="flex items-center gap-3 bg-zinc-900/50 rounded-full px-3 py-1.5 webkit-app-region-no-drag">
-                {isLoadingUserData ? (
-                  <Skeleton className="w-24" />
-                ) : (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <img
-                        src={userData?.discord?.avatarURL}
-                        alt={userData?.discord?.username}
-                        className="w-6 h-6 rounded-full"
-                      />
-                      <span className="text-white text-sm font-medium">
-                        {userData?.discord?.username}
-                      </span>
-                    </div>
-                    <Tooltip content="¡Consigue mas interactuando en discord!">
-                      <div className="flex items-center gap-1 bg-zinc-800/80 rounded-full px-2 py-0.5">
-                        <img
-                          src={'icons/coin.png'}
-                          alt="coin"
-                          className="w-3.5 h-3.5"
-                        />
-                        <span className="text-white text-xs font-medium">
-                          {userData?.user?.coins || 0}
-                        </span>
-                      </div>
-                    </Tooltip>
-                  </>
-                )}
-              </div>
+            {appIsActivated && appUserDiscordId && (
+              <UserBadge discordId={appUserDiscordId} />
             )}
 
             {updateDownloaded && (

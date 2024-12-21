@@ -1,4 +1,5 @@
 import { memo, useState } from 'react';
+import { useNavigate } from '@remix-run/react';
 
 import EpisodeCard from './episode';
 import EpisodeCardSkeleton from './skeleton';
@@ -11,6 +12,8 @@ interface EpisodesListProps {
 }
 
 const EpisodesList = memo(({ episodesData, isLoading, animeColors, textColor }: EpisodesListProps) => {
+  const navigate = useNavigate();
+  
   const [loadingEpisodeId, setLoadingEpisodeId] = useState<string | null>(null);
 
   const isWithinLastSixDays = (dateStr?: string): boolean => {
@@ -35,17 +38,11 @@ const EpisodesList = memo(({ episodesData, isLoading, animeColors, textColor }: 
   });
 
   const handlePlay = (episode) => {
-    // const infoHash = episode?.torrent?.hash;
-    // if (!infoHash) {
-    //   return sendNotification(state, { message: 'Episodio no disponible.' });
-    // }
+    const infoHash = episode?.torrent?.hash;
 
-    // if (loadingEpisodeId) {
-    //   return sendNotification(state, { title: 'Wow, espera!', message: 'Ya estamos cargando un episodio.', type: 'alert' });
-    // }
-
-    // setLoadingEpisodeId(infoHash);
-    // TorrentPlayer.playTorrent(episode, state, setLoadingEpisodeId);
+    setLoadingEpisodeId(infoHash);
+    const encodedUrl = encodeURIComponent(episode?.torrent?.torrentUrl);
+    navigate(`/player?url=${encodedUrl}`, { viewTransition: true });
   };
 
   return (

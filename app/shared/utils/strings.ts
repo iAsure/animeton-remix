@@ -62,4 +62,11 @@ export const timeAgo = (dateISO: string) => {
   return `Hace ${quantity} ${key}${quantity !== 1 ? 's' : ''}`;
 };
 
+export const videoFormatTime = (time: number) => {
+  if (!time || isNaN(time)) return '0:00';
+  const minutes = Math.floor(time / 60);
+  const seconds = Math.floor(time % 60);
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};
+
 export const normalize = (title: string) => title.toLowerCase().replace(/[^a-z0-9]/g, '');

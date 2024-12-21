@@ -1,6 +1,6 @@
 {
   "name": "animeton",
-  "version": "0.0.21",
+  "version": "0.1.0",
   "type": "module",
   "description": "Anime torrent player",
   "license": "MIT",
@@ -37,6 +37,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "cross-env": "^7.0.3",
+    "discord-rpc": "^4.0.1",
     "electron-log": "^5.2.2",
     "electron-updater": "^6.3.9",
     "extract-colors": "^4.1.1",
@@ -48,7 +49,8 @@
     "react-dom": "^18.3.1",
     "tailwind-merge": "^2.2.1",
     "tailwindcss": "^3.4.14",
-    "webtorrent": "^2.5.5"
+    "webtorrent": "^2.5.5",
+    "zustand": "^5.0.2"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.6.0",
@@ -84,7 +86,7 @@
     "icon": "public/favicon.ico",
     "copyright": "Copyright © 2024 Tiahui Tech",
     "files": [
-      "electron/**/*",
+      "build/**/*",
       "public/**/*",
       "node_modules/**/*",
       "!node_modules/@nextui-org/*/src/**/*",

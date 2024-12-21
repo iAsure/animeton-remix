@@ -13,13 +13,19 @@ const useAnimesData = ({
   displayCount 
 }: UseAnimesDataProps = {}) => {
   const [animes, setAnimes] = useState<any[] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAnimes = async () => {
+      setIsLoading(true);
+      setError(null);
+      
       try {
         const response = await fetch(`${API_BASE_URL}/anime/list?quantity=${perPage}`);
-        const data = await response.json() as any[];
-
+        if (!response.ok) throw new Error('Failed to fetch anime data');
+        
+        const data = await response.json();
         if (!data) return;
         
         const startIndex = (page - 1) * perPage;
@@ -28,14 +34,16 @@ const useAnimesData = ({
         
         setAnimes(finalData);
       } catch (error) {
-        console.error('Error fetching anime data:', error);
+        setError(error.message || 'Ha ocurrido un error');
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchAnimes();
   }, [page, perPage, displayCount]);
 
-  return animes;
+  return { animes, isLoading, error };
 };
 
 export default useAnimesData;
