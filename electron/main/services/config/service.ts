@@ -26,6 +26,7 @@ export class ConfigService {
         discordId: null,
       },
       features: {
+        downloadIndicator: false,
         subtitlesIndicator: false,
         subtitlesStatus: false,
       },

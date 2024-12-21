@@ -29,7 +29,7 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
     availableSubtitles,
     subtitleRanges,
     torrentRanges,
-    torrentProgress
+    torrentProgress,
   } = usePlayerStore();
   const { config } = useConfig();
 
@@ -199,6 +199,16 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const rangeInput = document.querySelector('input[type="range"]');
+    if (rangeInput) {
+      (rangeInput as HTMLElement).style.setProperty(
+        '--value-percent',
+        volume.toString()
+      );
+    }
+  }, [volume]);
+
   return (
     <div
       className="fixed bottom-0 w-full bg-gradient-to-t from-black/95 via-black/75 to-transparent z-50"
@@ -208,29 +218,22 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
       }}
     >
       {/* Torrent download indicator */}
-      <div className="w-full h-0.5 bg-transparent mb-1">
-        {torrentRanges.map((range, index) => (
-          <div
-            key={`torrent-${index}`}
-            className="absolute h-3"
-            style={{
-              left: `${range.start * 100}%`,
-              width: `${(range.end - range.start) * 100}%`,
-              background: 'linear-gradient(to bottom, rgba(255, 86, 128, 0.7), rgba(0, 0, 0, 0))',
-              cursor: 'pointer',
-            }}
-          />
-        ))}
-        {torrentProgress > 0 && (
-          <div 
-            className="absolute bottom-0 h-0.5 bg-rose-500/50"
-            style={{
-              width: `${torrentProgress * 100}%`,
-              transition: 'width 0.5s ease-out'
-            }}
-          />
-        )}
-      </div>
+      {config?.features?.downloadIndicator && (
+        <div className="w-full h-0.5 bg-transparent mb-4">
+          {torrentRanges.map((range, index) => (
+            <div
+              key={`torrent-${index}`}
+              className="absolute h-3"
+              style={{
+                left: `${range.start * 100}%`,
+                width: `${(range.end - range.start) * 100}%`,
+                background:
+                  'linear-gradient(to bottom, #ff568070, rgba(0, 0, 0, 0))',
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Subtitle ranges indicator */}
       {config?.features?.subtitlesIndicator && (
@@ -257,12 +260,24 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
       >
         <div className="relative w-full h-full">
           <div className="absolute w-full h-full bg-white/20" />
+
+          {torrentProgress > 0 && (
+            <div
+              className="absolute h-full bg-[#ff5680]"
+              style={{
+                width: `${torrentProgress * 100}%`,
+                transition: 'width 0.5s ease-out',
+              }}
+            />
+          )}
+
           <div
-            className="absolute h-full bg-white/60"
+            className="absolute h-full bg-white"
             style={{
               width: `${(currentTime / duration) * 100}%`,
             }}
           />
+
           {/* Updated Draggable handle */}
           <div
             className="absolute w-2 h-2 group-hover:-top-1.5 -top-0.5 bg-white rounded-full shadow-lg transform -translate-x-1/2
@@ -286,7 +301,7 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
         <div className="flex items-center space-x-4">
           <button
             onClick={handlePlayPause}
-            className="p-2 text-white/90 hover:text-white hover:scale-110 transition-all"
+            className="p-2 text-white/90 hover:text-white hover:scale-125 transition-all"
           >
             <Icon
               icon={
@@ -313,7 +328,24 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
               step="0.05"
               value={volume}
               onChange={handleVolumeChange}
-              className="w-24 h-1 bg-white/25 rounded-full appearance-none cursor-pointer"
+              className="w-24 h-1 rounded-full appearance-none cursor-pointer
+               bg-white/25
+               [&::-webkit-slider-runnable-track]:bg-transparent
+               [&::-moz-range-track]:bg-transparent
+               [&::-webkit-slider-thumb]:appearance-none
+               [&::-webkit-slider-thumb]:w-3
+               [&::-webkit-slider-thumb]:h-3
+               [&::-webkit-slider-thumb]:rounded-full
+               [&::-webkit-slider-thumb]:bg-[#ff5680]
+               [&::-moz-range-thumb]:bg-[#ff5680]
+               [&::-moz-range-thumb]:border-none
+               [&::-webkit-progress-value]:bg-[#ff5680]
+               [&::-moz-range-progress]:bg-[#ff5680]
+               relative
+               before:absolute before:h-full before:bg-[#ff5680] 
+               before:rounded-l-full before:content-[''] 
+               before:left-0 before:top-0
+               before:[width:calc(100%*var(--value-percent))]"
             />
           </div>
 

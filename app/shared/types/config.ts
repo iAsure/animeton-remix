@@ -6,6 +6,7 @@ export interface UserConfig {
 export interface AppConfig {
   user: UserConfig;
   features: {
+    downloadIndicator: boolean;
     subtitlesIndicator: boolean;
     subtitlesStatus: boolean;
     [key: string]: boolean;

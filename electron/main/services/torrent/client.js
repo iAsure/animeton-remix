@@ -74,78 +74,14 @@ async function handleTorrent(torrent, instance) {
     data: { url, filePath },
   });
 
+  // Send initial progress for completed torrents
+  if (torrent.progress === 1) {
+    sendProgressUpdate(torrent);
+  }
+
   // Setup progress updates
-  const progressInterval = setInterval(() => {
-    // Calculate downloaded ranges based on file pieces
-    const ranges = [];
-    let lastStart = null;
-    
-    // Get the first file (assuming single file torrent for now)
-    const file = torrent.files[0];
-    const startPiece = file._startPiece;
-    const endPiece = file._endPiece;
-    const numPieces = endPiece - startPiece + 1;
-
-    // Analyze pieces for this specific file
-    for (let piece = startPiece; piece <= endPiece; piece++) {
-      const piecePresent = torrent.bitfield.get(piece);
-      const normalizedPiece = piece - startPiece;
-      
-      if (piecePresent && lastStart === null) {
-        // Start new range
-        lastStart = normalizedPiece / numPieces;
-      } else if (!piecePresent && lastStart !== null) {
-        // End current range
-        ranges.push({
-          start: lastStart,
-          end: normalizedPiece / numPieces
-        });
-        lastStart = null;
-      }
-    }
-
-    // Handle last range if exists
-    if (lastStart !== null) {
-      ranges.push({
-        start: lastStart,
-        end: 1
-      });
-    }
-
-    // Send download ranges
-    process.parentPort?.postMessage({
-      type: IPC_CHANNELS.TORRENT.DOWNLOAD_RANGES,
-      data: {
-        ranges,
-        downloaded: torrent.downloaded,
-        total: torrent.length,
-        progress: torrent.progress,
-        // Add file-specific info
-        fileProgress: {
-          startPiece,
-          endPiece,
-          numPieces,
-          numPiecesPresent: ranges.reduce((acc, range) => 
-            acc + Math.round((range.end - range.start) * numPieces), 0)
-        }
-      },
-    });
-
-    // Regular progress update remains the same
-    process.parentPort?.postMessage({
-      type: IPC_CHANNELS.TORRENT.PROGRESS,
-      data: {
-        numPeers: torrent.numPeers,
-        downloaded: torrent.downloaded,
-        total: torrent.length,
-        progress: torrent.progress,
-        downloadSpeed: torrent.downloadSpeed,
-        uploadSpeed: torrent.uploadSpeed,
-        remaining: torrent.done ? 'Done' : humanizeDuration(torrent.timeRemaining),
-        isBuffering: torrent.progress < 0.01,
-        ready: torrent.progress > 0.01
-      },
-    });
+  progressInterval = setInterval(() => {
+    sendProgressUpdate(torrent);
   }, 500);
 
   // Handle torrent completion
@@ -160,6 +96,86 @@ async function handleTorrent(torrent, instance) {
       await handleMkvSubtitles(filePath);
     }
   });
+}
+
+// Helper function to send progress updates
+function sendProgressUpdate(torrent) {
+  // Calculate ranges for the file
+  const file = torrent.files[0];
+  const startPiece = file._startPiece;
+  const endPiece = file._endPiece;
+  const numPieces = endPiece - startPiece + 1;
+
+  // For completed torrents, send a single full range
+  const ranges =
+    torrent.progress === 1
+      ? [{ start: 0, end: 1 }]
+      : calculateRanges(torrent, startPiece, endPiece, numPieces);
+
+  // Send download ranges
+  process.parentPort?.postMessage({
+    type: IPC_CHANNELS.TORRENT.DOWNLOAD_RANGES,
+    data: {
+      ranges,
+      downloaded: torrent.downloaded,
+      total: torrent.length,
+      progress: torrent.progress,
+      fileProgress: {
+        startPiece,
+        endPiece,
+        numPieces,
+        numPiecesPresent: numPieces, // For completed torrents, all pieces are present
+      },
+    },
+  });
+
+  // Send regular progress update
+  process.parentPort?.postMessage({
+    type: IPC_CHANNELS.TORRENT.PROGRESS,
+    data: {
+      numPeers: torrent.numPeers,
+      downloaded: torrent.downloaded,
+      total: torrent.length,
+      progress: torrent.progress,
+      downloadSpeed: torrent.downloadSpeed,
+      uploadSpeed: torrent.uploadSpeed,
+      remaining: torrent.done
+        ? 'Done'
+        : humanizeDuration(torrent.timeRemaining),
+      isBuffering: torrent.progress < 0.01,
+      ready: torrent.progress > 0.01,
+    },
+  });
+}
+
+// Helper function to calculate ranges for incomplete torrents
+function calculateRanges(torrent, startPiece, endPiece, numPieces) {
+  const ranges = [];
+  let lastStart = null;
+
+  for (let piece = startPiece; piece <= endPiece; piece++) {
+    const piecePresent = torrent.bitfield.get(piece);
+    const normalizedPiece = piece - startPiece;
+
+    if (piecePresent && lastStart === null) {
+      lastStart = normalizedPiece / numPieces;
+    } else if (!piecePresent && lastStart !== null) {
+      ranges.push({
+        start: lastStart,
+        end: normalizedPiece / numPieces,
+      });
+      lastStart = null;
+    }
+  }
+
+  if (lastStart !== null) {
+    ranges.push({
+      start: lastStart,
+      end: 1,
+    });
+  }
+
+  return ranges;
 }
 
 async function verifyDownload(filePath, torrent, maxAttempts = 10) {
