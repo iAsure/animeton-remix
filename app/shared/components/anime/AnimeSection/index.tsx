@@ -121,6 +121,10 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
     const isLoading = searchTerm ? isSearchLoading : false;
     const isEmpty = !displayAnimes?.length;
 
+    const handleViewMore = () => {
+      navigate('/popular-anime', { viewTransition: true });
+    };
+
     return (
       <div
         className={`relative flex flex-col p-8 px-12 ${
@@ -141,7 +145,7 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
 
         {sectionTitle && (
           <button
-            onClick={() => navigate('/popular-anime')}
+            onClick={handleViewMore}
             className="flex flex-row items-center gap-2 mb-6 transition-transform duration-300 hover:-translate-y-1"
           >
             <Icon
@@ -187,7 +191,7 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
         {!isEmpty && showViewMore && (
           <div className="flex flex-col items-center justify-center w-full">
             <button
-              onClick={() => navigate('/popular-anime')}
+              onClick={handleViewMore}
               className="group flex items-center gap-2 mt-6 px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 transition-all duration-300"
             >
               <span className="text-xl font-semibold text-white">Ver más</span>

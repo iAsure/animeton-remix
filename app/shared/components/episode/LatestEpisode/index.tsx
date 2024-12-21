@@ -12,13 +12,6 @@ import useRSSData from '@hooks/useRSSData';
 import EpisodeCard from './episode';
 import EpisodeCardSkeleton from './skeleton';
 
-// Types
-interface Anime {
-  torrent?: {
-    infoHash: string;
-  };
-}
-
 interface LatestEpisodesProps {
   sectionTitle?: string;
   perPage?: number;
@@ -36,7 +29,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
   }) => {
     const navigate = useNavigate();
     const [loadingEpisodeId, setLoadingEpisodeId] = useState<string | null>(
-      null
+      undefined
     );
 
     const { rssAnimes, isLoading, error } = useRSSData({
@@ -58,16 +51,18 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
       }
     }, [error]);
 
-    const handlePlay = (anime: Anime) => {
-      // const infoHash = anime?.torrent?.infoHash;
+    const handlePlay = (anime) => {
+      const infoHash = anime?.torrent?.infoHash;
       // if (!infoHash) {
       //   return sendNotification(state, { message: 'Episodio no disponible.' });
       // }
       // if (loadingEpisodeId) {
       //   return sendNotification(state, { title: 'Wow, espera!', message: 'Ya estamos cargando un episodio.', type: 'alert' });
       // }
-      // setLoadingEpisodeId(infoHash);
+      setLoadingEpisodeId(infoHash);
       // TorrentPlayer.playTorrent(anime, state, setLoadingEpisodeId);
+      const encodedUrl = encodeURIComponent(anime?.torrent?.link);
+      navigate(`/player?url=${encodedUrl}`, { viewTransition: true });
     };
 
     const cardVariants = {
@@ -89,12 +84,11 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
       },
     };
 
-    const renderEpisodeCard = (anime: Anime, index: number) => {
+    const renderEpisodeCard = (anime, index: number) => {
       const card = (
         <EpisodeCard
           anime={anime}
-          isLoading={false}
-          // isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
+          isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
           onPlay={() => handlePlay(anime)}
         />
       );
@@ -122,6 +116,10 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
       );
     };
 
+    const handleViewMore = () => {
+      navigate('/latest-episodes', { viewTransition: true });
+    };
+
     return (
       <div className="relative flex flex-col items-center py-6">
         {/* Background */}
@@ -136,7 +134,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
 
         {sectionTitle && (
           <button
-            onClick={() => navigate('/latest-episodes')}
+            onClick={handleViewMore}
             className="flex flex-row items-center gap-2 mb-6 transition-transform duration-300 hover:-translate-y-1"
           >
             <Icon
@@ -163,7 +161,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
           {showViewMore && (
             <div className="flex flex-col items-center justify-center w-full">
               <button
-                onClick={() => navigate('/latest-episodes')}
+                onClick={handleViewMore}
                 className="group flex items-center gap-2 mt-6 px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 transition-all duration-300"
               >
                 <span className="text-xl font-semibold text-zinc-300">

@@ -23,10 +23,12 @@
     ],
     "paths": {
       "@/*": ["./app/*"],
+      "@shared/*": ["app/shared/*"],
       "@utils/*": ["app/shared/utils/*"],
       "@hooks/*": ["./app/hooks/*"],
       "@constants/*": ["app/shared/constants/*"],
-      "@components/*": ["app/shared/components/*"]
+      "@components/*": ["app/shared/components/*"],
+      "@context/*": ["app/context/*"]
     }
   }
 }

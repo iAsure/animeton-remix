@@ -39,9 +39,7 @@ const AnimeCard: FC<AnimeProps> = memo(({ anime, state, glassStyle }) => {
   const navigate = useNavigate();
 
   const handleAnimeClick = (anime: AnimeProps['anime']) => {
-    navigate(`/anime/${anime.idAnilist}`, {
-      state: { title: anime.title.romaji }
-    });
+    navigate(`/anime/${anime.idAnilist}`, { viewTransition: true });
   };
 
   return (

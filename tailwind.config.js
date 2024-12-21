@@ -15,6 +15,11 @@ module.exports = {
       gridTemplateColumns: {
         'auto-fit': 'repeat(auto-fit, minmax(200px, 220px))',
       },
+      fontFamily: {
+        exo: ['"Exo 2"', 'sans-serif'],
+        poppins: ['"Poppins"', 'sans-serif'],
+        noto: ['"Noto Sans"', 'sans-serif'],
+      },
     },
   },
   plugins: [nextui()],

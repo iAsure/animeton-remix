@@ -1,6 +1,12 @@
 import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardBody, CardFooter, Tooltip } from '@nextui-org/react';
+import {
+  Card,
+  CardHeader,
+  CardBody,
+  CardFooter,
+  Tooltip,
+} from '@nextui-org/react';
 import { Icon } from '@iconify/react';
 
 import { timeAgo } from '@utils/strings';
@@ -55,12 +61,13 @@ interface EpisodeCardProps {
 const EpisodeCard = memo(({ anime, isLoading, onPlay }: EpisodeCardProps) => {
   const navigate = useNavigate();
 
-  const episodeImage = 
-    anime?.episode?.image || 
-    anime?.bannerImage || 
+  const episodeImage =
+    anime?.episode?.image ||
+    anime?.bannerImage ||
     anime?.coverImage?.extraLarge;
 
-  const episodeDuration = anime?.duration || anime?.episode?.runtime || anime?.episode?.length;
+  const episodeDuration =
+    anime?.duration || anime?.episode?.runtime || anime?.episode?.length;
   const episodeTorrentLink = anime?.torrent?.link.toLowerCase();
   const hevcTorrent = anime?.torrentHevc;
 
@@ -75,9 +82,7 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }: EpisodeCardProps) => {
   };
 
   const handleAnimeClick = () => {
-    navigate(`/anime/${anime.idAnilist}`, {
-      state: { title: anime.title.romaji }
-    });
+    navigate(`/anime/${anime.idAnilist}`, { viewTransition: true });
   };
 
   const { animeColors } = useExtractColor(episodeImage);
@@ -87,99 +92,111 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }: EpisodeCardProps) => {
   const cardColor = getNeonColor(animeColors[0]);
 
   return (
-    <div className="w-full">
-      <Card className="flex flex-col relative overflow-hidden rounded-md border border-zinc-900 bg-zinc-950">
-        <CardHeader className="flex flex-col truncate items-start justify-start relative p-3">
-          <div className="flex w-full items-center justify-between">
-            <div className="flex flex-col flex-1 min-w-0">
-              <p className="text-base font-medium truncate w-full cursor-pointer" onClick={handleAnimeClick}>
-                {anime?.title?.romaji}
-              </p>
-              <span className="text-sm text-gray-400">
-                {`Episodio ${anime?.torrent?.episode || anime?.episode?.episodeNumber || anime?.episode?.episode || '??'}`}
-              </span>
-            </div>
-            {hevcTorrent && <Tooltip content="Cargará hasta 3 veces más rápido por usar el códec HEVC" className="bg-zinc-900 text-white" >
-              <Icon
-                icon="akar-icons:thunder"
-                width="26"
-                height="26"
-                style={{ color: 'white' }}
-                className="ml-2 flex-shrink-0"
-              />
-            </Tooltip>}
-            {episodeTorrentLink.includes('(nf)') && (
-              <Tooltip content="Netflix Subs" className="bg-zinc-900 text-white" >
-                <Icon
-                  icon="streamline:netflix"
-                  width="26"
-                  height="26"
-                  style={{ color: 'white' }}
-                  className="ml-2 flex-shrink-0"
-                />
-              </Tooltip>
-            )}
-
-          </div>
-        </CardHeader>
-        <div className="aspect-[16/9] w-full relative transition-transform duration-300 hover:scale-105">
+    <div className="w-full group">
+      <Card className="flex flex-col relative overflow-hidden rounded-md border-1 border-zinc-900 bg-zinc-950/40 transition-all duration-300 hover:scale-[1.02]">
+        <div className="aspect-[16/9] w-full relative">
           <CardBody
-            className="absolute inset-0 p-0 cursor-pointer"
+            className="absolute inset-0 p-0 cursor-pointer z-10"
             onClick={handlePlay}
           >
-            <img
-              src={episodeImage}
-              alt={anime?.title?.romaji}
-              className={`w-full h-full object-cover object-center ${isLoading && 'grayscale'}`}
-              loading="lazy"
-            />
-            <div className="flex flex-row gap-2 bg-slate-950/25 px-1 py-0.5 rounded-md absolute top-2 right-2 z-10">
+            <div className="relative w-full h-full">
+              <img
+                src={episodeImage}
+                alt={anime?.title?.romaji}
+                className="w-full h-full object-cover object-center transition-all duration-300 group-hover:brightness-75"
+                loading="lazy"
+              />
+
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent" />
+            </div>
+
+            <div
+              className="absolute bottom-3 left-3 backdrop-blur-sm bg-zinc-950/20 px-1.5 py-0.5 rounded-lg z-50"
+            >
               <FlagsList subtitles={anime?.torrent?.subtitles} />
             </div>
+
             {isLoading ? (
-              <div className="absolute inset-0 flex items-center justify-center opacity-100 z-30">
+              <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/50 backdrop-blur-sm z-30">
                 <Icon
                   icon="fluent:spinner-ios-16-filled"
-                  width="64"
-                  height="64"
+                  width="48"
+                  height="48"
                   className="animate-spin"
                   style={{ color: cardColor }}
                 />
               </div>
             ) : (
-              <div
-                className="absolute inset-0 flex items-center justify-center opacity-0 transition duration-300 ease-in-out hover:opacity-70 z-30"
-                onClick={handleIconClick}
-              >
-                <Icon
-                  icon="gravity-ui:play-fill"
-                  className="pointer-events-none"
-                  width="64"
-                  height="64"
-                  style={{ color: cardColor }}
-                />
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 bg-zinc-950/30 backdrop-blur-sm transition-all duration-300 group-hover:opacity-100 z-30">
+                <div className="transform transition-all duration-300 group-hover:scale-110">
+                  <Icon
+                    icon="gravity-ui:play-fill"
+                    width="48"
+                    height="48"
+                    style={{ color: cardColor }}
+                  />
+                </div>
               </div>
             )}
           </CardBody>
         </div>
-        <CardFooter className="p-3">
-          <div className="flex justify-between items-center w-full">
-            <div className="flex items-center">
-              <Icon icon="gravity-ui:calendar" />
-              <span className="text-sm text-gray-400 ml-1">
-                {timeAgo(anime?.torrentHevc?.pubDate || anime?.torrent?.pubDate)}
-              </span>
+
+        <div className="p-4 space-y-3">
+          <div className="space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <h3
+                className="text-base font-medium line-clamp-1 hover:text-[#ff5680] cursor-pointer transition-colors z-30"
+                onClick={handleAnimeClick}
+              >
+                {anime?.title?.romaji}
+              </h3>
+              <div className="flex gap-2">
+                {hevcTorrent && (
+                  <Tooltip content="Cargará hasta 3 veces más rápido por usar el códec HEVC">
+                    <Icon
+                      icon="akar-icons:thunder"
+                      className="w-5 h-5 text-primary-400"
+                    />
+                  </Tooltip>
+                )}
+                {episodeTorrentLink.includes('(nf)') && (
+                  <Tooltip content="Netflix Subs">
+                    <Icon
+                      icon="streamline:netflix"
+                      className="w-5 h-5 text-red-500"
+                    />
+                  </Tooltip>
+                )}
+              </div>
             </div>
-            {episodeDuration && (
-              <div className="flex items-center">
-                <Icon icon="gravity-ui:clock" />
-                <span className="text-sm text-gray-400 ml-1">
-                  {`${episodeDuration} mins`}
+            <p className="text-sm text-gray-400 transition-opacity duration-100 group-hover:opacity-0">
+              Episodio{' '}
+              {anime?.torrent?.episode ||
+                anime?.episode?.episodeNumber ||
+                anime?.episode?.episode ||
+                '??'}
+            </p>
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-zinc-950/90 to-transparent opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+            <div className="flex justify-between items-center text-sm text-gray-300">
+              <div className="flex items-center gap-1.5">
+                <Icon icon="gravity-ui:calendar" className="w-4 h-4" />
+                <span>
+                  {timeAgo(
+                    anime?.torrentHevc?.pubDate || anime?.torrent?.pubDate
+                  )}
                 </span>
               </div>
-            )}
+              {episodeDuration && (
+                <div className="flex items-center gap-1.5">
+                  <Icon icon="gravity-ui:clock" className="w-4 h-4" />
+                  <span>{episodeDuration} mins</span>
+                </div>
+              )}
+            </div>
           </div>
-        </CardFooter>
+        </div>
       </Card>
     </div>
   );

@@ -8,10 +8,13 @@ import { useHeaderTitle } from '@/hooks/useHeaderTitle';
 import { useWindowControls } from '@/hooks/useWindowControls';
 import { useUpdateDownload } from '@/hooks/useUpdateDownload';
 
+import { useModal } from '@/context/ModalContext';
+
+import ClosedBetaModal from '@components/modals/ClosedBeta';
 import NewBadge from '@components/decoration/NewBadge';
 
 const isPlayerRoute = (path: string) => path.includes('/player');
-import { version as appVersion } from '../../../../package.json';
+import { version as appVersion } from '../../../../../package.json';
 
 const Header = () => {
   const navigate = useNavigate();
@@ -31,10 +34,15 @@ const Header = () => {
   } = useHeaderNavigation();
   const { headerTitle } = useHeaderTitle();
   const { updateDownloaded, handleUpdateClick } = useUpdateDownload();
+  const { openModal } = useModal();
 
   const [opacity, setOpacity] = useState(1);
 
-  const handleClosedBeta = () => {};
+  const handleClosedBeta = () => {
+    openModal('closed-beta', ({ onClose }) => (
+      <ClosedBetaModal onClose={onClose} />
+    ));
+  };
 
   const appIsActivated = true;
   const appUserDiscordId = '1234567890';
@@ -134,7 +142,7 @@ const Header = () => {
             <NewBadge>
               <button
                 className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2 webkit-app-region-no-drag"
-                onClick={() => navigate('/popular-anime')}
+                onClick={() => navigate('/popular-anime', { viewTransition: true })}
               >
                 <Icon
                   icon="gravity-ui:star"
@@ -155,29 +163,29 @@ const Header = () => {
             >
               <p
                 onClick={handleHome}
-                className="text-white font-bold text-2xl leading-none"
+                className="text-white font-bold font-exo text-2xl leading-none"
                 style={{ cursor: canGoHome ? 'pointer' : 'default' }}
               >
-                Animeton
+                ANIMETON
               </p>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 text-xs">
                 <span
                   onClick={
                     isPlayerRoute(currentPath) ? handleHome : handleClosedBeta
                   }
-                  className="text-zinc-400 text-xs mt-1 leading-none"
+                  className="text-zinc-400 mt-1 leading-none"
                   style={{ cursor: 'pointer' }}
                 >
                   {headerTitle}
                 </span>
-                <span className="text-zinc-500 text-xs mt-1 cursor-pointer">
+                <span className="text-zinc-500 mt-1 cursor-pointer">
                   {' - '}
                 </span>
                 <span
                   onClick={
                     isPlayerRoute(currentPath) ? handleHome : handleClosedBeta
                   }
-                  className="text-zinc-400 text-xs mt-1 cursor-pointer"
+                  className="text-zinc-400 mt-1 cursor-pointer"
                 >
                   v{appVersion}
                 </span>
@@ -190,7 +198,7 @@ const Header = () => {
             <NewBadge>
               <button
                 className="text-white focus:outline-none p-1 hover:bg-zinc-800 rounded text-sm font-semibold flex items-center gap-2 webkit-app-region-no-drag"
-                onClick={() => navigate('/latest-episodes')}
+                onClick={() => navigate('/latest-episodes', { viewTransition: true })}
               >
                 <Icon
                   icon="majesticons:megaphone-line"
