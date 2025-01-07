@@ -13,6 +13,9 @@ const createEventHandler = (channel) => ({
   );
 
   const electron = {
+    env: {
+      POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
+    },
     ipc: {
       send: (channel, data) => ipcRenderer.send(channel, data),
       invoke: (channel, data) => ipcRenderer.invoke(channel, data),

@@ -6,28 +6,33 @@ import { PostHogProvider } from 'posthog-js/react';
 import { ModalProvider } from '@context/ModalContext';
 import { ConfigProvider } from '@context/ConfigContext';
 
-const POSTHOG_CONFIG = {
-  apiKey: 'phc_T5wad1TWciA187DmTuXur4wikGDfFPV6LzEDYXx9Vw',
-  options: {
-    api_host: 'https://us.i.posthog.com',
-  },
-};
-
 const AppProviders = ({ children }: PropsWithChildren) => {
   const [isClient, setIsClient] = useState(false);
+  const [posthogConfig, setPosthogConfig] = useState<{apiKey?: string, options: any}>({
+    apiKey: undefined,
+    options: {
+      api_host: 'https://us.i.posthog.com',
+    },
+  });
 
   useEffect(() => {
     setIsClient(true);
+    setPosthogConfig({
+      apiKey: window.electron?.env?.POSTHOG_API_KEY,
+      options: {
+        api_host: 'https://us.i.posthog.com',
+      },
+    });
   }, []);
 
   return (
     <NextUIProvider>
       <ConfigProvider>
         <ModalProvider>
-          {isClient ? (
+          {isClient && posthogConfig.apiKey ? (
             <PostHogProvider
-              apiKey={POSTHOG_CONFIG.apiKey}
-              options={POSTHOG_CONFIG.options}
+              apiKey={posthogConfig.apiKey}
+              options={posthogConfig.options}
             >
               {children}
             </PostHogProvider>
