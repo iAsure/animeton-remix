@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-ipcRenderer.setMaxListeners(20);
+ipcRenderer.setMaxListeners(0);
 
 const createEventHandler = (channel) => ({
   subscribe: (callback) => ipcRenderer.on(channel, callback),
@@ -30,6 +30,12 @@ const createEventHandler = (channel) => ({
         torrentId,
       });
     },
+    
+    checkTorrentServer: () => {
+      ipcRenderer.send(IPC_CHANNELS.TORRENT.ADD, {
+        action: 'check-server'
+      });
+    },
 
     torrent: {
       onProgress: createEventHandler(IPC_CHANNELS.TORRENT.PROGRESS),
@@ -39,6 +45,8 @@ const createEventHandler = (channel) => ({
       onError: createEventHandler(IPC_CHANNELS.TORRENT.ERROR),
       onMkvProcess: createEventHandler(IPC_CHANNELS.TORRENT.MKV_PROCESS),
       onDownloadRanges: createEventHandler(IPC_CHANNELS.TORRENT.DOWNLOAD_RANGES),
+      onServerStatus: createEventHandler(IPC_CHANNELS.TORRENT.SERVER_STATUS),
+      onWarning: createEventHandler(IPC_CHANNELS.TORRENT.WARNING),
     },
 
     subtitles: {

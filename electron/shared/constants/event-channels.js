@@ -9,6 +9,8 @@ export const IPC_CHANNELS = {
     MKV_PROCESS: 'process-mkv',
     MKV_ERROR: 'process-mkv-error',
     DOWNLOAD_RANGES: 'torrent-download-ranges',
+    SERVER_STATUS: 'torrent-server-status',
+    WARNING: 'torrent-warning',
   },
   SUBTITLES: {
     EXTRACT: 'extract-subtitles',

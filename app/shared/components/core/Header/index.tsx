@@ -1,18 +1,16 @@
 import { Icon } from '@iconify/react';
-import { Divider, Skeleton, Tooltip } from '@nextui-org/react';
-import { useNavigate, useLocation } from '@remix-run/react';
-import { useCallback, useEffect } from 'react';
+import { Divider } from '@nextui-org/react';
+import { useNavigate } from '@remix-run/react';
 
 import useHeaderNavigation from '@hooks/useHeaderNavigation';
 import useHeaderTitle from '@hooks/useHeaderTitle';
 import useWindowControls from '@hooks/useWindowControls';
 import useUpdateDownload from '@hooks/useUpdateDownload';
-import useDiscordUser from '@hooks/useDiscordUser';
+import useAnimeSearch from '@hooks/useAnimeSearch';
 
 import { useModal } from '@context/ModalContext';
 import { useConfig } from '@context/ConfigContext';
 
-import useSearchStore from '@stores/search';
 import usePlayerStore from '@stores/player';
 
 import ClosedBetaModal from '@components/modals/ClosedBeta';
@@ -25,17 +23,12 @@ import { version as appVersion } from '../../../../../package.json';
 import { debounce } from '@/shared/lib/utils';
 
 const Header = () => {
-  const { searchTerm, setSearchTerm } = useSearchStore();
+  const { searchTerm, setSearchTerm, resetSearch } = useAnimeSearch();
   const { isMouseMoving } = usePlayerStore();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const { openModal } = useModal();
   const { config } = useConfig();
-
-  const { data: userData, isLoading: isLoadingUserData } = useDiscordUser(
-    config?.user?.discordId
-  );
 
   const { isMaximized, handleWindowControl } = useWindowControls();
   const {
@@ -50,33 +43,6 @@ const Header = () => {
   } = useHeaderNavigation();
   const { headerTitle } = useHeaderTitle();
   const { updateDownloaded, handleUpdateClick } = useUpdateDownload();
-
-  // Efficient debounced search handler
-  const debouncedNavigateOnSearch = useCallback(
-    debounce(() => {
-      if (currentPath !== '/popular-anime') {
-        navigate('/popular-anime', { viewTransition: true });
-      }
-    }, 500),
-    [currentPath]
-  );
-
-  const handleSearchChange = (term) => {
-    debouncedNavigateOnSearch();
-    setSearchTerm(term);
-  };
-
-  useEffect(() => {
-    const currentPath = location.pathname;
-
-    const handleSearchTermChanged = (term) => {
-      if (term && currentPath !== '/popular-anime') {
-        navigate('/popular-anime', { viewTransition: true });
-      }
-    };
-
-    handleSearchTermChanged(searchTerm);
-  }, [location, searchTerm]);
 
   const handleClosedBeta = () => {
     openModal('closed-beta', ({ onClose }) => (
@@ -160,8 +126,10 @@ const Header = () => {
             {/* Search Input */}
             {!isPlayerRoute(currentPath) && appIsActivated && (
               <SearchInput
-                searchTerm={searchTerm}
-                setSearchTerm={handleSearchChange}
+                initialValue={searchTerm}
+                onSearch={setSearchTerm}
+                onClear={resetSearch}
+                placeholder="Buscar anime..."
               />
             )}
           </div>

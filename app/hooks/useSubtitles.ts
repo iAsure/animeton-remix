@@ -221,17 +221,25 @@ const useSubtitles = (
     if (!subtitleContent || !duration) return;
     if (extractionState.status === 'completed') return;
 
-    const MAX_ATTEMPTS = 50;
-    const RETRY_TIMEOUT = 10000;
+    const MAX_ATTEMPTS = 100;
+    const BASE_TIMEOUT = 5000;
+    const TIMEOUT_INCREMENT = 500;
+    const ATTEMPTS_PER_INCREMENT = 5;
+    
+    // Calculate dynamic timeout based on attempts
+    const currentRetryTimeout = BASE_TIMEOUT + 
+      Math.floor(extractionState.attempts / ATTEMPTS_PER_INCREMENT) * TIMEOUT_INCREMENT;
+    
     const currentSegments = subtitleRanges.length;
 
     const checkTimer = setInterval(() => {
       const timeSinceLastAttempt = Date.now() - extractionState.lastAttemptTime;
 
-      if (currentSegments === 0 || timeSinceLastAttempt >= RETRY_TIMEOUT) {
+      if (currentSegments === 0 || timeSinceLastAttempt >= currentRetryTimeout) {
         log.info('Checking retry conditions:', {
           attempts: extractionState.attempts,
           maxAttempts: MAX_ATTEMPTS,
+          currentTimeout: currentRetryTimeout,
           hasFilePath: !!videoFilePath,
           currentState: extractionState.status,
           timeSinceLastAttempt,
@@ -255,7 +263,7 @@ const useSubtitles = (
           }));
         }
       }
-    }, RETRY_TIMEOUT);
+    }, currentRetryTimeout);
 
     return () => clearInterval(checkTimer);
   }, [subtitleContent, duration, extractionState, videoFilePath, extractSubtitles, subtitleRanges]);
@@ -267,7 +275,7 @@ const useSubtitles = (
     if (extractionState.status !== 'extracting') return;
 
     const currentSegments = subtitleRanges.length;
-    const REQUIRED_MATCHES = 3;
+    const REQUIRED_MATCHES = 30;
 
     if (currentSegments > 0) {
       const prevSegmentCount = lastSegmentCount ?? 0;

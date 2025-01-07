@@ -44,14 +44,14 @@ const useHeaderNavigation = () => {
       // });
     }
 
-    // Send special event when leaving popular-anime route
     if (wasPreviousPopularAnime && !isCurrentPopularAnime) {
-      setSearchTerm(null);
+      if (currentPath.startsWith('/anime')) {
+        historyRef.current.past = historyRef.current.past.filter(
+          (path) => !isPopularAnimeRoute(path)
+        );
+      }
     }
 
-    // Only update history if:
-    // 1. It's a new route different from the current one
-    // 2. We're not navigating between player routes
     if (
       historyRef.current.current !== currentPath &&
       !(isCurrentPlayer && wasPreviousPlayer)
@@ -73,6 +73,7 @@ const useHeaderNavigation = () => {
       //     method: 'navigation'
       // });
     }
+
     // Update navigation states considering player routes
     const lastNonPlayerPast = [...historyRef.current.past]
       .reverse()

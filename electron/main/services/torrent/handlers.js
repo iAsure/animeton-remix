@@ -30,6 +30,14 @@ export function setupTorrentHandlers(
       mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.ERROR, error);
     },
 
+    // [IPC_CHANNELS.TORRENT.SERVER_STATUS]: (data) => {
+    //   mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.SERVER_STATUS, data);
+    // },
+
+    // [IPC_CHANNELS.TORRENT.WARNING]: (data) => {
+    //   mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.WARNING, data);
+    // },
+
     [IPC_CHANNELS.TORRENT.MKV_PROCESS]: async (data) => {
       log.info('Processing MKV file:', data.filePath);
       mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.MKV_PROCESS, data);

@@ -44,6 +44,8 @@ export interface TorrentApi {
   onError: EventHandler<{ error: string }>;
   onMkvProcess: EventHandler<TorrentMkvProcess>;
   onDownloadRanges: EventHandler<TorrentRangeData>;
+  onServerStatus: EventHandler<{ active: boolean; port?: number }>;
+  onWarning: EventHandler<{ warning: string }>;
 }
 
 export interface SubtitleCue {
@@ -121,6 +123,7 @@ export interface DiscordApi {
 
 export interface Api {
   addTorrent: (torrentId: string) => void;
+  checkTorrentServer: () => void;
   torrent: TorrentApi;
   subtitles: SubtitlesApi;
   shell: ShellApi;

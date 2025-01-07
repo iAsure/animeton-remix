@@ -211,30 +211,12 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
 
   return (
     <div
-      className="fixed bottom-0 w-full bg-gradient-to-t from-black/95 via-black/75 to-transparent z-50"
+      className="fixed bottom-0 w-full bg-gradient-to-t from-black/95 to-transparent z-50"
       style={{
         opacity: isMouseMoving ? 1 : 0,
         transition: 'opacity 0.3s ease-in-out',
       }}
     >
-      {/* Torrent download indicator */}
-      {config?.features?.downloadIndicator && (
-        <div className="w-full h-0.5 bg-transparent mb-4">
-          {torrentRanges.map((range, index) => (
-            <div
-              key={`torrent-${index}`}
-              className="absolute h-3"
-              style={{
-                left: `${range.start * 100}%`,
-                width: `${(range.end - range.start) * 100}%`,
-                background:
-                  'linear-gradient(to bottom, #ff568070, rgba(0, 0, 0, 0))',
-              }}
-            />
-          ))}
-        </div>
-      )}
-
       {/* Subtitle ranges indicator */}
       {config?.features?.subtitlesIndicator && (
         <div className="w-full h-0.5 bg-transparent mb-5">
@@ -261,18 +243,19 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
         <div className="relative w-full h-full">
           <div className="absolute w-full h-full bg-white/20" />
 
-          {torrentProgress > 0 && (
+          {torrentRanges.map((range, index) => (
             <div
-              className="absolute h-full bg-[#ff5680]"
+              key={`progress-${index}`}
+              className="absolute h-full bg-white/50"
               style={{
-                width: `${torrentProgress * 100}%`,
-                transition: 'width 0.5s ease-out',
+                left: `${range.start * 100}%`,
+                width: `${(range.end - range.start) * 100}%`,
               }}
             />
-          )}
+          ))}
 
           <div
-            className="absolute h-full bg-white"
+            className="absolute h-full bg-[#ff5680]"
             style={{
               width: `${(currentTime / duration) * 100}%`,
             }}
@@ -280,7 +263,7 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
 
           {/* Updated Draggable handle */}
           <div
-            className="absolute w-2 h-2 group-hover:-top-1.5 -top-0.5 bg-white rounded-full shadow-lg transform -translate-x-1/2
+            className="absolute w-2 h-2 group-hover:-top-1.5 -top-0.5 bg-[#ff5680] rounded-full shadow-lg transform -translate-x-1/2
                    group-hover:w-4 group-hover:h-4 transition-all duration-200 cursor-grab"
             style={{
               left: `${(currentTime / duration) * 100}%`,

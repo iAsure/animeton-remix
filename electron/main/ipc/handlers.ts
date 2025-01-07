@@ -40,13 +40,13 @@ export async function setupIpcHandlers(
     if (handler) {
       await handler(message.data);
     } else {
-      log.warn('Unknown torrent message type:', message.type);
+      log.warn('Unknown torrent message type:', message);
     }
   });
 
   // Register subtitle extraction handler
   ipcMain.handle(IPC_CHANNELS.SUBTITLES.EXTRACT, async (_, filePath) => {
-    log.info('Main process: Received extract request for:', filePath);
+    log.info('Main process: Received extract request for:', { filePath });
     
     if (!filePath) {
       const error = new Error('No file path provided');
@@ -56,7 +56,6 @@ export async function setupIpcHandlers(
 
     try {
       const result = await subtitlesService.processFile(filePath);
-      log.info('Main process: Extraction result:', result);
       return result;
     } catch (error) {
       log.error('Main process: Extraction failed:', error);

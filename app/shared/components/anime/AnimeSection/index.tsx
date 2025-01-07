@@ -66,18 +66,16 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
     const cardVariants = {
       hidden: {
         opacity: 0,
-        y: 10,
-        scale: 0.98,
+        y: 15,
       },
       visible: {
         opacity: 1,
         y: 0,
-        scale: 1,
         transition: {
           type: 'spring',
-          duration: 0.4,
+          duration: 0.3,
           bounce: 0.1,
-          staggerChildren: 0.07,
+          staggerChildren: 0.03,
         },
       },
     };
@@ -94,7 +92,8 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
           whileInView="visible"
           viewport={{
             once: true,
-            margin: '-20% 0px',
+            margin: '-10% 0px',
+            amount: 0.1,
           }}
           variants={cardVariants}
           className="will-change-transform"

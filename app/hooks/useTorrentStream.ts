@@ -76,6 +76,11 @@ const useTorrentStream = (torrentId: string) => {
     }
   }, [torrentId, retryCount]);
 
+  const checkServerStatus = useCallback(async () => {
+    if (!torrentId) return;
+    window.api.checkTorrentServer();
+  }, [torrentId]);
+
   useEffect(() => {
     if (!torrentId) return;
 
@@ -122,7 +127,7 @@ const useTorrentStream = (torrentId: string) => {
       log.error('Torrent error:', error);
       setState(prev => ({
         ...prev,
-        error: error.message || 'Unknown error occurred',
+        error: error.error || 'Unknown error occurred',
         isBuffering: false
       }));
 
@@ -132,14 +137,33 @@ const useTorrentStream = (torrentId: string) => {
       }
     };
 
+    const handleServerStatus = (_: any, data: any) => {
+      if (!data.active) {
+        // Server is not healthy, retry torrent
+        if (retryCount < MAX_RETRIES) {
+          setTimeout(() => setRetryCount(prev => prev + 1), RETRY_DELAY);
+        } else {
+          setState(prev => ({
+            ...prev,
+            error: 'Torrent server failed to initialize',
+            isBuffering: false
+          }));
+        }
+      }
+    };
+
     // Subscribe to events
     window.api.torrent.onProgress.subscribe(handleProgress);
     window.api.torrent.onDownloadRanges.subscribe(handleDownloadRanges);
     window.api.torrent.onServerDone.subscribe(handleServerDone);
     window.api.torrent.onError.subscribe(handleError);
+    window.api.torrent.onServerStatus.subscribe(handleServerStatus);
 
     // Start torrent with a small delay to avoid race conditions
     const timeoutId = setTimeout(() => startTorrent(), 100);
+
+    // Check server status periodically
+    const statusCheckInterval = setInterval(checkServerStatus, 30000);
 
     // Cleanup
     return () => {
@@ -148,14 +172,16 @@ const useTorrentStream = (torrentId: string) => {
       window.api.torrent.onDownloadRanges.unsubscribe(handleDownloadRanges);
       window.api.torrent.onServerDone.unsubscribe(handleServerDone);
       window.api.torrent.onError.unsubscribe(handleError);
+      window.api.torrent.onServerStatus.unsubscribe(handleServerStatus);
       
       // Only destroy if we're unmounting
       if (!isMounted.current) {
         window.api.addTorrent('destroy');
       }
       setState(INITIAL_STATE);
+      clearInterval(statusCheckInterval);
     };
-  }, [torrentId, startTorrent]);
+  }, [torrentId, startTorrent, checkServerStatus]);
 
   return state;
 };
