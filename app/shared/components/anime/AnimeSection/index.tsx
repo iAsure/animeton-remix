@@ -5,7 +5,7 @@ import { useNavigate } from '@remix-run/react';
 
 import useAnimesData from '@hooks/useAnimesData';
 import useSearchAnimes from '@hooks/useSearchAnimes';
-// import useModernBackground from '../../../hooks/useModernBackground';
+import useModernBackground from '@hooks/useModernBackground';
 
 import AnimeCard from './anime';
 import AnimeCardSkeleton from './skeleton';
@@ -36,7 +36,11 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
   }) => {
     const navigate = useNavigate();
     const [filteredAnimes, setFilteredAnimes] = useState<any[]>([]);
-    const { animes, isLoading: isLoadingAnimes, error: animesError } = useAnimesData({ perPage });
+    const {
+      animes,
+      isLoading: isLoadingAnimes,
+      error: animesError,
+    } = useAnimesData({ perPage });
     const {
       searchAnimes,
       data: searchResults,
@@ -44,12 +48,12 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
       error: searchError,
     } = useSearchAnimes(searchTerm, perPage);
 
-    // const background = useModernBackground({
-    //   primaryColor: '#63e8ff',
-    //   secondaryColor: '#ff9af7',
-    //   disablePattern: true,
-    //   opacity: 0.6
-    // });
+    const background = useModernBackground({
+      primaryColor: '#63e8ff',
+      secondaryColor: '#ff9af7',
+      disablePattern: true,
+      opacity: 0.6,
+    });
 
     useEffect(() => {
       const fetchAnimes = async () => {
@@ -116,7 +120,8 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
       navigate('/popular-anime', { viewTransition: true });
     };
 
-    const isLoadingContent = (searchTerm && isSearchLoading) || (!searchTerm && isLoadingAnimes);
+    const isLoadingContent =
+      (searchTerm && isSearchLoading) || (!searchTerm && isLoadingAnimes);
     const error = searchTerm ? searchError : animesError;
     const hasError = Boolean(error);
     const hasNoResults = !isLoadingContent && !hasError && isEmpty;
@@ -128,16 +133,17 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
         } items-center ${fullScreen ? 'min-h-[calc(100vh-56px)]' : ''}`}
       >
         {/* Background */}
-        {/* {showBackground && (
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url(${background})`,
-            maskImage: 'linear-gradient(to top, black 70%, transparent)',
-            WebkitMaskImage: 'linear-gradient(to top, black 70%, transparent)'
-          }}
-        />
-      )} */}
+        {showBackground && (
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: `url(${background})`,
+              maskImage: 'linear-gradient(to top, black 70%, transparent)',
+              WebkitMaskImage:
+                'linear-gradient(to top, black 70%, transparent)',
+            }}
+          />
+        )}
 
         {sectionTitle && (
           <button

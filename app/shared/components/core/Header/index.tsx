@@ -20,7 +20,6 @@ import UserBadge from '@components/core/Header/UserBadge';
 
 const isPlayerRoute = (path: string) => path.includes('/player');
 import { version as appVersion } from '../../../../../package.json';
-import { debounce } from '@/shared/lib/utils';
 
 const Header = () => {
   const { searchTerm, setSearchTerm, resetSearch } = useAnimeSearch();

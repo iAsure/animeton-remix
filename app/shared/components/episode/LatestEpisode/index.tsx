@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from '@remix-run/react';
 
 import useRSSData from '@hooks/useRSSData';
-// import useModernBackground from '@hooks/useModernBackground';
+import useModernBackground from '@hooks/useModernBackground';
 // import eventBus from '../../../lib/event-bus';
 // import TorrentPlayer from '../../../lib/torrent-player';
 // import { sendNotification } from '../../../lib/errors';
@@ -38,12 +38,12 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
       emptyState: false,
     });
 
-    // const background = useModernBackground({
-    //   primaryColor: '#63e8ff',
-    //   secondaryColor: '#ff9af7',
-    //   disablePattern: true,
-    //   opacity: 0.6
-    // });
+    const background = useModernBackground({
+      primaryColor: '#63e8ff',
+      secondaryColor: '#ff9af7',
+      disablePattern: true,
+      opacity: 0.6,
+    });
 
     useEffect(() => {
       if (error) {
@@ -116,14 +116,14 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
     return (
       <div className="relative flex flex-col items-center py-6">
         {/* Background */}
-        {/* <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{
-          backgroundImage: `url(${background})`,
-          maskImage: 'linear-gradient(to top, black 70%, transparent)',
-          WebkitMaskImage: 'linear-gradient(to top, black 70%, transparent)'
-        }}
-      /> */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: `url(${background})`,
+            maskImage: 'linear-gradient(to top, black 70%, transparent)',
+            WebkitMaskImage: 'linear-gradient(to top, black 70%, transparent)',
+          }}
+        />
 
         {sectionTitle && (
           <button

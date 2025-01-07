@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 
 import useExtractColor from '@hooks/useExtractColor';
-// import useModernBackground from '@hooks/useModernBackground';
+import useModernBackground from '@hooks/useModernBackground';
 import useCanvasRpcFrame from '@hooks/useCanvasRpcFrame';
 import useAnimeDetails from '@hooks/useAnimeDetails';
 
@@ -55,16 +55,17 @@ const AnimeDetails: React.FC<AnimeDetailsProps> = ({ state }) => {
   const { animeColors, textColor } = useExtractColor(animeImage);
   const { animeColors: bannerColors } = useExtractColor(bannerImage);
 
-  //   const backgroundConfig = useMemo(
-  //     () => ({
-  //       primaryColor: animeColors ? animeColors[0] : null,
-  //       secondaryColor: bannerColors ? bannerColors[0] : null,
-  //       opacity: 0.6,
-  //     }),
-  //     [animeColors, bannerColors]
-  //   );
+  const backgroundConfig = useMemo(
+    () => ({
+      primaryColor: animeColors ? animeColors[0] : '#ffffff',
+      secondaryColor: bannerColors ? bannerColors[0] : '#ffffff',
+      disablePattern: true,
+      opacity: 0.6,
+    }),
+    [animeColors, bannerColors]
+  );
 
-  //   const background = useModernBackground(backgroundConfig);
+  const background = useModernBackground(backgroundConfig);
 
   useEffect(() => {
     if (anime && animeColors && bannerColors) {
@@ -91,7 +92,7 @@ const AnimeDetails: React.FC<AnimeDetailsProps> = ({ state }) => {
           anime={anime}
           animeColors={animeColors}
           textColor={textColor}
-          //   background={background}
+          background={background}
         />
         <div className="flex flex-row gap-8 p-8 pt-0 justify-between items-start h-full">
           <AnimeRecommendationsList
