@@ -14,6 +14,7 @@ const useSubtitles = (
   const [subtitlesRenderer, setSubtitlesRenderer] = useState<JASSUB | null>(
     null
   );
+  const [infoHash, setInfoHash] = useState<string | null>(null);
 
   const {
     duration,
@@ -32,7 +33,8 @@ const useSubtitles = (
     setConsecutiveMatches,
     setVideoFilePath,
     setExtractionState,
-    setLastSegmentCount
+    setLastSegmentCount,
+    selectedSubtitleTrack
   } = usePlayerStore();
 
   const initializeSubtitlesRenderer = useCallback(() => {
@@ -85,6 +87,31 @@ const useSubtitles = (
     [loadSubtitles]
   );
 
+  const loadApiSubtitles = (subtitleContent: string) => {
+    const apiSubtitle = {
+      track: {
+        language: 'spa',
+        name: 'Español Latino (API)',
+        default: true,
+        isApiTrack: true
+      },
+      parsedContent: subtitleContent,
+      source: 'api'
+    };
+
+    const currentState = usePlayerStore.getState();
+    const newSubtitles = [
+      apiSubtitle,
+      ...currentState.availableSubtitles.filter(sub => sub.source !== 'api')
+    ];
+
+    usePlayerStore.setState({
+      availableSubtitles: newSubtitles,
+      selectedSubtitleTrack: apiSubtitle,
+      subtitleContent: subtitleContent
+    });
+  };
+
   useEffect(() => {
     const handleSubtitles = (
       _: any,
@@ -93,23 +120,40 @@ const useSubtitles = (
       const subtitlesArray = Object.values(result.data);
       
       if (result.success && subtitlesArray.length > 0) {
-        // Parse all subtitles and store them
         const parsedSubtitles = subtitlesArray.map(subtitle => ({
           ...subtitle,
-          parsedContent: formatAssSubtitles(subtitle)
+          parsedContent: formatAssSubtitles(subtitle),
+          source: 'extractor'
         }));
         
-        setAvailableSubtitles(parsedSubtitles);
+        const currentApiSub = availableSubtitles.find(
+          sub => sub.source === 'api'
+        );
 
-        // Find Spanish/Latin America subtitle
-        const defaultSubtitle = parsedSubtitles.find(
-          sub => sub.track.language === 'spa' || 
-          (sub.track.name && sub.track.name.includes('Lat'))
-        ) || parsedSubtitles[0];
+        const isApiSelected = selectedSubtitleTrack?.source === 'api';
 
-        setSelectedSubtitleTrack(defaultSubtitle);
-        setSubtitleContent(defaultSubtitle.parsedContent);
-        log.info('Subtitles loaded into renderer');
+        const filteredSubtitles = parsedSubtitles.filter(sub => 
+          !(currentApiSub && sub.track.language === 'spa' && 
+            (sub.track.name?.includes('Lat') || !sub.track.name))
+        );
+
+        const newAvailableSubtitles = currentApiSub
+          ? [currentApiSub, ...filteredSubtitles]
+          : filteredSubtitles;
+
+        setAvailableSubtitles(newAvailableSubtitles);
+
+        if (!selectedSubtitleTrack && !isApiSelected) {
+          const defaultSubtitle = filteredSubtitles.find(
+            sub => sub.track.language === 'spa' || 
+            (sub.track.name && sub.track.name.includes('Lat'))
+          ) || filteredSubtitles[0];
+
+          if (defaultSubtitle) {
+            setSelectedSubtitleTrack(defaultSubtitle);
+            setSubtitleContent(defaultSubtitle.parsedContent);
+          }
+        }
       }
     };
 
@@ -124,7 +168,7 @@ const useSubtitles = (
       window.api.subtitles.onExtracted.unsubscribe(handleSubtitles);
       window.api.subtitles.onError.unsubscribe(handleError);
     };
-  }, [loadSubtitles]);
+  }, [availableSubtitles, selectedSubtitleTrack, setSelectedSubtitleTrack, setSubtitleContent]);
 
   useEffect(() => {
     if (subtitleContent !== null && subtitlesRenderer) {
@@ -140,9 +184,10 @@ const useSubtitles = (
 
   // Listen for SERVER_DONE event to get the actual file path
   useEffect(() => {
-    const handleServerDone = (_: any, data: { url: string; filePath: string }) => {
+    const handleServerDone = (_: any, data: { url: string; filePath: string, infoHash: string }) => {
       log.info('Video file path received:', data.filePath);
       setVideoFilePath(data.filePath);
+      setInfoHash(data.infoHash);
     };
 
     window.api.torrent.onServerDone.subscribe(handleServerDone);
@@ -343,6 +388,8 @@ const useSubtitles = (
   return {
     loadSubtitles,
     loadSubtitlesFromFile,
+    loadApiSubtitles,
+    infoHash
   };
 };
 

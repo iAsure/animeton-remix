@@ -289,7 +289,7 @@ async function handleTorrent(torrent, instance) {
 
   process.parentPort?.postMessage({
     type: IPC_CHANNELS.TORRENT.SERVER_DONE,
-    data: { url, filePath },
+    data: { url, filePath, infoHash: torrent.infoHash },
   });
 
   if (torrent.progress === 1) {

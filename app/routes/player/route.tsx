@@ -1,10 +1,11 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, use } from 'react';
 import { useSearchParams } from '@remix-run/react';
 
 import log from 'electron-log';
 
 import useTorrentStream from '@hooks/useTorrentStream';
 import useSubtitles from '@hooks/useSubtitles';
+import useApiSubtitles from '@hooks/useApiSubtitles';
 
 import VideoSpinner from '@components/video/VideoSpinner';
 import VideoControls from '@components/video/VideoControls';
@@ -16,7 +17,7 @@ import usePlayerStore from '@stores/player';
 import { useConfig } from '@context/ConfigContext';
 
 const Player = () => {
-  const { isMouseMoving, setMouseMoving, setIsPlaying, setPlayLastAction, reset } =
+  const { subtitleContent, isMouseMoving, setMouseMoving, setIsPlaying, setPlayLastAction, reset } =
     usePlayerStore();
   const { config } = useConfig();
 
@@ -33,14 +34,28 @@ const Player = () => {
     progress,
     downloadSpeed,
     uploadSpeed,
-    isBuffering: torrentBuffering,
     ready: torrentReady,
     error: torrentError
   } = useTorrentStream(torrentUrl);
 
-  const isBuffering = (torrentBuffering || isLocalBuffering) || !torrentReady;
+  const isLoadingVideo = subtitleContent?.length === 0 && !torrentReady;
 
-  useSubtitles(videoRef, isVideoReady);
+  const { infoHash, loadApiSubtitles } = useSubtitles(videoRef, isVideoReady);
+
+  const { subtitles, fetchSubtitles } = useApiSubtitles(infoHash);
+
+  useEffect(() => {
+    if (subtitles) {
+      loadApiSubtitles(subtitles);
+    }
+  }, [subtitles]);
+
+  useEffect(() => {
+    if (infoHash) {
+      log.info('API_SUBTITLES: Fetching subtitles for infoHash:', infoHash);
+      fetchSubtitles();
+    }
+  }, [infoHash, fetchSubtitles]);
 
   useEffect(() => {
     if (torrentError) {
@@ -128,7 +143,7 @@ const Player = () => {
       {config?.features?.subtitlesStatus && <SubtitleStatus />}
       <VideoPlayPauseOverlay />
       <VideoControls videoRef={videoRef} />
-      {isLocalBuffering && (
+      {isLoadingVideo && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
           <VideoSpinner
             progress={progress}
