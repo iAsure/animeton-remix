@@ -17,6 +17,9 @@ export const IPC_CHANNELS = {
     EXTRACTED: 'subtitles-extracted',
     ERROR: 'subtitles-error',
   },
+  CHAPTERS: {
+    EXTRACTED: 'chapters-extracted',
+  },
   WINDOW: {
     MAXIMIZE: 'window-maximize',
     UNMAXIMIZE: 'window-unmaximize',

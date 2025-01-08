@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useState } from 'react';
 import { Icon } from '@iconify/react';
+import { Button } from '@nextui-org/react';
 
 import usePlayerStore from '@stores/player';
 
@@ -8,12 +9,14 @@ import { useConfig } from '@context/ConfigContext';
 import { videoFormatTime } from '@utils/strings';
 
 import SubtitleSelector from '@components/video/SubtitleSelector';
+import Timeline from '@components/video/Timeline';
 
 interface VideoControlsProps {
   videoRef: React.RefObject<HTMLVideoElement>;
+  chapters: any[];
 }
 
-const VideoControls = ({ videoRef }: VideoControlsProps) => {
+const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
   const {
     isPlaying,
     currentTime,
@@ -29,11 +32,14 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
     availableSubtitles,
     subtitleRanges,
     torrentRanges,
-    torrentProgress,
   } = usePlayerStore();
   const { config } = useConfig();
 
   const [showSubtitleSelector, setShowSubtitleSelector] = useState(false);
+
+  const currentChapter = chapters.find(
+    chapter => currentTime >= chapter.start/1000 && currentTime <= chapter.end/1000
+  );
 
   const handleDragStart = useCallback((e: React.MouseEvent) => {
     document.addEventListener('mousemove', handleDrag);
@@ -209,175 +215,162 @@ const VideoControls = ({ videoRef }: VideoControlsProps) => {
     }
   }, [volume]);
 
+  const handleSkipOpening = () => {
+    const openingChapter = chapters.find(chapter => chapter.text.toLowerCase() === 'opening');
+    if (!openingChapter || !videoRef.current) return;
+    
+    videoRef.current.currentTime = openingChapter.end/1000;
+  };
+
   return (
-    <div
-      className="fixed bottom-0 w-full bg-gradient-to-t from-black/95 to-transparent z-50"
-      style={{
-        opacity: isMouseMoving ? 1 : 0,
-        transition: 'opacity 0.3s ease-in-out',
-      }}
-    >
-      {/* Subtitle ranges indicator */}
-      {config?.features?.subtitlesIndicator && (
-        <div className="w-full h-0.5 bg-transparent mb-5">
-          {subtitleRanges.map((range, index) => (
-            <div
-              key={index}
-              className="absolute h-3"
-              style={{
-                left: `${(range.start / duration) * 100}%`,
-                width: `${((range.end - range.start) / duration) * 100}%`,
-                background:
-                  'linear-gradient(to bottom, rgba(59, 130, 246, 0.7), rgba(0, 0, 0, 0))',
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Progress bar with draggable handle */}
-      <div
-        className="w-full h-1 bg-white/5 hover:h-1.5 transition-all duration-200 cursor-pointer group progress-bar-container"
-        onClick={handleSeek}
+    <>
+      <Button
+        className="fixed right-10 bottom-24 bg-white text-black font-extrabold z-50"
+        onClick={handleSkipOpening}
+        isDisabled={!currentChapter || currentChapter.text.toLowerCase() !== 'opening'}
+        style={{
+          opacity: currentChapter?.text.toLowerCase() === 'opening' ? 1 : 0,
+          transition: 'opacity 0.3s ease-in-out',
+        }}
       >
-        <div className="relative w-full h-full">
-          <div className="absolute w-full h-full bg-white/20" />
+        Saltar intro
+      </Button>
 
-          {torrentRanges.map((range, index) => (
-            <div
-              key={`progress-${index}`}
-              className="absolute h-full bg-white/50"
-              style={{
-                left: `${range.start * 100}%`,
-                width: `${(range.end - range.start) * 100}%`,
-              }}
-            />
-          ))}
-
-          <div
-            className="absolute h-full bg-[#ff5680]"
-            style={{
-              width: `${(currentTime / duration) * 100}%`,
-            }}
-          />
-
-          {/* Updated Draggable handle */}
-          <div
-            className="absolute w-2 h-2 group-hover:-top-1.5 -top-0.5 bg-[#ff5680] rounded-full shadow-lg transform -translate-x-1/2
-                   group-hover:w-4 group-hover:h-4 transition-all duration-200 cursor-grab"
-            style={{
-              left: `${(currentTime / duration) * 100}%`,
-            }}
-            onMouseDown={handleDragStart}
-          />
-          {/* Invisible wider hit area for better UX */}
-          <div
-            className="absolute h-8 w-full -top-3"
-            onMouseDown={handleDragStart}
-          />
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="flex items-center justify-between px-4 h-16">
-        {/* Left controls */}
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={handlePlayPause}
-            className="p-2 text-white/90 hover:text-white hover:scale-125 transition-all"
-          >
-            <Icon
-              icon={
-                isPlaying ? 'fluent:pause-48-filled' : 'fluent:play-48-filled'
-              }
-              className="pointer-events-none"
-              width="32"
-              height="32"
-            />
-          </button>
-
-          {/* Volume control */}
-          <div className="flex items-center space-x-2">
-            <Icon
-              icon="fluent:speaker-2-24-filled"
-              className="text-white/90 pointer-events-none"
-              width="24"
-              height="24"
-            />
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={volume}
-              onChange={handleVolumeChange}
-              className="w-24 h-1 rounded-full appearance-none cursor-pointer
-               bg-white/25
-               [&::-webkit-slider-runnable-track]:bg-transparent
-               [&::-moz-range-track]:bg-transparent
-               [&::-webkit-slider-thumb]:appearance-none
-               [&::-webkit-slider-thumb]:w-3
-               [&::-webkit-slider-thumb]:h-3
-               [&::-webkit-slider-thumb]:rounded-full
-               [&::-webkit-slider-thumb]:bg-[#ff5680]
-               [&::-moz-range-thumb]:bg-[#ff5680]
-               [&::-moz-range-thumb]:border-none
-               [&::-webkit-progress-value]:bg-[#ff5680]
-               [&::-moz-range-progress]:bg-[#ff5680]
-               relative
-               before:absolute before:h-full before:bg-[#ff5680] 
-               before:rounded-l-full before:content-[''] 
-               before:left-0 before:top-0
-               before:[width:calc(100%*var(--value-percent))]"
-            />
+      <div
+        className="fixed bottom-0 w-full bg-gradient-to-t from-black/95 to-transparent z-50"
+        style={{
+          opacity: isMouseMoving ? 1 : 0,
+          transition: 'opacity 0.3s ease-in-out',
+        }}
+      >
+        {/* Subtitle ranges indicator */}
+        {config?.features?.subtitlesIndicator && (
+          <div className="w-full h-0.5 bg-transparent mb-5">
+            {subtitleRanges.map((range, index) => (
+              <div
+                key={index}
+                className="absolute h-3"
+                style={{
+                  left: `${(range.start / duration) * 100}%`,
+                  width: `${((range.end - range.start) / duration) * 100}%`,
+                  background:
+                    'linear-gradient(to bottom, rgba(59, 130, 246, 0.7), rgba(0, 0, 0, 0))',
+                }}
+              />
+            ))}
           </div>
+        )}
 
-          {/* Time display */}
-          <div className="text-white/90 text-sm">
-            {videoFormatTime(currentTime)} / {videoFormatTime(duration)}
-          </div>
-        </div>
+        <Timeline
+          currentTime={currentTime}
+          duration={duration}
+          chapters={chapters}
+          torrentRanges={torrentRanges}
+          onSeek={handleSeek}
+          onDragStart={handleDragStart}
+        />
 
-        {/* Right controls */}
-        <div className="flex items-center space-x-4">
-          {/* Subtitles button */}
-          <div className="relative subtitle-selector-container">
+        {/* Controls */}
+        <div className="flex items-center justify-between px-4 h-16">
+          {/* Left controls */}
+          <div className="flex items-center space-x-4">
             <button
-              className="p-2 text-white/90 hover:text-white transition-all"
-              onClick={() => setShowSubtitleSelector(!showSubtitleSelector)}
-              disabled={availableSubtitles.length === 0}
+              onClick={handlePlayPause}
+              className="p-2 text-white/90 hover:text-white hover:scale-125 transition-all"
             >
               <Icon
-                icon="mingcute:subtitle-fill"
-                className={`pointer-events-none ${
-                  availableSubtitles.length === 0 ? 'opacity-50' : ''
-                }`}
+                icon={
+                  isPlaying ? 'fluent:pause-48-filled' : 'fluent:play-48-filled'
+                }
+                className="pointer-events-none"
+                width="32"
+                height="32"
+              />
+            </button>
+
+            {/* Volume control */}
+            <div className="flex items-center space-x-2">
+              <Icon
+                icon="fluent:speaker-2-24-filled"
+                className="text-white/90 pointer-events-none"
+                width="24"
+                height="24"
+              />
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={volume}
+                onChange={handleVolumeChange}
+                className="w-24 h-1 rounded-full appearance-none cursor-pointer
+                 bg-white/25
+                 [&::-webkit-slider-runnable-track]:bg-transparent
+                 [&::-moz-range-track]:bg-transparent
+                 [&::-webkit-slider-thumb]:appearance-none
+                 [&::-webkit-slider-thumb]:w-3
+                 [&::-webkit-slider-thumb]:h-3
+                 [&::-webkit-slider-thumb]:rounded-full
+                 [&::-webkit-slider-thumb]:bg-[#ff5680]
+                 [&::-moz-range-thumb]:bg-[#ff5680]
+                 [&::-moz-range-thumb]:border-none
+                 [&::-webkit-progress-value]:bg-[#ff5680]
+                 [&::-moz-range-progress]:bg-[#ff5680]
+                 relative
+                 before:absolute before:h-full before:bg-[#ff5680] 
+                 before:rounded-l-full before:content-[''] 
+                 before:left-0 before:top-0
+                 before:[width:calc(100%*var(--value-percent))]"
+              />
+            </div>
+
+            {/* Time display */}
+            <div className="text-white/90 text-sm">
+              {videoFormatTime(currentTime)} / {videoFormatTime(duration)}
+            </div>
+          </div>
+
+          {/* Right controls */}
+          <div className="flex items-center space-x-4">
+            {/* Subtitles button */}
+            <div className="relative subtitle-selector-container">
+              <button
+                className="p-2 text-white/90 hover:text-white transition-all"
+                onClick={() => setShowSubtitleSelector(!showSubtitleSelector)}
+                disabled={availableSubtitles.length === 0}
+              >
+                <Icon
+                  icon="mingcute:subtitle-fill"
+                  className={`pointer-events-none ${
+                    availableSubtitles.length === 0 ? 'opacity-50' : ''
+                  }`}
+                  width="24"
+                  height="24"
+                />
+              </button>
+              {showSubtitleSelector && <SubtitleSelector />}
+            </div>
+
+            {/* Fullscreen button */}
+            <button
+              onClick={handleFullScreen}
+              className="p-2 text-white/90 hover:text-white transition-all"
+            >
+              <Icon
+                icon={
+                  isFullscreen
+                    ? 'mingcute:fullscreen-exit-fill'
+                    : 'mingcute:fullscreen-fill'
+                }
+                className="pointer-events-none"
                 width="24"
                 height="24"
               />
             </button>
-            {showSubtitleSelector && <SubtitleSelector />}
           </div>
-
-          {/* Fullscreen button */}
-          <button
-            onClick={handleFullScreen}
-            className="p-2 text-white/90 hover:text-white transition-all"
-          >
-            <Icon
-              icon={
-                isFullscreen
-                  ? 'mingcute:fullscreen-exit-fill'
-                  : 'mingcute:fullscreen-fill'
-              }
-              className="pointer-events-none"
-              width="24"
-              height="24"
-            />
-          </button>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

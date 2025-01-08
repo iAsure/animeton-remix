@@ -168,3 +168,7 @@ table {
   font-size: 30px;
   margin-top: -3px;
 }
+
+.progress-bar-container {
+  --chapter-clips: 0 0, 100% 0, 100% 100%, 0 100%;
+}

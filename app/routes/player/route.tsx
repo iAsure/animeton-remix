@@ -6,6 +6,7 @@ import log from 'electron-log';
 import useTorrentStream from '@hooks/useTorrentStream';
 import useSubtitles from '@hooks/useSubtitles';
 import useApiSubtitles from '@hooks/useApiSubtitles';
+import useChapters from '@hooks/useChapters';
 
 import VideoSpinner from '@components/video/VideoSpinner';
 import VideoControls from '@components/video/VideoControls';
@@ -37,16 +38,21 @@ const Player = () => {
     ready: torrentReady,
     error: torrentError
   } = useTorrentStream(torrentUrl);
+  const { infoHash, loadApiSubtitles } = useSubtitles(videoRef, isVideoReady);
+  const { subtitles, fetchSubtitles } = useApiSubtitles(infoHash);
+  const { chapters } = useChapters();
+
+  useEffect(() => {
+    if (chapters.length > 0) {
+      console.log('Chapters:', chapters);
+    }
+  }, [chapters]);
 
   const isLoadingVideo = subtitleContent?.length === 0 && !torrentReady;
 
-  const { infoHash, loadApiSubtitles } = useSubtitles(videoRef, isVideoReady);
-
-  const { subtitles, fetchSubtitles } = useApiSubtitles(infoHash);
-
   useEffect(() => {
     if (subtitles) {
-      loadApiSubtitles(subtitles);
+      // loadApiSubtitles(subtitles);
     }
   }, [subtitles]);
 
@@ -142,7 +148,7 @@ const Player = () => {
       />
       {config?.features?.subtitlesStatus && <SubtitleStatus />}
       <VideoPlayPauseOverlay />
-      <VideoControls videoRef={videoRef} />
+      <VideoControls videoRef={videoRef} chapters={chapters} />
       {isLoadingVideo && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
           <VideoSpinner

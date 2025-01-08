@@ -121,6 +121,28 @@ export interface DiscordApi {
   onW2GLink: EventHandler<string>;
 }
 
+export interface Chapter {
+  start: number;
+  end: number;
+  text: string;
+  language: string;
+}
+
+export interface ChaptersResult {
+  success: boolean;
+  data?: Chapter[];
+  error?: string;
+}
+
+export interface MkvMetadata {
+  subtitles: SubtitleTrack[];
+  chapters: Chapter[];
+}
+
+export interface ChaptersApi {
+  onExtracted: EventHandler<ChaptersResult>;
+}
+
 export interface Api {
   addTorrent: (torrentId: string) => void;
   checkTorrentServer: () => void;
@@ -130,4 +152,5 @@ export interface Api {
   config: ConfigApi;
   updater: UpdaterApi;
   discord: DiscordApi;
+  chapters: ChaptersApi;
 }
