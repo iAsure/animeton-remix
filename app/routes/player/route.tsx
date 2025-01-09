@@ -52,7 +52,7 @@ const Player = () => {
 
   useEffect(() => {
     if (subtitles) {
-      // loadApiSubtitles(subtitles);
+      loadApiSubtitles(subtitles);
     }
   }, [subtitles]);
 
