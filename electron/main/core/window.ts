@@ -40,7 +40,12 @@ export async function setupWindow(partition = 'persist:partition'): Promise<Brow
   }
 
   const port = process.env.DEV ? ':5173' : '';
-  await mainWindow.loadURL(`https://remix${port}/`);
+  try {
+    await mainWindow.loadURL(`https://remix${port}/`);
+  } catch (error) {
+    log.error('Failed to load main window:', error);
+    throw error;
+  }
 
   mainWindow.webContents.on('did-finish-load', () => {
     log.info('Main window loaded successfully');

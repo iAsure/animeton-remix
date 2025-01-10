@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from '@remix-run/react';
 
 import useSearchStore from '@stores/search';
 
-import { usePostHog } from 'posthog-js/react';
+import { usePostHog } from '@lib/posthog';
 
 const PLAYER_PATH = '/player';
 const POPULAR_ANIME_PATH = '/popular-anime';

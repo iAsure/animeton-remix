@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { Icon } from '@iconify/react';
 import { Button, Divider, Skeleton } from '@nextui-org/react';
-import { usePostHog } from 'posthog-js/react';
+import { usePostHog } from '@lib/posthog';
 
 import { useConfig } from '@context/ConfigContext';
 import useDiscordUser from '@hooks/useDiscordUser';

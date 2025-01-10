@@ -30,7 +30,8 @@
       "@components/*": ["app/shared/components/*"],
       "@context/*": ["app/context/*"],
       "@stores/*": ["app/stores/*"],
-      "@canvas/*": ["app/shared/canvas/*"]
+      "@canvas/*": ["app/shared/canvas/*"],
+      "@lib/*": ["app/shared/lib/*"]
     }
   }
 }
