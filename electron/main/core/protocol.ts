@@ -23,7 +23,10 @@ export async function setupProtocol(build, viteDevServer) {
 
   ses.protocol.handle('https', async (request) => {
     const url = new URL(request.url);
-    // log.debug(`Handling HTTPS request: ${url.pathname}`);
+
+    if (url.pathname === '/null') {
+      return new Response('Not Found', { status: 404 });
+    }
 
     // Check if URL is external
     const isExternalUrl = url?.hostname !== 'remix';
@@ -34,6 +37,8 @@ export async function setupProtocol(build, viteDevServer) {
         headers: request.headers,
         body: request.body,
         duplex: 'half'
+      }).catch(() => {
+        return new Response('External URL fetch error', { status: 500 });
       });
     }
 
