@@ -6,6 +6,7 @@ import log from 'electron-log';
 
 import useRSSData from '@hooks/useRSSData';
 import useModernBackground from '@hooks/useModernBackground';
+import { useTorrentPlayer } from '@context/TorrentPlayerContext';
 // import eventBus from '../../../lib/event-bus';
 // import TorrentPlayer from '../../../lib/torrent-player';
 // import { sendNotification } from '../../../lib/errors';
@@ -29,6 +30,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
     cardAnimation = false,
   }) => {
     const navigate = useNavigate();
+    const { playTorrent } = useTorrentPlayer();
     const [loadingEpisodeId, setLoadingEpisodeId] = useState<string | null>(
       undefined
     );
@@ -56,8 +58,11 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
       const infoHash = anime?.torrent?.infoHash;
 
       setLoadingEpisodeId(infoHash);
-      const encodedUrl = encodeURIComponent(anime?.torrent?.link);
-      navigate(`/player?url=${encodedUrl}&hash=${infoHash}`, { viewTransition: true });
+      
+      playTorrent({
+        infoHash,
+        link: anime?.torrent?.link,
+      });
     };
 
     const cardVariants = {

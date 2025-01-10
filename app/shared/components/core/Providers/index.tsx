@@ -1,9 +1,12 @@
-"use client";
+'use client';
 
 import { PropsWithChildren, useEffect } from 'react';
 import { NextUIProvider } from '@nextui-org/react';
+
 import { ModalProvider } from '@context/ModalContext';
 import { ConfigProvider } from '@context/ConfigContext';
+import { TorrentPlayerProvider } from '@context/TorrentPlayerContext';
+
 import { initPostHog } from '@lib/posthog';
 
 const AppProviders = ({ children }: PropsWithChildren) => {
@@ -18,7 +21,7 @@ const AppProviders = ({ children }: PropsWithChildren) => {
     <NextUIProvider>
       <ConfigProvider>
         <ModalProvider>
-          {children}
+          <TorrentPlayerProvider>{children}</TorrentPlayerProvider>
         </ModalProvider>
       </ConfigProvider>
     </NextUIProvider>

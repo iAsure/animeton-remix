@@ -2,6 +2,7 @@ import { useState, useEffect, memo } from 'react';
 import { useNavigate } from '@remix-run/react';
 
 import useRSSData from '@hooks/useRSSData';
+import { useTorrentPlayer } from '@context/TorrentPlayerContext';
 
 import Episode from './episode';
 import EpisodeSkeleton from './skeleton';
@@ -13,7 +14,7 @@ interface LatestEpisodesSidebarProps {
 }
 
 const LatestEpisodesSidebar = memo(({ state, bannerColors, sectionTitle }: LatestEpisodesSidebarProps) => {
-  const navigate = useNavigate();
+  const { playTorrent } = useTorrentPlayer();
   const [loadingEpisodeId, setLoadingEpisodeId] = useState<string | null>(null);
 
   const { rssAnimes, isLoading, error } = useRSSData({
@@ -31,8 +32,10 @@ const LatestEpisodesSidebar = memo(({ state, bannerColors, sectionTitle }: Lates
     const infoHash = episode?.torrent?.infoHash;
 
     setLoadingEpisodeId(infoHash);
-    const encodedUrl = encodeURIComponent(episode?.torrent?.link);
-    navigate(`/player?url=${encodedUrl}`, { viewTransition: true });
+    playTorrent({
+      infoHash,
+      link: episode?.torrent?.link,
+    });
   };
 
   return (

@@ -1,5 +1,5 @@
 import { memo, useState } from 'react';
-import { useNavigate } from '@remix-run/react';
+import { useTorrentPlayer } from '@context/TorrentPlayerContext';
 
 import EpisodeCard from './episode';
 import EpisodeCardSkeleton from './skeleton';
@@ -12,7 +12,7 @@ interface EpisodesListProps {
 }
 
 const EpisodesList = memo(({ episodesData, isLoading, animeColors, textColor }: EpisodesListProps) => {
-  const navigate = useNavigate();
+  const { playTorrent } = useTorrentPlayer();
   
   const [loadingEpisodeId, setLoadingEpisodeId] = useState<string | null>(null);
 
@@ -41,8 +41,10 @@ const EpisodesList = memo(({ episodesData, isLoading, animeColors, textColor }: 
     const infoHash = episode?.torrent?.hash;
 
     setLoadingEpisodeId(infoHash);
-    const encodedUrl = encodeURIComponent(episode?.torrent?.torrentUrl);
-    navigate(`/player?url=${encodedUrl}`, { viewTransition: true });
+    playTorrent({
+      infoHash,
+      link: episode?.torrent?.torrentUrl,
+    });
   };
 
   return (
