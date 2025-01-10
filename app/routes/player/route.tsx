@@ -43,13 +43,14 @@ const Player = () => {
   const { subtitles, fetchSubtitles } = useApiSubtitles(infoHash);
   const { chapters } = useChapters();
 
+  const isLoadingVideo = isLocalBuffering || (!subtitleContent?.length && !torrentReady);
+  
   useEffect(() => {
-    if (chapters.length > 0) {
-      console.log('Chapters:', chapters);
-    }
-  }, [chapters]);
-
-  const isLoadingVideo = subtitleContent?.length === 0 && !torrentReady;
+    log.info('isLoadingVideo', isLoadingVideo);
+    log.info('isLocalBuffering', isLocalBuffering);
+    log.info('subtitleContent', subtitleContent);
+    log.info('torrentReady', torrentReady);
+  }, [isLoadingVideo, isLocalBuffering, subtitleContent, torrentReady]);
 
   useEffect(() => {
     if (subtitles) {
@@ -59,7 +60,6 @@ const Player = () => {
 
   useEffect(() => {
     if (infoHash) {
-      log.info('API_SUBTITLES: Fetching subtitles for infoHash:', infoHash);
       fetchSubtitles();
     }
   }, [infoHash, fetchSubtitles]);
