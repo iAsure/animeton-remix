@@ -2,6 +2,7 @@ import { useState, useEffect, memo, Fragment } from 'react';
 import { Icon } from '@iconify/react';
 import { motion } from 'framer-motion';
 import { useNavigate } from '@remix-run/react';
+import log from 'electron-log';
 
 import useRSSData from '@hooks/useRSSData';
 import useModernBackground from '@hooks/useModernBackground';

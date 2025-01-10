@@ -138,6 +138,7 @@ const useTorrentStream = (torrentId: string, torrentHash: string) => {
     };
 
     const handleServerStatus = (_: any, data: any) => {
+      log.info('Torrent server status:', data);
       if (!data.active) {
         // Server is not healthy, retry torrent
         if (retryCount < MAX_RETRIES) {

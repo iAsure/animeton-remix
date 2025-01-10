@@ -30,9 +30,9 @@ export function setupTorrentHandlers(
       mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.ERROR, error);
     },
 
-    // [IPC_CHANNELS.TORRENT.SERVER_STATUS]: (data) => {
-    //   mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.SERVER_STATUS, data);
-    // },
+    [IPC_CHANNELS.TORRENT.SERVER_STATUS]: (data) => {
+      mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.SERVER_STATUS, data);
+    },
 
     // [IPC_CHANNELS.TORRENT.WARNING]: (data) => {
     //   mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.WARNING, data);
