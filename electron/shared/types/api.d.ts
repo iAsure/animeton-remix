@@ -36,7 +36,6 @@ export interface TorrentRangeData {
 }
 
 export interface TorrentApi {
-  addTorrent: (torrentId: string) => void;
   onProgress: EventHandler<TorrentProgress>;
   onDone: EventHandler<void>;
   onServerDone: EventHandler<TorrentServerDone>;
@@ -144,7 +143,7 @@ export interface ChaptersApi {
 }
 
 export interface Api {
-  addTorrent: (torrentId: string) => void;
+  addTorrent: (torrentId: string, torrentHash: string) => void;
   checkTorrentServer: () => void;
   torrent: TorrentApi;
   subtitles: SubtitlesApi;

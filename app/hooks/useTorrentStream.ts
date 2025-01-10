@@ -34,7 +34,7 @@ const INITIAL_STATE: TorrentStreamState = {
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000;
 
-const useTorrentStream = (torrentId: string) => {
+const useTorrentStream = (torrentId: string, torrentHash: string) => {
   const { setTorrentRanges, setTorrentProgress } = usePlayerStore();
   const [state, setState] = useState<TorrentStreamState>(INITIAL_STATE);
   const [retryCount, setRetryCount] = useState(0);
@@ -55,7 +55,7 @@ const useTorrentStream = (torrentId: string) => {
     try {
       log.info('Starting torrent stream', { torrentId, attempt: retryCount + 1 });
       setState(prev => ({ ...prev, error: null, isBuffering: true }));
-      window.api.addTorrent(torrentId);
+      window.api.addTorrent(torrentId, torrentHash);
     } catch (error) {
       if (!isMounted.current) return;
       
@@ -176,7 +176,7 @@ const useTorrentStream = (torrentId: string) => {
       
       // Only destroy if we're unmounting
       if (!isMounted.current) {
-        window.api.addTorrent('destroy');
+        window.api.addTorrent('destroy', torrentHash);
       }
       setState(INITIAL_STATE);
       clearInterval(statusCheckInterval);

@@ -24,6 +24,7 @@ const Player = () => {
 
   const [searchParams] = useSearchParams();
   const torrentUrl = searchParams.get('url');
+  const torrentHash = searchParams.get('hash');
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -37,7 +38,7 @@ const Player = () => {
     uploadSpeed,
     ready: torrentReady,
     error: torrentError
-  } = useTorrentStream(torrentUrl);
+  } = useTorrentStream(torrentUrl, torrentHash);
   const { infoHash, loadApiSubtitles } = useSubtitles(videoRef, isVideoReady);
   const { subtitles, fetchSubtitles } = useApiSubtitles(infoHash);
   const { chapters } = useChapters();

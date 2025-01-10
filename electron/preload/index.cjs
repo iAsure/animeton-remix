@@ -27,10 +27,11 @@ const createEventHandler = (channel) => ({
   };
 
   const api = {
-    addTorrent: (torrentId) => {
+    addTorrent: (torrentId, torrentHash) => {
       ipcRenderer.send(IPC_CHANNELS.TORRENT.ADD, {
         action: torrentId === 'destroy' ? 'destroy' : 'add-torrent',
         torrentId,
+        torrentHash,
       });
     },
     

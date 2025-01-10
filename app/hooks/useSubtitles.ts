@@ -59,6 +59,12 @@ const useSubtitles = (
   }, [videoRef, subtitlesRenderer, isVideoReady]);
 
   useEffect(() => {
+    if (!selectedSubtitleTrack) {
+      loadSubtitles(defaultHeader);
+    }
+  }, [selectedSubtitleTrack]);
+
+  useEffect(() => {
     if (isVideoReady) {
       initializeSubtitlesRenderer();
     }
@@ -129,6 +135,8 @@ const useSubtitles = (
         updatedSubtitle.track.name = 'Ingles';
       } else if (subtitle.track.language === 'spa' && !subtitle.track.name?.includes('Lat')) {
         updatedSubtitle.track.name = 'Español España';
+      } else if (subtitle.track.language === 'spa' && subtitle.track.name?.includes('Lat')) {
+        updatedSubtitle.track.name = 'Español Latino';
       }
       
       return {
@@ -360,7 +368,8 @@ const useSubtitles = (
     if (extractionState.status === 'completed') return;
     if (extractionState.status !== 'extracting') return;
 
-    const currentSegments = subtitleRanges.length;
+    const extractedRanges = usePlayerStore.getState().getExtractedSubtitleRanges();
+    const currentSegments = extractedRanges.length;
     const REQUIRED_MATCHES = 30;
 
     if (currentSegments > 0) {
@@ -383,7 +392,6 @@ const useSubtitles = (
             status: 'completed',
             attempts: extractionState.attempts,
             progress: 100,
-            successfulTracks: availableSubtitles.length,
             lastAttemptTime: extractionState.lastAttemptTime,
           });
 

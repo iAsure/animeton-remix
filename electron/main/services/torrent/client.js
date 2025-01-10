@@ -458,6 +458,13 @@ process.parentPort?.on('message', async (message) => {
         throw new Error('Failed to initialize torrent client');
       }
 
+      const dupTorrent = client.torrents.find(torrent => torrent.infoHash === message.data.torrentHash);
+
+      if (dupTorrent) {
+        log.info('Duplicate torrent found, using existing torrent');
+        return handleTorrent(dupTorrent, instance);
+      }
+
       client.add(message.data.torrentId, { announce: ANNOUNCE }, (torrent) => {
         handleTorrent(torrent, instance).catch((error) => {
           log.error('Error handling torrent:', error);

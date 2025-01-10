@@ -27,10 +27,13 @@ export async function setupIpcHandlers(
   // Register torrent handler
   ipcMain.on(IPC_CHANNELS.TORRENT.ADD, (_, arg) => {
     log.debug('Torrent action received:', arg);
+    const { action, torrentId, torrentHash } = arg;
     const message = {
-      action: arg.action,
-      torrentId: arg.torrentId
+      action,
+      torrentId,
+      torrentHash,
     };
+    
     webTorrentProcess.postMessage(message);
   });
 

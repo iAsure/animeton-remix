@@ -56,7 +56,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
 
       setLoadingEpisodeId(infoHash);
       const encodedUrl = encodeURIComponent(anime?.torrent?.link);
-      navigate(`/player?url=${encodedUrl}`, { viewTransition: true });
+      navigate(`/player?url=${encodedUrl}&hash=${infoHash}`, { viewTransition: true });
     };
 
     const cardVariants = {
