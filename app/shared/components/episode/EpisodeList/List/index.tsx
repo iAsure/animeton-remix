@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo } from 'react';
 import { useTorrentPlayer } from '@context/TorrentPlayerContext';
 
 import EpisodeCard from './episode';
@@ -12,9 +12,7 @@ interface EpisodesListProps {
 }
 
 const EpisodesList = memo(({ episodesData, isLoading, animeColors, textColor }: EpisodesListProps) => {
-  const { playTorrent } = useTorrentPlayer();
-  
-  const [loadingEpisodeId, setLoadingEpisodeId] = useState<string | null>(null);
+  const { playEpisode, loadingHash } = useTorrentPlayer();
 
   const isWithinLastSixDays = (dateStr?: string): boolean => {
     if (!dateStr) return false;
@@ -37,16 +35,6 @@ const EpisodesList = memo(({ episodesData, isLoading, animeColors, textColor }: 
     return 0;
   });
 
-  const handlePlay = (episode) => {
-    const infoHash = episode?.torrent?.hash;
-
-    setLoadingEpisodeId(infoHash);
-    playTorrent({
-      infoHash,
-      link: episode?.torrent?.torrentUrl,
-    });
-  };
-
   return (
     <div className="relative w-full">
       <div className="flex flex-col gap-4 p-4 px-8">
@@ -58,11 +46,11 @@ const EpisodesList = memo(({ episodesData, isLoading, animeColors, textColor }: 
             <EpisodeCard
               episode={episode}
               key={`episode-${episode.episodeNumber}-${i}`}
-              isLoading={loadingEpisodeId === episode?.torrent?.hash}
+              isLoading={loadingHash === episode?.torrent?.hash}
               isNew={isWithinLastSixDays(episode?.torrent?.date)}
               animeColors={animeColors}
               textColor={textColor}
-              onPlay={() => handlePlay(episode)}
+              onPlay={() => playEpisode(episode)}
             />
           ))}
       </div>

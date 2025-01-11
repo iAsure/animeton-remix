@@ -1,15 +1,11 @@
-import { useState, useEffect, memo, Fragment } from 'react';
+import { useEffect, memo, Fragment } from 'react';
 import { Icon } from '@iconify/react';
 import { motion } from 'framer-motion';
 import { useNavigate } from '@remix-run/react';
-import log from 'electron-log';
 
 import useRSSData from '@hooks/useRSSData';
 import useModernBackground from '@hooks/useModernBackground';
 import { useTorrentPlayer } from '@context/TorrentPlayerContext';
-// import eventBus from '../../../lib/event-bus';
-// import TorrentPlayer from '../../../lib/torrent-player';
-// import { sendNotification } from '../../../lib/errors';
 
 import EpisodeCard from './episode';
 import EpisodeCardSkeleton from './skeleton';
@@ -30,10 +26,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
     cardAnimation = false,
   }) => {
     const navigate = useNavigate();
-    const { playTorrent } = useTorrentPlayer();
-    const [loadingEpisodeId, setLoadingEpisodeId] = useState<string | null>(
-      undefined
-    );
+    const { playEpisode, loadingHash } = useTorrentPlayer();
 
     const { rssAnimes, isLoading, error } = useRSSData({
       page: 1,
@@ -53,17 +46,6 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
         // sendNotification(state, { message: error });
       }
     }, [error]);
-
-    const handlePlay = (anime) => {
-      const infoHash = anime?.torrent?.infoHash;
-
-      setLoadingEpisodeId(infoHash);
-      
-      playTorrent({
-        infoHash,
-        link: anime?.torrent?.link,
-      });
-    };
 
     const cardVariants = {
       hidden: {
@@ -86,8 +68,8 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
       const card = (
         <EpisodeCard
           anime={anime}
-          isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
-          onPlay={() => handlePlay(anime)}
+          isLoading={loadingHash === anime?.torrent?.infoHash}
+          onPlay={() => playEpisode(anime)}
         />
       );
 

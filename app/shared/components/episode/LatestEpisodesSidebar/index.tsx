@@ -1,5 +1,4 @@
-import { useState, useEffect, memo } from 'react';
-import { useNavigate } from '@remix-run/react';
+import { useEffect, memo } from 'react';
 
 import useRSSData from '@hooks/useRSSData';
 import { useTorrentPlayer } from '@context/TorrentPlayerContext';
@@ -14,8 +13,7 @@ interface LatestEpisodesSidebarProps {
 }
 
 const LatestEpisodesSidebar = memo(({ state, bannerColors, sectionTitle }: LatestEpisodesSidebarProps) => {
-  const { playTorrent } = useTorrentPlayer();
-  const [loadingEpisodeId, setLoadingEpisodeId] = useState<string | null>(null);
+  const { playEpisode, loadingHash } = useTorrentPlayer();
 
   const { rssAnimes, isLoading, error } = useRSSData({
     page: 1,
@@ -27,16 +25,6 @@ const LatestEpisodesSidebar = memo(({ state, bannerColors, sectionTitle }: Lates
       // sendNotification(state, { message: error });
     }
   }, [error, state]);
-
-  const handlePlay = (episode) => {
-    const infoHash = episode?.torrent?.infoHash;
-
-    setLoadingEpisodeId(infoHash);
-    playTorrent({
-      infoHash,
-      link: episode?.torrent?.link,
-    });
-  };
 
   return (
     <div className="flex flex-col p-4 gap-2 items-start w-80 overflow-hidden">
@@ -53,8 +41,8 @@ const LatestEpisodesSidebar = memo(({ state, bannerColors, sectionTitle }: Lates
             <Episode
               key={`rss-episode-${i}`}
               anime={anime}
-              isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
-              onPlay={() => handlePlay(anime)}
+              isLoading={loadingHash === anime?.torrent?.infoHash}
+              onPlay={() => playEpisode(anime)}
             />
           ))}
       </div>

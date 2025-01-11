@@ -22,12 +22,6 @@ export default function Index() {
   const needActivation =
     !activationKey || (activationKey && !isValid);
 
-  // useEffect(() => {
-  //   if (!needActivation) {
-  //     dispatch('updateDiscordRPC', { details: 'En el inicio' });
-  //   }
-  // }, [needActivation]);
-
   useEffect(() => {
     if (config?.user?.activationKey) {
       validateKey();
