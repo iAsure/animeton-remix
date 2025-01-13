@@ -8,7 +8,7 @@ export interface Notification {
   id: string
   message: string
   type: NotificationType
-  duration?: number
+  duration?: number | null
   title?: string
 }
 
@@ -37,11 +37,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const showNotification = useCallback(
     ({ message, type, duration = NOTIFICATION_TTL, title }: Omit<Notification, 'id'>) => {
       const id = crypto.randomUUID()
-      const notification = { id, message, type, title }
+      const notification = { id, message, type, duration, title }
 
       setNotifications(current => [...current, notification])
 
-      if (duration) {
+      if (duration !== null) {
         setTimeout(() => removeNotification(id), duration)
       }
     },
@@ -78,7 +78,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                   ${notification.type === 'info' && 'from-blue-500 to-blue-400'}
                 `}
                 style={{
-                  animation: `shrink ${NOTIFICATION_TTL}ms linear forwards`,
+                  animation: notification.duration ? `shrink ${notification.duration}ms linear forwards` : undefined,
                   transformOrigin: 'right'
                 }}
               />

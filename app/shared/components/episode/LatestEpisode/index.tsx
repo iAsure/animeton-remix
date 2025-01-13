@@ -6,6 +6,7 @@ import { useNavigate } from '@remix-run/react';
 import useRSSData from '@hooks/useRSSData';
 import useModernBackground from '@hooks/useModernBackground';
 import { useTorrentPlayer } from '@context/TorrentPlayerContext';
+import { useNotification } from '@context/NotificationContext';
 
 import EpisodeCard from './episode';
 import EpisodeCardSkeleton from './skeleton';
@@ -27,6 +28,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
   }) => {
     const navigate = useNavigate();
     const { playEpisode, loadingHash } = useTorrentPlayer();
+    const { showNotification } = useNotification();
 
     const { rssAnimes, isLoading, error } = useRSSData({
       page: 1,
@@ -43,7 +45,11 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
 
     useEffect(() => {
       if (error) {
-        // sendNotification(state, { message: error });
+        showNotification({
+          title: 'Error',
+          message: error,
+          type: 'error',
+        });
       }
     }, [error]);
 

@@ -2,6 +2,7 @@ import { useEffect, memo } from 'react';
 
 import useRSSData from '@hooks/useRSSData';
 import { useTorrentPlayer } from '@context/TorrentPlayerContext';
+import { useNotification } from '@context/NotificationContext';
 
 import Episode from './episode';
 import EpisodeSkeleton from './skeleton';
@@ -14,6 +15,7 @@ interface LatestEpisodesSidebarProps {
 
 const LatestEpisodesSidebar = memo(({ state, bannerColors, sectionTitle }: LatestEpisodesSidebarProps) => {
   const { playEpisode, loadingHash } = useTorrentPlayer();
+  const { showNotification } = useNotification();
 
   const { rssAnimes, isLoading, error } = useRSSData({
     page: 1,
@@ -22,7 +24,11 @@ const LatestEpisodesSidebar = memo(({ state, bannerColors, sectionTitle }: Lates
 
   useEffect(() => {
     if (error) {
-      // sendNotification(state, { message: error });
+      showNotification({
+        title: 'Error',
+        message: error,
+        type: 'error',
+      });
     }
   }, [error, state]);
 

@@ -7,7 +7,6 @@ import { humanizeDuration } from '../../../shared/utils/time.js';
 import { IPC_CHANNELS } from '../../../shared/constants/event-channels.js';
 import http from 'http';
 
-
 /** @type {import('webtorrent').Instance} */
 let activeClient = null;
 let progressInterval = null;
@@ -38,23 +37,26 @@ const SERVER_INIT_DELAY = 1000;
 
 async function checkServerHealth() {
   if (!torrentServer) return false;
-  
+
   try {
     const port = torrentServer.server.address()?.port;
     if (!port) return false;
 
     log.info(`Checking server health on port ${port}`);
-    
+
     const isHealthy = await new Promise((resolve) => {
-      const req = http.request({
-        hostname: 'localhost',
-        port: port,
-        path: '/webtorrent',
-        method: 'GET',
-        timeout: 1000
-      }, (res) => {
-        resolve(true);
-      });
+      const req = http.request(
+        {
+          hostname: 'localhost',
+          port: port,
+          path: '/webtorrent',
+          method: 'GET',
+          timeout: 1000,
+        },
+        (res) => {
+          resolve(true);
+        }
+      );
 
       req.on('error', () => {
         resolve(false);
@@ -67,7 +69,7 @@ async function checkServerHealth() {
 
       req.end();
     });
-    
+
     log.info(`Server health check result: ${isHealthy}`);
     return isHealthy;
   } catch (error) {
@@ -78,7 +80,7 @@ async function checkServerHealth() {
 
 async function closeServer() {
   if (!torrentServer || serverClosing) return;
-  
+
   serverClosing = true;
   try {
     log.info('Closing existing server...');
@@ -120,7 +122,11 @@ async function createTorrentServer(client) {
 
   for (let attempt = 0; attempt < SERVER_INIT_RETRIES; attempt++) {
     try {
-      log.info(`Attempting to create torrent server (attempt ${attempt + 1}/${SERVER_INIT_RETRIES})`);
+      log.info(
+        `Attempting to create torrent server (attempt ${
+          attempt + 1
+        }/${SERVER_INIT_RETRIES})`
+      );
 
       // Destroy and recreate client if server creation fails
       if (attempt > 0) {
@@ -150,7 +156,7 @@ async function createTorrentServer(client) {
         instance.server.listen(0, 'localhost', async () => {
           clearTimeout(timeout);
           torrentServer = instance;
-          
+
           const port = instance.server.address()?.port;
           if (!port) {
             reject(new Error('Server initialized without port'));
@@ -158,24 +164,26 @@ async function createTorrentServer(client) {
           }
 
           log.info(`Torrent server listening on port ${port}`);
-          
+
           // Add small delay before health check
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
           const isHealthy = await checkServerHealth();
           if (!isHealthy) {
-            reject(new Error('Server health check failed after initialization'));
+            reject(
+              new Error('Server health check failed after initialization')
+            );
             return;
           }
 
           process.parentPort?.postMessage({
             type: IPC_CHANNELS.TORRENT.SERVER_STATUS,
-            data: { 
+            data: {
               active: true,
-              port
-            }
+              port,
+            },
           });
-          
+
           resolve(instance);
         });
       });
@@ -183,9 +191,9 @@ async function createTorrentServer(client) {
       return torrentServer;
     } catch (error) {
       log.error(`Server creation attempt ${attempt + 1} failed:`, error);
-      
+
       if (attempt < SERVER_INIT_RETRIES - 1) {
-        await new Promise(resolve => setTimeout(resolve, SERVER_INIT_DELAY));
+        await new Promise((resolve) => setTimeout(resolve, SERVER_INIT_DELAY));
       } else {
         throw error;
       }
@@ -197,10 +205,10 @@ async function initializeWebTorrentClient() {
   if (isInitializing) {
     log.info('Client initialization already in progress, waiting...');
     while (isInitializing) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    
-    if (activeClient && torrentServer && await checkServerHealth()) {
+
+    if (activeClient && torrentServer && (await checkServerHealth())) {
       log.info('Using existing healthy client and server');
       return { client: activeClient, instance: torrentServer };
     }
@@ -211,7 +219,7 @@ async function initializeWebTorrentClient() {
   try {
     if (!activeClient || !torrentServer || !(await checkServerHealth())) {
       await cleanup();
-      
+
       const { default: WebTorrent } = await import('webtorrent');
       activeClient = new WebTorrent({
         downloadLimit: 5 * 1048576 || 0,
@@ -224,9 +232,11 @@ async function initializeWebTorrentClient() {
     }
 
     const instance = await createTorrentServer(activeClient);
-    
+
     if (!instance) {
-      throw new Error('Failed to create torrent server after multiple attempts');
+      throw new Error(
+        'Failed to create torrent server after multiple attempts'
+      );
     }
 
     return { client: activeClient, instance };
@@ -241,7 +251,7 @@ async function initializeWebTorrentClient() {
 
 async function cleanup() {
   log.info('Starting cleanup...');
-  
+
   if (progressInterval) {
     clearInterval(progressInterval);
     progressInterval = null;
@@ -257,7 +267,7 @@ async function cleanup() {
 
   process.parentPort?.postMessage({
     type: IPC_CHANNELS.TORRENT.SERVER_STATUS,
-    data: { active: false }
+    data: { active: false },
   });
 
   log.info('Cleanup completed');
@@ -299,7 +309,7 @@ async function handleTorrent(torrent, instance) {
   if (progressInterval) {
     clearInterval(progressInterval);
   }
-  
+
   progressInterval = setInterval(() => {
     if (torrent.infoHash === activeTorrentInfoHash) {
       sendProgressUpdate(torrent);
@@ -308,7 +318,7 @@ async function handleTorrent(torrent, instance) {
 
   torrent.on('done', async () => {
     await verifyDownload(filePath, torrent);
-    
+
     if (torrent.infoHash === activeTorrentInfoHash) {
       process.parentPort?.postMessage({ type: IPC_CHANNELS.TORRENT.DONE });
     }
@@ -322,7 +332,7 @@ async function handleTorrent(torrent, instance) {
     if (torrent.infoHash === activeTorrentInfoHash) {
       process.parentPort?.postMessage({
         type: IPC_CHANNELS.TORRENT.ERROR,
-        data: { error: error.message }
+        data: { error: error.message },
       });
     }
   });
@@ -448,29 +458,44 @@ async function handleMkvSubtitles(filePath) {
   }
 }
 
+async function validateTorrent(torrentUrl) {
+  try {
+    const response = await fetch(torrentUrl);
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+  } catch (error) {
+    throw new Error(error.message);
+  }
+}
+
 // Message handler
 process.parentPort?.on('message', async (message) => {
   if (message.data?.action === 'add-torrent') {
     try {
       const { client, instance } = await initializeWebTorrentClient();
-      
+
       if (!client || !instance) {
         throw new Error('Failed to initialize torrent client');
       }
 
-      const dupTorrent = client.torrents.find(torrent => torrent.infoHash === message.data.torrentHash);
+      const dupTorrent = client.torrents.find(
+        (torrent) => torrent.infoHash === message.data.torrentHash
+      );
 
       if (dupTorrent) {
         log.info('Duplicate torrent found, using existing torrent');
         return handleTorrent(dupTorrent, instance);
       }
 
-      client.add(message.data.torrentId, { announce: ANNOUNCE }, (torrent) => {
+      await validateTorrent(message.data.torrentUrl);
+
+      client.add(message.data.torrentUrl, { announce: ANNOUNCE }, (torrent) => {
         handleTorrent(torrent, instance).catch((error) => {
           log.error('Error handling torrent:', error);
           process.parentPort?.postMessage({
             type: IPC_CHANNELS.TORRENT.ERROR,
-            data: { error: error.message }
+            data: { error: error.message },
           });
         });
       });
@@ -478,7 +503,7 @@ process.parentPort?.on('message', async (message) => {
       log.error('Error initializing WebTorrent:', error);
       process.parentPort?.postMessage({
         type: IPC_CHANNELS.TORRENT.ERROR,
-        data: { error: error.message }
+        data: { error: 'Episodio no disponible en este momento' },
       });
     }
   } else if (message.data?.action === 'check-server') {
@@ -486,10 +511,10 @@ process.parentPort?.on('message', async (message) => {
     const isHealthy = await checkServerHealth();
     process.parentPort?.postMessage({
       type: IPC_CHANNELS.TORRENT.SERVER_STATUS,
-      data: { 
+      data: {
         active: isHealthy,
-        port: torrentServer?.server.address().port
-      }
+        port: torrentServer?.server.address().port,
+      },
     });
   }
 });

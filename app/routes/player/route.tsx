@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, use } from 'react';
-import { useSearchParams } from '@remix-run/react';
+import { useSearchParams, useLocation, useNavigate } from '@remix-run/react';
 
 import log from 'electron-log';
 
@@ -15,14 +15,29 @@ import SubtitleStatus from '@/shared/components/video/SubtitleStatus';
 
 import usePlayerStore from '@stores/player';
 
+import { useNotification } from '@context/NotificationContext';
 import { useConfig } from '@context/ConfigContext';
+import useCanvasRpcFrame from '@hooks/useCanvasRpcFrame';
+import DiscordStatus from '@components/core/DiscordStatus';
 
 const Player = () => {
-  const { subtitleContent, isMouseMoving, setMouseMoving, setIsPlaying, setPlayLastAction, reset } =
-    usePlayerStore();
+  const {
+    isPlaying,
+    subtitleContent,
+    isMouseMoving,
+    setMouseMoving,
+    setIsPlaying,
+    setPlayLastAction,
+    reset,
+  } = usePlayerStore();
   const { config } = useConfig();
-
+  const { showNotification } = useNotification();
   const [searchParams] = useSearchParams();
+  const { state } = useLocation();
+  const navigate = useNavigate();
+
+  const animeData = state?.animeData;
+
   const torrentUrl = searchParams.get('url');
   const torrentHash = searchParams.get('hash');
 
@@ -37,20 +52,26 @@ const Player = () => {
     downloadSpeed,
     uploadSpeed,
     ready: torrentReady,
-    error: torrentError
+    error: torrentError,
   } = useTorrentStream(torrentUrl, torrentHash);
   const { infoHash, loadApiSubtitles } = useSubtitles(videoRef, isVideoReady);
   const { subtitles, fetchSubtitles } = useApiSubtitles(infoHash);
   const { chapters } = useChapters();
 
-  const isLoadingVideo = isLocalBuffering || (!subtitleContent?.length && !torrentReady);
-  
-  useEffect(() => {
-    log.info('isLoadingVideo', isLoadingVideo);
-    log.info('isLocalBuffering', isLocalBuffering);
-    log.info('subtitleContent', subtitleContent);
-    log.info('torrentReady', torrentReady);
-  }, [isLoadingVideo, isLocalBuffering, subtitleContent, torrentReady]);
+  const isLoadingVideo =
+    isLocalBuffering || (!subtitleContent?.length && !torrentReady);
+
+  const animeImage =
+    animeData?.coverImage?.extraLarge ||
+    animeData?.bannerImage ||
+    animeData?.image;
+  const animeTitle =
+    animeData?.title?.english ||
+    animeData?.title?.romaji ||
+    animeData?.torrent?.title;
+  const animeEpisode = animeData?.torrent?.episode;
+
+  const rpcFrame = useCanvasRpcFrame({ imageUrl: animeImage }) || null;
 
   useEffect(() => {
     if (subtitles) {
@@ -67,7 +88,13 @@ const Player = () => {
   useEffect(() => {
     if (torrentError) {
       log.error('Torrent error:', torrentError);
-      // You could show a toast/notification here
+
+      showNotification({
+        title: 'Error',
+        message: torrentError,
+        type: 'error',
+      });
+      navigate('/', { viewTransition: true });
     }
   }, [torrentError]);
 
@@ -136,6 +163,17 @@ const Player = () => {
       }`}
       onMouseMove={handleMouseMove}
     >
+      <DiscordStatus
+        options={{
+          details: animeTitle,
+          state: animeEpisode ? `Episodio ${animeEpisode}` : '',
+          assets: {
+            large_image: rpcFrame,
+            small_image: isPlaying ? 'play' : 'pause',
+            small_text: isPlaying ? 'Reproduciendo' : 'Pausado',
+          },
+        }}
+      />
       <video
         id="output"
         ref={videoRef}

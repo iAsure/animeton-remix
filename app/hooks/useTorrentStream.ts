@@ -34,7 +34,7 @@ const INITIAL_STATE: TorrentStreamState = {
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000;
 
-const useTorrentStream = (torrentId: string, torrentHash: string) => {
+const useTorrentStream = (torrentUrl: string, torrentHash: string) => {
   const { setTorrentRanges, setTorrentProgress } = usePlayerStore();
   const [state, setState] = useState<TorrentStreamState>(INITIAL_STATE);
   const [retryCount, setRetryCount] = useState(0);
@@ -50,12 +50,12 @@ const useTorrentStream = (torrentId: string, torrentHash: string) => {
   }, []);
 
   const startTorrent = useCallback(async () => {
-    if (!torrentId || !isMounted.current) return;
+    if (!torrentUrl || !isMounted.current) return;
 
     try {
-      log.info('Starting torrent stream', { torrentId, attempt: retryCount + 1 });
+      log.info('Starting torrent stream', { torrentUrl, attempt: retryCount + 1 });
       setState(prev => ({ ...prev, error: null, isBuffering: true }));
-      window.api.addTorrent(torrentId, torrentHash);
+      window.api.addTorrent(torrentUrl, torrentHash);
     } catch (error) {
       if (!isMounted.current) return;
       
@@ -69,20 +69,20 @@ const useTorrentStream = (torrentId: string, torrentHash: string) => {
       } else {
         setState(prev => ({
           ...prev,
-          error: 'Failed to start torrent after multiple attempts',
+          error: 'No se pudo reproducir después de varios intentos',
           isBuffering: false
         }));
       }
     }
-  }, [torrentId, retryCount]);
+  }, [torrentUrl, retryCount]);
 
   const checkServerStatus = useCallback(async () => {
-    if (!torrentId) return;
+    if (!torrentUrl) return;
     window.api.checkTorrentServer();
-  }, [torrentId]);
+  }, [torrentUrl]);
 
   useEffect(() => {
-    if (!torrentId) return;
+    if (!torrentUrl) return;
 
     const handleProgress = (_: any, data: any) => {
       if (!isMounted.current) return;
@@ -127,7 +127,7 @@ const useTorrentStream = (torrentId: string, torrentHash: string) => {
       log.error('Torrent error:', error);
       setState(prev => ({
         ...prev,
-        error: error.error || 'Unknown error occurred',
+        error: error.error || 'No se pudo reproducir',
         isBuffering: false
       }));
 
@@ -182,7 +182,7 @@ const useTorrentStream = (torrentId: string, torrentHash: string) => {
       setState(INITIAL_STATE);
       clearInterval(statusCheckInterval);
     };
-  }, [torrentId, startTorrent, checkServerStatus]);
+  }, [torrentUrl, startTorrent, checkServerStatus]);
 
   return state;
 };

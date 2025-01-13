@@ -143,7 +143,7 @@ export interface ChaptersApi {
 }
 
 export interface Api {
-  addTorrent: (torrentId: string, torrentHash: string) => void;
+  addTorrent: (torrentUrl: string, torrentHash: string) => void;
   checkTorrentServer: () => void;
   torrent: TorrentApi;
   subtitles: SubtitlesApi;
