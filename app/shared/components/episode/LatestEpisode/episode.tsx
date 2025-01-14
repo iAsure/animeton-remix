@@ -55,10 +55,11 @@ interface AnimeProps {
 interface EpisodeCardProps {
   anime: AnimeProps | any;
   isLoading: boolean;
+  progress: number;
   onPlay: () => void;
 }
 
-const EpisodeCard = memo(({ anime, isLoading, onPlay }: EpisodeCardProps) => {
+const EpisodeCard = memo(({ anime, isLoading, onPlay, progress }: EpisodeCardProps) => {
   const navigate = useNavigate();
 
   const episodeImage =
@@ -95,6 +96,12 @@ const EpisodeCard = memo(({ anime, isLoading, onPlay }: EpisodeCardProps) => {
     <div className="w-full group">
       <Card className="flex flex-col relative overflow-hidden rounded-md border-1 border-zinc-900 bg-zinc-950/70 transition-all duration-300 hover:scale-[1.02]">
         <div className="aspect-[16/9] w-full relative">
+
+          <div 
+            className="absolute bottom-0 left-0 h-1 bg-[#ff5680] z-20 transition-all duration-300"
+            style={{ width: `${progress * 100}%` }}
+          />
+          
           <CardBody
             className="absolute inset-0 p-0 cursor-pointer z-10"
             onClick={handlePlay}

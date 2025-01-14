@@ -142,6 +142,33 @@ export interface ChaptersApi {
   onExtracted: EventHandler<ChaptersResult>;
 }
 
+export interface WatchProgress {
+  timeStamp: number;
+  duration: number;
+  progress: number;
+  completed: boolean;
+  lastWatched: number;
+}
+
+export interface WatchHistory {
+  lastUpdated: number;
+  episodes: {
+    [id: string]: WatchProgress;
+  }
+}
+
+export interface HistoryApi {
+  getProgress: (episodeId: string) => Promise<WatchProgress | undefined>;
+  updateProgress: (episodeId: string, progress: number, duration: number) => Promise<void>;
+  getAll: () => Promise<WatchHistory>;
+  clear: () => Promise<void>;
+  onChanged: EventHandler<WatchHistory>;
+  onEpisodeUpdated: EventHandler<{
+    episodeId: string;
+    episode: WatchProgress;
+  }>;
+}
+
 export interface Api {
   addTorrent: (torrentUrl: string, torrentHash: string) => void;
   checkTorrentServer: () => void;
@@ -152,4 +179,5 @@ export interface Api {
   updater: UpdaterApi;
   discord: DiscordApi;
   chapters: ChaptersApi;
+  history: HistoryApi;
 }

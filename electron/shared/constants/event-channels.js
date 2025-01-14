@@ -48,4 +48,12 @@ export const IPC_CHANNELS = {
     CHECKING_FOR_UPDATE: 'update-checking-for-update',
     ERROR: 'update-error',
   },
+  HISTORY: {
+    GET_PROGRESS: 'history:get-progress',
+    UPDATE_PROGRESS: 'history:update-progress',
+    GET_ALL: 'history:get-all',
+    CLEAR: 'history:clear',
+    CHANGED: 'history:changed',
+    EPISODE_UPDATED: 'history:episode-updated',
+  },
 };

@@ -7,6 +7,7 @@ import path from 'path';
 import os from 'os';
 import { Worker as NodeWorker } from 'worker_threads';
 import { ConfigService } from '../services/config/service.js';
+import { HistoryService } from '../services/history/service.js';
 
 export async function setupIpcHandlers(
   webTorrentProcess: UtilityProcess,
@@ -23,6 +24,9 @@ export async function setupIpcHandlers(
 
   const configService = new ConfigService(mainWindow);
   await configService.initialize();
+
+  const historyService = new HistoryService(mainWindow);
+  await historyService.initialize();
 
   // Register torrent handler
   ipcMain.on(IPC_CHANNELS.TORRENT.ADD, (_, arg) => {
@@ -197,7 +201,26 @@ export async function setupIpcHandlers(
     return mainWindow.webContents.isDevToolsOpened();
   });
 
+  // History handlers
+  
+  ipcMain.handle(IPC_CHANNELS.HISTORY.GET_PROGRESS, async (_, episodeId) => {
+    return await historyService.getEpisodeProgress(episodeId);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.HISTORY.UPDATE_PROGRESS, async (_, episodeId, progress, duration) => {
+    await historyService.updateEpisodeProgress(episodeId, progress, duration);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.HISTORY.GET_ALL, async () => {
+    return await historyService.getAllHistory();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.HISTORY.CLEAR, async () => {
+    await historyService.clearHistory();
+  });
+
   mainWindow.on('closed', () => {
     configService.cleanup();
+    historyService.cleanup();
   });
 }

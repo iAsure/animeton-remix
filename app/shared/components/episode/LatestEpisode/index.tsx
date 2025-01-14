@@ -5,6 +5,8 @@ import { useNavigate } from '@remix-run/react';
 
 import useRSSData from '@hooks/useRSSData';
 import useModernBackground from '@hooks/useModernBackground';
+import useUserActivity from '@hooks/useUserActivity';
+
 import { useTorrentPlayer } from '@context/TorrentPlayerContext';
 import { useNotification } from '@context/NotificationContext';
 
@@ -29,6 +31,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
     const navigate = useNavigate();
     const { playEpisode, loadingHash } = useTorrentPlayer();
     const { showNotification } = useNotification();
+    const { history } = useUserActivity();
 
     const { rssAnimes, isLoading, error } = useRSSData({
       page: 1,
@@ -71,11 +74,14 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
     };
 
     const renderEpisodeCard = (anime, index: number) => {
+      const progress = history?.episodes[anime?.torrent?.infoHash]?.progress;
+
       const card = (
         <EpisodeCard
           anime={anime}
           isLoading={loadingHash === anime?.torrent?.infoHash}
           onPlay={() => playEpisode(anime)}
+          progress={progress}
         />
       );
 

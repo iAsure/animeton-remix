@@ -103,6 +103,23 @@ const createEventHandler = (channel) => ({
       },
       onW2GLink: createEventHandler('w2glink'),
     },
+
+    history: {
+      getProgress: (episodeId) => 
+        ipcRenderer.invoke(IPC_CHANNELS.HISTORY.GET_PROGRESS, episodeId),
+      
+      updateProgress: (episodeId, progress, duration) =>
+        ipcRenderer.invoke(IPC_CHANNELS.HISTORY.UPDATE_PROGRESS, episodeId, progress, duration),
+      
+      getAll: () => 
+        ipcRenderer.invoke(IPC_CHANNELS.HISTORY.GET_ALL),
+      
+      clear: () => 
+        ipcRenderer.invoke(IPC_CHANNELS.HISTORY.CLEAR),
+      
+      onChanged: createEventHandler(IPC_CHANNELS.HISTORY.CHANGED),
+      onEpisodeUpdated: createEventHandler(IPC_CHANNELS.HISTORY.EPISODE_UPDATED),
+    },
   };
 
   contextBridge.exposeInMainWorld('electron', electron);

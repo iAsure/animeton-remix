@@ -7,6 +7,7 @@ import useTorrentStream from '@hooks/useTorrentStream';
 import useSubtitles from '@hooks/useSubtitles';
 import useApiSubtitles from '@hooks/useApiSubtitles';
 import useChapters from '@hooks/useChapters';
+import useUserActivity from '@hooks/useUserActivity';
 
 import VideoSpinner from '@components/video/VideoSpinner';
 import VideoControls from '@components/video/VideoControls';
@@ -23,6 +24,7 @@ import DiscordStatus from '@components/core/DiscordStatus';
 const Player = () => {
   const {
     isPlaying,
+    duration,
     subtitleContent,
     isMouseMoving,
     setMouseMoving,
@@ -35,6 +37,8 @@ const Player = () => {
   const [searchParams] = useSearchParams();
   const { state } = useLocation();
   const navigate = useNavigate();
+
+  const { updateProgress, getEpisodeProgress } = useUserActivity();
 
   const animeData = state?.animeData;
 
@@ -54,8 +58,8 @@ const Player = () => {
     ready: torrentReady,
     error: torrentError,
   } = useTorrentStream(torrentUrl, torrentHash);
-  const { infoHash, loadApiSubtitles } = useSubtitles(videoRef, isVideoReady);
-  const { subtitles, fetchSubtitles } = useApiSubtitles(infoHash);
+  const { loadApiSubtitles } = useSubtitles(videoRef, isVideoReady);
+  const { subtitles, fetchSubtitles } = useApiSubtitles(torrentHash);
   const { chapters } = useChapters();
 
   const isLoadingVideo =
@@ -80,10 +84,10 @@ const Player = () => {
   }, [subtitles]);
 
   useEffect(() => {
-    if (infoHash) {
+    if (torrentHash) {
       fetchSubtitles();
     }
-  }, [infoHash, fetchSubtitles]);
+  }, [torrentHash, fetchSubtitles]);
 
   useEffect(() => {
     if (torrentError) {
@@ -97,6 +101,38 @@ const Player = () => {
       navigate('/', { viewTransition: true });
     }
   }, [torrentError]);
+
+  useEffect(() => {
+    if (torrentHash && videoRef.current) {
+      getEpisodeProgress(torrentHash).then(progress => {
+        if (progress?.progress) {
+          videoRef.current!.currentTime = progress.progress * progress.duration;
+        }
+      });
+    }
+  }, [torrentHash]);
+
+  useEffect(() => {
+    if (!torrentHash || !duration) return;
+
+    const interval = setInterval(() => {
+      if (videoRef.current && !videoRef.current.paused) {
+        const progress = videoRef.current.currentTime / duration;
+        updateProgress(torrentHash, progress, duration);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [torrentHash, duration, updateProgress]);
+
+  useEffect(() => {
+    return () => {
+      if (torrentHash && videoRef.current && duration) {
+        const finalProgress = videoRef.current.currentTime / duration;
+        updateProgress(torrentHash, finalProgress, duration);
+      }
+    };
+  }, [torrentHash, duration]);
 
   const handleVideoWaiting = useCallback(() => {
     setIsLocalBuffering(true);
