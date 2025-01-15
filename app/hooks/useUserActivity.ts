@@ -8,10 +8,21 @@ interface WatchProgress {
   lastWatched: number;
 }
 
+interface EpisodeHistory {
+  animeName: string;
+  animeImage: string;
+  animeIdAnilist: number;
+  episodeImage: string;
+  episodeNumber: number;
+  episodeTorrentUrl: string;
+  pubDate: string;
+  progressData: WatchProgress;
+}
+
 interface WatchHistory {
   lastUpdated: number;
   episodes: {
-    [id: string]: WatchProgress;
+    [id: string]: EpisodeHistory;
   };
 }
 
@@ -32,14 +43,19 @@ const useUserActivity = () => {
   }, []);
 
   const updateProgress = useCallback(
-    async (episodeId: string, progress: number, duration: number) => {
-      await window.api.history.updateProgress(episodeId, progress, duration);
+    async (
+      episodeId: string, 
+      progress: number, 
+      duration: number,
+      episodeInfo: Omit<EpisodeHistory, 'progressData'>
+    ) => {
+      await window.api.history.updateProgress(episodeId, progress, duration, episodeInfo);
     },
     []
   );
 
   const getEpisodeProgress = useCallback(
-    async (episodeId: string): Promise<WatchProgress | undefined> => {
+    async (episodeId: string): Promise<EpisodeHistory | undefined> => {
       return await window.api.history.getProgress(episodeId);
     },
     []
@@ -51,7 +67,7 @@ const useUserActivity = () => {
 
   const isEpisodeCompleted = useCallback(
     (episodeId: string): boolean => {
-      return !!history?.episodes[episodeId]?.completed;
+      return !!history?.episodes[episodeId]?.progressData.completed;
     },
     [history]
   );
@@ -61,11 +77,11 @@ const useUserActivity = () => {
       if (!history) return [];
 
       return Object.entries(history.episodes)
-        .sort((a, b) => b[1].lastWatched - a[1].lastWatched)
+        .sort((a, b) => b[1].progressData.lastWatched - a[1].progressData.lastWatched)
         .slice(0, limit)
-        .map(([id, progress]) => ({
+        .map(([id, episode]) => ({
           episodeId: id,
-          ...progress,
+          ...episode,
         }));
     },
     [history]
@@ -73,18 +89,27 @@ const useUserActivity = () => {
 
   const getWatchedCount = useCallback((): number => {
     if (!history) return 0;
-    return Object.values(history.episodes).filter((ep) => ep.completed).length;
+    return Object.values(history.episodes).filter(
+      (ep) => ep.progressData.completed
+    ).length;
   }, [history]);
 
   const getInProgressEpisodes = useCallback(() => {
     if (!history) return [];
 
     return Object.entries(history.episodes)
-      .filter(([_, progress]) => progress.progress > 0 && !progress.completed)
-      .sort((a, b) => b[1].lastWatched - a[1].lastWatched)
-      .map(([id, progress]) => ({
+      .filter(
+        ([_, episode]) => 
+          episode.progressData.progress > 0 && 
+          !episode.progressData.completed
+      )
+      .sort(
+        (a, b) => 
+          b[1].progressData.lastWatched - a[1].progressData.lastWatched
+      )
+      .map(([id, episode]) => ({
         episodeId: id,
-        ...progress,
+        ...episode,
       }));
   }, [history]);
 

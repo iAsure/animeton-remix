@@ -150,22 +150,38 @@ export interface WatchProgress {
   lastWatched: number;
 }
 
+export interface EpisodeHistory {
+  animeName: string;
+  animeImage: string;
+  animeIdAnilist: number;
+  episodeImage: string;
+  episodeNumber: number;
+  episodeTorrentUrl: string;
+  pubDate: string;
+  progressData: WatchProgress;
+}
+
 export interface WatchHistory {
   lastUpdated: number;
   episodes: {
-    [id: string]: WatchProgress;
+    [id: string]: EpisodeHistory;
   }
 }
 
 export interface HistoryApi {
-  getProgress: (episodeId: string) => Promise<WatchProgress | undefined>;
-  updateProgress: (episodeId: string, progress: number, duration: number) => Promise<void>;
+  getProgress: (episodeId: string) => Promise<EpisodeHistory | undefined>;
+  updateProgress: (
+    episodeId: string, 
+    progress: number, 
+    duration: number,
+    episodeInfo: Omit<EpisodeHistory, 'progressData'>
+  ) => Promise<void>;
   getAll: () => Promise<WatchHistory>;
   clear: () => Promise<void>;
   onChanged: EventHandler<WatchHistory>;
   onEpisodeUpdated: EventHandler<{
     episodeId: string;
-    episode: WatchProgress;
+    episode: EpisodeHistory;
   }>;
 }
 

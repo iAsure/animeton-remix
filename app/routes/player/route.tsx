@@ -108,35 +108,37 @@ const Player = () => {
 
   useEffect(() => {
     if (torrentHash && videoRef.current) {
-      getEpisodeProgress(torrentHash).then(progress => {
-        if (progress?.progress) {
-          videoRef.current!.currentTime = progress.progress * progress.duration;
+      getEpisodeProgress(torrentHash).then(episode => {
+        if (episode?.progressData.progress) {
+          videoRef.current!.currentTime = 
+            episode.progressData.progress * episode.progressData.duration;
         }
       });
     }
   }, [torrentHash]);
 
   useEffect(() => {
-    if (!torrentHash || !duration) return;
+    if (!torrentHash || !duration || !animeData) return;
+
+    const episodeInfo = {
+      animeName: animeTitle,
+      animeImage: animeImage,
+      animeIdAnilist: animeData?.idAnilist || null,
+      episodeImage: animeData?.image || null,
+      episodeNumber: animeEpisode || null,
+      episodeTorrentUrl: torrentUrl,
+      pubDate: animeData?.torrent?.pubDate || animeData?.torrent?.date || new Date(),
+    };
 
     const interval = setInterval(() => {
       if (videoRef.current && !videoRef.current.paused) {
         const progress = videoRef.current.currentTime / duration;
-        updateProgress(torrentHash, progress, duration);
+        updateProgress(torrentHash, progress, duration, episodeInfo);
       }
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [torrentHash, duration, updateProgress]);
-
-  useEffect(() => {
-    return () => {
-      if (torrentHash && videoRef.current && duration) {
-        const finalProgress = videoRef.current.currentTime / duration;
-        updateProgress(torrentHash, finalProgress, duration);
-      }
-    };
-  }, [torrentHash, duration]);
+  }, [torrentHash, duration, updateProgress, animeData]);
 
   const handleVideoWaiting = useCallback(() => {
     setIsLocalBuffering(true);

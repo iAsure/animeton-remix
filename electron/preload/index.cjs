@@ -108,8 +108,14 @@ const createEventHandler = (channel) => ({
       getProgress: (episodeId) => 
         ipcRenderer.invoke(IPC_CHANNELS.HISTORY.GET_PROGRESS, episodeId),
       
-      updateProgress: (episodeId, progress, duration) =>
-        ipcRenderer.invoke(IPC_CHANNELS.HISTORY.UPDATE_PROGRESS, episodeId, progress, duration),
+      updateProgress: (episodeId, progress, duration, episodeInfo) =>
+        ipcRenderer.invoke(
+          IPC_CHANNELS.HISTORY.UPDATE_PROGRESS, 
+          episodeId, 
+          progress, 
+          duration,
+          episodeInfo
+        ),
       
       getAll: () => 
         ipcRenderer.invoke(IPC_CHANNELS.HISTORY.GET_ALL),

@@ -207,9 +207,17 @@ export async function setupIpcHandlers(
     return await historyService.getEpisodeProgress(episodeId);
   });
 
-  ipcMain.handle(IPC_CHANNELS.HISTORY.UPDATE_PROGRESS, async (_, episodeId, progress, duration) => {
-    await historyService.updateEpisodeProgress(episodeId, progress, duration);
-  });
+  ipcMain.handle(
+    IPC_CHANNELS.HISTORY.UPDATE_PROGRESS,
+    async (_, episodeId, progress, duration, episodeInfo) => {
+      await historyService.updateEpisodeProgress(
+        episodeId, 
+        progress, 
+        duration,
+        episodeInfo
+      );
+    }
+  );
 
   ipcMain.handle(IPC_CHANNELS.HISTORY.GET_ALL, async () => {
     return await historyService.getAllHistory();

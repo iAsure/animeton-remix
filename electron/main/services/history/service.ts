@@ -5,17 +5,30 @@ import path from 'path';
 import log from 'electron-log';
 import { IPC_CHANNELS } from '../../../shared/constants/event-channels.js';
 
+interface WatchProgress {
+  timeStamp: number;
+  duration: number;
+  progress: number;
+  completed: boolean;
+  lastWatched: number;
+}
+
+interface EpisodeHistory {
+  animeName: string;
+  animeImage: string;
+  animeIdAnilist: number;
+  episodeImage: string;
+  episodeNumber: number;
+  episodeTorrentUrl: string;
+  pubDate: string;
+  progressData: WatchProgress;
+}
+
 interface WatchHistory {
   lastUpdated: number;
   episodes: {
-    [id: string]: {
-      timeStamp: number;
-      duration: number;
-      progress: number;
-      completed: boolean;
-      lastWatched: number;
-    }
-  }
+    [id: string]: EpisodeHistory;
+  };
 }
 
 export class HistoryService {
@@ -33,7 +46,7 @@ export class HistoryService {
   private getDefaultHistory(): WatchHistory {
     return {
       lastUpdated: Date.now(),
-      episodes: {}
+      episodes: {},
     };
   }
 
@@ -54,14 +67,22 @@ export class HistoryService {
       path.dirname(this.historyPath),
       { persistent: true },
       async (eventType, filename) => {
-        if (filename === path.basename(this.historyPath) && eventType === 'change') {
+        if (
+          filename === path.basename(this.historyPath) &&
+          eventType === 'change'
+        ) {
           try {
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise((resolve) => setTimeout(resolve, 100));
             const previousHistory = { ...this.history };
             await this.loadHistory();
-            
-            if (JSON.stringify(previousHistory) !== JSON.stringify(this.history)) {
-              this.mainWindow?.webContents.send('history:changed', this.history);
+
+            if (
+              JSON.stringify(previousHistory) !== JSON.stringify(this.history)
+            ) {
+              this.mainWindow?.webContents.send(
+                'history:changed',
+                this.history
+              );
               log.info('History file changed externally');
             }
           } catch (error) {
@@ -91,25 +112,30 @@ export class HistoryService {
     await fs.writeFile(this.historyPath, JSON.stringify(this.history, null, 2));
   }
 
-  async updateEpisodeProgress(episodeId: string, progress: number, duration: number) {
-    const episode = this.history.episodes[episodeId] || {
+  async updateEpisodeProgress(
+    episodeId: string,
+    progress: number,
+    duration: number,
+    episodeInfo: Omit<EpisodeHistory, 'progressData'>
+  ) {
+    const progressData = {
       timeStamp: Date.now(),
       duration,
-      progress: 0,
-      completed: false,
-      lastWatched: Date.now()
+      progress,
+      completed: progress >= 0.9,
+      lastWatched: Date.now(),
     };
 
-    episode.progress = progress;
-    episode.lastWatched = Date.now();
-    episode.completed = progress >= 0.9;
+    this.history.episodes[episodeId] = {
+      ...episodeInfo,
+      progressData,
+    };
 
-    this.history.episodes[episodeId] = episode;
     await this.saveHistory();
-    
+
     this.mainWindow?.webContents.send(IPC_CHANNELS.HISTORY.EPISODE_UPDATED, {
       episodeId,
-      episode
+      episode: this.history.episodes[episodeId],
     });
   }
 

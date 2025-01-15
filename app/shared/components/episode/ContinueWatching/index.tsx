@@ -9,6 +9,7 @@ import { useTorrentPlayer } from '@context/TorrentPlayerContext';
 
 import EpisodeCard from '../LatestEpisode/episode';
 import EpisodeCardSkeleton from '../LatestEpisode/skeleton';
+import log from 'electron-log';
 
 interface ContinueWatchingProps {
   sectionTitle?: string;
@@ -32,16 +33,6 @@ const ContinueWatching = memo(
 
     const inProgressEpisodes = getInProgressEpisodes();
 
-    const filteredAnimes = rssAnimes
-      ?.filter((anime) =>
-        inProgressEpisodes.some(
-          (episode) => episode.episodeId === anime.torrent.infoHash
-        )
-      )
-      .slice(0, perPage);
-
-    if (!filteredAnimes?.length) return null;
-
     const cardVariants = {
       hidden: { opacity: 0, y: 15 },
       visible: {
@@ -56,14 +47,15 @@ const ContinueWatching = memo(
       },
     };
 
-    const renderEpisodeCard = (anime, index: number) => {
-      const progress = history?.episodes[anime?.torrent?.infoHash]?.progress;
+    const renderEpisodeCard = (episode, index: number) => {
+      const progress = episode?.progressData?.progress;
 
       const card = (
         <EpisodeCard
-          anime={anime}
-          isLoading={loadingHash === anime?.torrent?.infoHash}
-          onPlay={() => playEpisode(anime)}
+          anime={null}
+          episode={episode}
+          isLoading={loadingHash === episode.episodeId}
+          onPlay={() => playEpisode(episode)}
           progress={progress}
         />
       );
@@ -114,7 +106,7 @@ const ContinueWatching = memo(
               ? Array.from({ length: perPage }).map((_, i) => (
                   <EpisodeCardSkeleton key={i} />
                 ))
-              : filteredAnimes.map((anime, i) => renderEpisodeCard(anime, i))}
+              : inProgressEpisodes.map((episode, i) => renderEpisodeCard(episode, i))}
           </div>
         </div>
       </div>

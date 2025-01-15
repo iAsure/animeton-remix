@@ -29,9 +29,8 @@ export const TorrentPlayerProvider = ({
   const [loadingHash, setLoadingHash] = useState<string | undefined>(undefined);
 
   const playEpisode = (episode) => {
-    const torrentLink = episode?.torrent?.link || episode?.torrent?.torrentUrl;
-    const infoHash = episode?.torrent?.hash || episode?.torrent?.infoHash;
-    const anilistId = episode?.anilistId;
+    const torrentLink = episode?.episodeTorrentUrl || episode?.torrent?.link || episode?.torrent?.torrentUrl;
+    const infoHash = episode?.episodeId || episode?.torrent?.hash || episode?.torrent?.infoHash;
 
     if (!torrentLink) {
       showNotification({
@@ -45,7 +44,7 @@ export const TorrentPlayerProvider = ({
     setLoadingHash(infoHash);
     const encodedUrl = encodeURIComponent(torrentLink);
     navigate(
-      `/player?url=${encodedUrl}&hash=${infoHash}&anilistId=${anilistId}`,
+      `/player?url=${encodedUrl}&hash=${infoHash}`,
       {
         viewTransition: true,
         state: {
