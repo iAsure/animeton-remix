@@ -483,6 +483,10 @@ process.parentPort?.on('message', async (message) => {
         (torrent) => torrent.infoHash === message.data.torrentHash
       );
 
+      log.info('Torrents', client.torrents.map((t) => ({ created: t.created, infoHash: t.infoHash, name: t.name })));
+      log.info('torrentHashes', client.torrents.map((t) => t.infoHash));
+      log.info('Received torrent hash:', message.data.torrentHash);
+
       if (dupTorrent) {
         log.info('Duplicate torrent found, using existing torrent');
         return handleTorrent(dupTorrent, instance);
