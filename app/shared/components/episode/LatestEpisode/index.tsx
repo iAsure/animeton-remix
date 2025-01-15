@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { useNavigate } from '@remix-run/react';
 
 import useRSSData from '@hooks/useRSSData';
-import useModernBackground from '@hooks/useModernBackground';
 import useUserActivity from '@hooks/useUserActivity';
 
 import { useTorrentPlayer } from '@context/TorrentPlayerContext';
@@ -37,13 +36,6 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
       page: 1,
       perPage,
       emptyState: false,
-    });
-
-    const background = useModernBackground({
-      primaryColor: '#63e8ff',
-      secondaryColor: '#ff9af7',
-      disablePattern: true,
-      opacity: 0.6,
     });
 
     useEffect(() => {
@@ -114,17 +106,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
     };
 
     return (
-      <div className="relative flex flex-col items-center py-6">
-        {/* Background */}
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url(${background})`,
-            maskImage: 'linear-gradient(to top, black 70%, transparent)',
-            WebkitMaskImage: 'linear-gradient(to top, black 70%, transparent)',
-          }}
-        />
-
+      <div className="flex flex-col items-center py-6">
         {sectionTitle && (
           <button
             onClick={handleViewMore}
@@ -136,13 +118,13 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
               height="28"
               className="pointer-events-none text-zinc-500"
             />
-            <h2 className="relative text-2xl font-bold text-center text-white">
+            <h2 className="text-2xl font-bold text-center text-white">
               {sectionTitle}
             </h2>
           </button>
         )}
 
-        <div className="relative mx-auto max-w-[90%]">
+        <div className="max-w-[90%]">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 w-full">
             {isLoading || !rssAnimes
               ? Array.from({ length: perPage }).map((_, i) => (
