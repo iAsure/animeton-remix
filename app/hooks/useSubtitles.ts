@@ -172,6 +172,9 @@ const useSubtitles = (
     }
 
     setAvailableSubtitles(newSubtitles);
+    
+    const currentSubtitleContent = newSubtitles.find((sub) => sub.track.name === currentSelectedSubtitleTrack?.track.name)?.parsedContent;
+    setSubtitleContent(currentSubtitleContent);
 
     if (!currentSelectedSubtitleTrack) {
       const defaultLatSubtitle =

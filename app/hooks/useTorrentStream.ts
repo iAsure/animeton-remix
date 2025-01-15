@@ -55,7 +55,10 @@ const useTorrentStream = (torrentUrl: string, torrentHash: string) => {
     try {
       log.info('Starting torrent stream', { torrentUrl, attempt: retryCount + 1 });
       setState(prev => ({ ...prev, error: null, isBuffering: true }));
-      window.api.addTorrent(torrentUrl, torrentHash);
+      
+      if (retryCount === 0) {
+        window.api.addTorrent(torrentUrl, torrentHash);
+      }
     } catch (error) {
       if (!isMounted.current) return;
       

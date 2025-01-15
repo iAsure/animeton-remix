@@ -33,6 +33,7 @@ const Timeline = ({
           chapters.map((chapter, index) => (
             <div
               className="h-full bg-white/20 relative hover:bg-white/10 transition-colors"
+              key={`chapter-${index}`}
               style={{
                 width: `${((chapter.end - chapter.start) / duration) * 100}%`,
                 marginRight: index !== chapters.length - 1 ? '6px' : '0',
@@ -44,7 +45,7 @@ const Timeline = ({
         )}
       </div>
 
-      {/* Torrent ranges with mask */}
+      {/* Torrent ranges */}
       <div className="absolute w-full h-full z-[2]">
         {torrentRanges.map((range, index) => (
           <div
@@ -56,23 +57,6 @@ const Timeline = ({
             }}
           />
         ))}
-        {/* Mask for torrent ranges */}
-        {chapters.length > 0 && (
-          <div className="absolute w-full h-full flex">
-            {chapters.map((chapter, index) => (
-              <div
-                key={`chapter-mask-${index}`}
-                className="h-full bg-black"
-                style={{
-                  width: index !== chapters.length - 1 ? '4px' : '0',
-                  marginLeft: `${
-                    ((chapter.end - chapter.start) / duration) * 100
-                  }%`,
-                }}
-              />
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Progress bar */}

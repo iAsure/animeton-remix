@@ -9,9 +9,10 @@ interface EpisodesListProps {
   isLoading: boolean;
   animeColors: string[];
   textColor: string;
+  anime: any;
 }
 
-const EpisodesList = memo(({ episodesData, isLoading, animeColors, textColor }: EpisodesListProps) => {
+const EpisodesList = memo(({ episodesData, isLoading, animeColors, textColor, anime }: EpisodesListProps) => {
   const { playEpisode, loadingHash } = useTorrentPlayer();
 
   const isWithinLastSixDays = (dateStr?: string): boolean => {
@@ -50,7 +51,7 @@ const EpisodesList = memo(({ episodesData, isLoading, animeColors, textColor }: 
               isNew={isWithinLastSixDays(episode?.torrent?.date)}
               animeColors={animeColors}
               textColor={textColor}
-              onPlay={() => playEpisode(episode)}
+              onPlay={() => playEpisode({ ...anime, ...episode })}
             />
           ))}
       </div>

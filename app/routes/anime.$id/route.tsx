@@ -101,6 +101,7 @@ const AnimeDetails: React.FC<AnimeDetailsProps> = ({ state }) => {
           />
           <AnimeEpisodesList
             idAnilist={idAnilist}
+            anime={anime}
             animeColors={animeColors}
             textColor={textColor}
             sectionTitle="Episodios"

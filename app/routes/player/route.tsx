@@ -78,6 +78,10 @@ const Player = () => {
   const rpcFrame = useCanvasRpcFrame({ imageUrl: animeImage }) || null;
 
   useEffect(() => {
+    console.log(animeData);
+  }, [animeData]);
+
+  useEffect(() => {
     if (subtitles) {
       loadApiSubtitles(subtitles);
     }
