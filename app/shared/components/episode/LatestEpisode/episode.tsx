@@ -122,7 +122,7 @@ const EpisodeCard = memo(
     return (
       <div className="w-full group">
         <Card className="flex flex-col relative overflow-hidden rounded-md border-1 border-zinc-900 bg-zinc-950/70 transition-all duration-300 hover:scale-[1.02]">
-          <div className="aspect-[16/9] w-full relative">
+          <div className="aspect-[16/9] min-w-full relative">
             <div
               className="absolute bottom-0 left-0 h-1 bg-[#ff5680] z-20 transition-all duration-300"
               style={{ width: `${progress * 100}%` }}

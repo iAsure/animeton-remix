@@ -283,7 +283,7 @@ async function handleTorrent(torrent, instance) {
 
   const isHealthy = await checkServerHealth();
   if (!isHealthy) {
-    throw new Error('Torrent server is not healthy');
+    throw new Error('No se pudo iniciar el servidor de reproducción');
   }
 
   const fileName = encodeURIComponent(torrent.files[0].name);
