@@ -66,11 +66,12 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
     };
 
     const renderEpisodeCard = (anime, index: number) => {
-      const progress = history?.episodes[anime?.torrent?.infoHash]?.progress;
+      const progress = history?.episodes[anime?.torrent?.infoHash]?.progressData?.progress;
 
       const card = (
         <EpisodeCard
           anime={anime}
+          episode={null}
           isLoading={loadingHash === anime?.torrent?.infoHash}
           onPlay={() => playEpisode(anime)}
           progress={progress}

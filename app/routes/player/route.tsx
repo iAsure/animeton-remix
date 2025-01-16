@@ -124,7 +124,7 @@ const Player = () => {
       animeName: animeTitle,
       animeImage: animeImage,
       animeIdAnilist: animeData?.idAnilist || null,
-      episodeImage: animeData?.image || null,
+      episodeImage: animeData?.image || animeData?.episode?.image || null,
       episodeNumber: animeEpisode || null,
       episodeTorrentUrl: torrentUrl,
       pubDate: animeData?.torrent?.pubDate || animeData?.torrent?.date || new Date(),

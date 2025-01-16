@@ -26,7 +26,7 @@ export const TorrentPlayerProvider = ({
 }) => {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-  const [loadingHash, setLoadingHash] = useState<string | undefined>(undefined);
+  const [loadingHash, setLoadingHash] = useState<string | undefined>('');
 
   const playEpisode = (episode) => {
     const torrentLink = episode?.episodeTorrentUrl || episode?.torrent?.link || episode?.torrent?.torrentUrl;
@@ -52,7 +52,7 @@ export const TorrentPlayerProvider = ({
         },
       }
     );
-    setLoadingHash(undefined);
+    setLoadingHash('');
   };
 
   return (
