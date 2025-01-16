@@ -459,6 +459,10 @@ async function handleMkvSubtitles(filePath) {
 }
 
 async function validateTorrent(torrentUrl) {
+  if (torrentUrl.includes('magnet:')) {
+    return;
+  }
+
   try {
     const response = await fetch(torrentUrl);
     if (!response.ok) {

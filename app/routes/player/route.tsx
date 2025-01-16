@@ -55,6 +55,11 @@ const Player = () => {
     progress,
     downloadSpeed,
     uploadSpeed,
+    numPeers,
+    downloaded,
+    remaining,
+    total,
+    url,
     ready: torrentReady,
     error: torrentError,
   } = useTorrentStream(torrentUrl, torrentHash);
@@ -76,10 +81,6 @@ const Player = () => {
   const animeEpisode = animeData?.torrent?.episode;
 
   const rpcFrame = useCanvasRpcFrame({ imageUrl: animeImage }) || null;
-
-  useEffect(() => {
-    console.log(animeData);
-  }, [animeData]);
 
   useEffect(() => {
     if (subtitles) {
@@ -139,6 +140,19 @@ const Player = () => {
 
     return () => clearInterval(interval);
   }, [torrentHash, duration, updateProgress, animeData]);
+
+  useEffect(() => {
+    log.info('Torrent status:', {
+      progress,
+      downloadSpeed,
+      uploadSpeed,
+      numPeers,
+      downloaded,
+      remaining,
+      total,
+      url
+    });
+  }, [progress, downloadSpeed, uploadSpeed, numPeers, downloaded, remaining, total, url]);
 
   const handleVideoWaiting = useCallback(() => {
     setIsLocalBuffering(true);

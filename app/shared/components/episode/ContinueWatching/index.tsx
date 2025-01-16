@@ -2,14 +2,11 @@ import { memo, Fragment } from 'react';
 import { Icon } from '@iconify/react';
 import { motion } from 'framer-motion';
 
-import useRSSData from '@hooks/useRSSData';
 import useUserActivity from '@hooks/useUserActivity';
 
 import { useTorrentPlayer } from '@context/TorrentPlayerContext';
 
 import EpisodeCard from '../LatestEpisode/episode';
-import EpisodeCardSkeleton from '../LatestEpisode/skeleton';
-import log from 'electron-log';
 
 interface ContinueWatchingProps {
   sectionTitle?: string;
@@ -24,12 +21,7 @@ const ContinueWatching = memo(
     cardAnimation = false,
   }: ContinueWatchingProps) => {
     const { playEpisode, loadingHash } = useTorrentPlayer();
-    const { history, getInProgressEpisodes } = useUserActivity();
-    const { rssAnimes, isLoading } = useRSSData({
-      page: 1,
-      perPage: 50,
-      emptyState: false,
-    });
+    const { getInProgressEpisodes } = useUserActivity();
 
     const inProgressEpisodes = getInProgressEpisodes();
 
@@ -102,11 +94,9 @@ const ContinueWatching = memo(
 
         <div className="w-[90%]">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 w-full">
-            {isLoading
-              ? Array.from({ length: perPage }).map((_, i) => (
-                  <EpisodeCardSkeleton key={i} />
-                ))
-              : inProgressEpisodes.map((episode, i) => renderEpisodeCard(episode, i))}
+            {inProgressEpisodes
+              .slice(0, perPage)
+              .map((episode, i) => renderEpisodeCard(episode, i))}
           </div>
         </div>
       </div>
