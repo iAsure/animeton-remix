@@ -12,7 +12,8 @@ import useUserActivity from '@hooks/useUserActivity';
 import VideoSpinner from '@components/video/VideoSpinner';
 import VideoControls from '@components/video/VideoControls';
 import VideoPlayPauseOverlay from '@components/video/VideoPlayPauseOverlay';
-import SubtitleStatus from '@/shared/components/video/SubtitleStatus';
+import SubtitleStatus from '@components/video/SubtitleStatus';
+import VideoInfo from '@components/video/VideoInfo';
 
 import usePlayerStore from '@stores/player';
 
@@ -38,7 +39,7 @@ const Player = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
 
-  const { updateProgress, getEpisodeProgress } = useUserActivity();
+  const { updateProgress, getEpisodeProgress, history } = useUserActivity();
 
   const animeData = state?.animeData;
 
@@ -56,10 +57,6 @@ const Player = () => {
     downloadSpeed,
     uploadSpeed,
     numPeers,
-    downloaded,
-    remaining,
-    total,
-    url,
     ready: torrentReady,
     error: torrentError,
   } = useTorrentStream(torrentUrl, torrentHash);
@@ -70,15 +67,18 @@ const Player = () => {
   const isLoadingVideo =
     isLocalBuffering || (!subtitleContent?.length && !torrentReady);
 
-  const animeImage =
+  const animeHistoryData = history?.episodes[torrentHash];
+
+  const animeImage = animeHistoryData?.animeImage ||
     animeData?.coverImage?.extraLarge ||
     animeData?.bannerImage ||
     animeData?.image;
   const animeTitle =
+    animeHistoryData?.animeName ||
     animeData?.title?.english ||
     animeData?.title?.romaji ||
     animeData?.torrent?.title;
-  const animeEpisode = animeData?.torrent?.episode;
+  const animeEpisode = animeHistoryData?.episodeNumber || animeData?.torrent?.episode;
 
   const rpcFrame = useCanvasRpcFrame({ imageUrl: animeImage }) || null;
 
@@ -140,19 +140,6 @@ const Player = () => {
 
     return () => clearInterval(interval);
   }, [torrentHash, duration, updateProgress, animeData]);
-
-  useEffect(() => {
-    log.info('Torrent status:', {
-      progress,
-      downloadSpeed,
-      uploadSpeed,
-      numPeers,
-      downloaded,
-      remaining,
-      total,
-      url
-    });
-  }, [progress, downloadSpeed, uploadSpeed, numPeers, downloaded, remaining, total, url]);
 
   const handleVideoWaiting = useCallback(() => {
     setIsLocalBuffering(true);
@@ -222,13 +209,19 @@ const Player = () => {
       <DiscordStatus
         options={{
           details: animeTitle,
-          state: animeEpisode ? `Episodio ${animeEpisode}` : '',
+          state: animeEpisode ? `Episodio ${animeEpisode}` : null,
           assets: {
             large_image: rpcFrame,
             small_image: isPlaying ? 'play' : 'pause',
             small_text: isPlaying ? 'Reproduciendo' : 'Pausado',
           },
         }}
+      />
+      <VideoInfo
+        animeName={animeTitle}
+        episodeNumber={animeEpisode}
+        numPeers={numPeers}
+        isMouseMoving={isMouseMoving}
       />
       <video
         id="output"

@@ -36,6 +36,7 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
   const { config } = useConfig();
 
   const [showSubtitleSelector, setShowSubtitleSelector] = useState(false);
+  const [showSkipButton, setShowSkipButton] = useState(true);
 
   const currentChapter = chapters.find(
     chapter => currentTime >= chapter.start/1000 && currentTime <= chapter.end/1000
@@ -215,25 +216,68 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
     }
   }, [volume]);
 
-  const handleSkipOpening = () => {
-    const openingChapter = chapters.find(chapter => chapter.text.toLowerCase() === 'opening');
-    if (!openingChapter || !videoRef.current) return;
+  const SKIPPABLE_CHAPTERS = [
+    ['Opening', /^op$|opening$|^ncop/i],
+    ['Ending', /^ed$|ending$|^nced/i],
+    ['Recap', /recap/i]
+  ] as const;
+
+  const getSkippableChapterType = useCallback((chapter?: any) => {
+    if (!chapter?.text) return null;
     
-    videoRef.current.currentTime = openingChapter.end/1000;
+    for (const [type, regex] of SKIPPABLE_CHAPTERS) {
+      if (regex.test(chapter.text)) {
+        return type;
+      }
+    }
+    return null;
+  }, []);
+
+  const handleSkipChapter = () => {
+    if (!videoRef.current || !currentChapter) return;
+    videoRef.current.currentTime = currentChapter.end/1000;
+  };
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    if (getSkippableChapterType(currentChapter)) {
+      setShowSkipButton(true);
+      timeoutId = setTimeout(() => {
+        setShowSkipButton(false);
+      }, 10000);
+    } else {
+      setShowSkipButton(false);
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [currentChapter?.start, getSkippableChapterType]);
+
+  const getSkipButtonText = (chapterType: string) => {
+    switch (chapterType) {
+      case 'Opening': return 'Saltar intro';
+      case 'Ending': return 'Saltar ending';
+      case 'Recap': return 'Saltar recap';
+      default: return 'Saltar';
+    }
   };
 
   return (
     <>
       <Button
-        className="fixed right-10 bottom-24 bg-white text-black font-extrabold z-50"
-        onClick={handleSkipOpening}
-        isDisabled={!currentChapter || currentChapter.text.toLowerCase() !== 'opening'}
+        className="fixed right-10 bottom-24 bg-white text-black text-base font-extrabold z-50 shadow-sm rounded-lg"
+        onClick={handleSkipChapter}
+        isDisabled={!currentChapter || !getSkippableChapterType(currentChapter)}
         style={{
-          opacity: currentChapter?.text.toLowerCase() === 'opening' ? 1 : 0,
+          opacity: (getSkippableChapterType(currentChapter) && showSkipButton) ? 1 : 0,
           transition: 'opacity 0.3s ease-in-out',
+          height: '36px',
         }}
       >
-        Saltar intro
+        <Icon icon="gravity-ui:chevrons-right" className="text-black h-5 w-5" />
+        {getSkipButtonText(getSkippableChapterType(currentChapter) || '')}
       </Button>
 
       <div

@@ -84,7 +84,7 @@ const EpisodeCard = memo(
       anime?.bannerImage ||
       anime?.coverImage?.extraLarge;
 
-    const animeName = episode?.animeName || anime?.title?.romaji;
+    const animeName = episode?.animeName || anime?.title?.english || anime?.title?.romaji;
     const animeIdAnilist = episode?.animeIdAnilist || anime?.idAnilist;
     const episodeNumber =
       episode?.episodeNumber ||

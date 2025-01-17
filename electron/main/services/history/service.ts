@@ -126,8 +126,16 @@ export class HistoryService {
       lastWatched: Date.now(),
     };
 
+    const existingEpisode = this.history.episodes[episodeId];
+    
     this.history.episodes[episodeId] = {
-      ...episodeInfo,
+      animeName: existingEpisode?.animeName ?? episodeInfo.animeName,
+      animeImage: existingEpisode?.animeImage ?? episodeInfo.animeImage,
+      animeIdAnilist: existingEpisode?.animeIdAnilist ?? episodeInfo.animeIdAnilist,
+      episodeImage: existingEpisode?.episodeImage ?? episodeInfo.episodeImage,
+      episodeNumber: existingEpisode?.episodeNumber ?? episodeInfo.episodeNumber,
+      episodeTorrentUrl: existingEpisode?.episodeTorrentUrl ?? episodeInfo.episodeTorrentUrl,
+      pubDate: existingEpisode?.pubDate ?? episodeInfo.pubDate,
       progressData,
     };
 
