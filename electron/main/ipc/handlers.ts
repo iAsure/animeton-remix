@@ -7,6 +7,7 @@ import path from 'path';
 import os from 'os';
 import { Worker as NodeWorker } from 'worker_threads';
 import { ConfigService } from '../services/config/service.js';
+import { HistoryService } from '../services/history/service.js';
 
 export async function setupIpcHandlers(
   webTorrentProcess: UtilityProcess,
@@ -24,13 +25,19 @@ export async function setupIpcHandlers(
   const configService = new ConfigService(mainWindow);
   await configService.initialize();
 
+  const historyService = new HistoryService(mainWindow);
+  await historyService.initialize();
+
   // Register torrent handler
   ipcMain.on(IPC_CHANNELS.TORRENT.ADD, (_, arg) => {
     log.debug('Torrent action received:', arg);
+    const { action, torrentUrl, torrentHash } = arg;
     const message = {
-      action: arg.action,
-      torrentId: arg.torrentId
+      action,
+      torrentUrl,
+      torrentHash,
     };
+    
     webTorrentProcess.postMessage(message);
   });
 
@@ -40,13 +47,13 @@ export async function setupIpcHandlers(
     if (handler) {
       await handler(message.data);
     } else {
-      log.warn('Unknown torrent message type:', message.type);
+      log.warn('Unknown torrent message type:', message);
     }
   });
 
   // Register subtitle extraction handler
   ipcMain.handle(IPC_CHANNELS.SUBTITLES.EXTRACT, async (_, filePath) => {
-    log.info('Main process: Received extract request for:', filePath);
+    log.info('Main process: Received extract request for:', { filePath });
     
     if (!filePath) {
       const error = new Error('No file path provided');
@@ -56,7 +63,6 @@ export async function setupIpcHandlers(
 
     try {
       const result = await subtitlesService.processFile(filePath);
-      log.info('Main process: Extraction result:', result);
       return result;
     } catch (error) {
       log.error('Main process: Extraction failed:', error);
@@ -195,7 +201,34 @@ export async function setupIpcHandlers(
     return mainWindow.webContents.isDevToolsOpened();
   });
 
+  // History handlers
+  
+  ipcMain.handle(IPC_CHANNELS.HISTORY.GET_PROGRESS, async (_, episodeId) => {
+    return await historyService.getEpisodeProgress(episodeId);
+  });
+
+  ipcMain.handle(
+    IPC_CHANNELS.HISTORY.UPDATE_PROGRESS,
+    async (_, episodeId, progress, duration, episodeInfo) => {
+      await historyService.updateEpisodeProgress(
+        episodeId, 
+        progress, 
+        duration,
+        episodeInfo
+      );
+    }
+  );
+
+  ipcMain.handle(IPC_CHANNELS.HISTORY.GET_ALL, async () => {
+    return await historyService.getAllHistory();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.HISTORY.CLEAR, async () => {
+    await historyService.clearHistory();
+  });
+
   mainWindow.on('closed', () => {
     configService.cleanup();
+    historyService.cleanup();
   });
 }

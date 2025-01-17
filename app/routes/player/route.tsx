@@ -1,27 +1,50 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { useSearchParams } from '@remix-run/react';
+import { useState, useRef, useCallback, useEffect, use } from 'react';
+import { useSearchParams, useLocation, useNavigate } from '@remix-run/react';
 
 import log from 'electron-log';
 
 import useTorrentStream from '@hooks/useTorrentStream';
 import useSubtitles from '@hooks/useSubtitles';
+import useApiSubtitles from '@hooks/useApiSubtitles';
+import useChapters from '@hooks/useChapters';
+import useUserActivity from '@hooks/useUserActivity';
 
 import VideoSpinner from '@components/video/VideoSpinner';
 import VideoControls from '@components/video/VideoControls';
 import VideoPlayPauseOverlay from '@components/video/VideoPlayPauseOverlay';
-import SubtitleStatus from '@/shared/components/video/SubtitleStatus';
+import SubtitleStatus from '@components/video/SubtitleStatus';
+import VideoInfo from '@components/video/VideoInfo';
 
 import usePlayerStore from '@stores/player';
 
+import { useNotification } from '@context/NotificationContext';
 import { useConfig } from '@context/ConfigContext';
+import useCanvasRpcFrame from '@hooks/useCanvasRpcFrame';
+import DiscordStatus from '@components/core/DiscordStatus';
 
 const Player = () => {
-  const { isMouseMoving, setMouseMoving, setIsPlaying, setPlayLastAction, reset } =
-    usePlayerStore();
+  const {
+    isPlaying,
+    duration,
+    subtitleContent,
+    isMouseMoving,
+    setMouseMoving,
+    setIsPlaying,
+    setPlayLastAction,
+    reset,
+  } = usePlayerStore();
   const { config } = useConfig();
-
+  const { showNotification } = useNotification();
   const [searchParams] = useSearchParams();
+  const { state } = useLocation();
+  const navigate = useNavigate();
+
+  const { updateProgress, getEpisodeProgress, history } = useUserActivity();
+
+  const animeData = state?.animeData;
+
   const torrentUrl = searchParams.get('url');
+  const torrentHash = searchParams.get('hash');
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -33,21 +56,90 @@ const Player = () => {
     progress,
     downloadSpeed,
     uploadSpeed,
-    isBuffering: torrentBuffering,
+    numPeers,
     ready: torrentReady,
-    error: torrentError
-  } = useTorrentStream(torrentUrl);
+    error: torrentError,
+  } = useTorrentStream(torrentUrl, torrentHash);
+  const { loadApiSubtitles } = useSubtitles(videoRef, isVideoReady);
+  const { subtitles, fetchSubtitles } = useApiSubtitles(torrentHash);
+  const { chapters } = useChapters();
 
-  const isBuffering = (torrentBuffering || isLocalBuffering) || !torrentReady;
+  const isLoadingVideo =
+    isLocalBuffering || (!subtitleContent?.length && !torrentReady);
 
-  useSubtitles(videoRef, isVideoReady);
+  const animeHistoryData = history?.episodes[torrentHash];
+
+  const animeImage = animeHistoryData?.animeImage ||
+    animeData?.coverImage?.extraLarge ||
+    animeData?.bannerImage ||
+    animeData?.image;
+  const animeTitle =
+    animeHistoryData?.animeName ||
+    animeData?.title?.english ||
+    animeData?.title?.romaji ||
+    animeData?.torrent?.title;
+  const animeEpisode = animeHistoryData?.episodeNumber || animeData?.torrent?.episode;
+
+  const rpcFrame = useCanvasRpcFrame({ imageUrl: animeImage }) || null;
+
+  useEffect(() => {
+    if (subtitles) {
+      loadApiSubtitles(subtitles);
+    }
+  }, [subtitles]);
+
+  useEffect(() => {
+    if (torrentHash) {
+      fetchSubtitles();
+    }
+  }, [torrentHash, fetchSubtitles]);
 
   useEffect(() => {
     if (torrentError) {
       log.error('Torrent error:', torrentError);
-      // You could show a toast/notification here
+
+      showNotification({
+        title: 'Error',
+        message: torrentError,
+        type: 'error',
+      });
+      navigate('/', { viewTransition: true });
     }
   }, [torrentError]);
+
+  useEffect(() => {
+    if (torrentHash && videoRef.current) {
+      getEpisodeProgress(torrentHash).then(episode => {
+        if (episode?.progressData.progress) {
+          videoRef.current!.currentTime = 
+            episode.progressData.progress * episode.progressData.duration;
+        }
+      });
+    }
+  }, [torrentHash]);
+
+  useEffect(() => {
+    if (!torrentHash || !duration || !animeData) return;
+
+    const episodeInfo = {
+      animeName: animeTitle,
+      animeImage: animeImage,
+      animeIdAnilist: animeData?.idAnilist || null,
+      episodeImage: animeData?.image || animeData?.episode?.image || null,
+      episodeNumber: animeEpisode || null,
+      episodeTorrentUrl: torrentUrl,
+      pubDate: animeData?.torrent?.pubDate || animeData?.torrent?.date || new Date(),
+    };
+
+    const interval = setInterval(() => {
+      if (videoRef.current && !videoRef.current.paused) {
+        const progress = videoRef.current.currentTime / duration;
+        updateProgress(torrentHash, progress, duration, episodeInfo);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [torrentHash, duration, updateProgress, animeData]);
 
   const handleVideoWaiting = useCallback(() => {
     setIsLocalBuffering(true);
@@ -114,6 +206,23 @@ const Player = () => {
       }`}
       onMouseMove={handleMouseMove}
     >
+      <DiscordStatus
+        options={{
+          details: animeTitle,
+          state: animeEpisode ? `Episodio ${animeEpisode}` : null,
+          assets: {
+            large_image: rpcFrame,
+            small_image: isPlaying ? 'play' : 'pause',
+            small_text: isPlaying ? 'Reproduciendo' : 'Pausado',
+          },
+        }}
+      />
+      <VideoInfo
+        animeName={animeTitle}
+        episodeNumber={animeEpisode}
+        numPeers={numPeers}
+        isMouseMoving={isMouseMoving}
+      />
       <video
         id="output"
         ref={videoRef}
@@ -127,8 +236,8 @@ const Player = () => {
       />
       {config?.features?.subtitlesStatus && <SubtitleStatus />}
       <VideoPlayPauseOverlay />
-      <VideoControls videoRef={videoRef} />
-      {isLocalBuffering && (
+      <VideoControls videoRef={videoRef} chapters={chapters} />
+      {isLoadingVideo && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
           <VideoSpinner
             progress={progress}

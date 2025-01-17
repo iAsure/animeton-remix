@@ -22,101 +22,113 @@ export async function setupProtocol(build, viteDevServer) {
   const ses = session.fromPartition(partition);
 
   ses.protocol.handle('https', async (request) => {
-    const url = new URL(request.url);
-    // log.debug(`Handling HTTPS request: ${url.pathname}`);
+    try {
+      const url = new URL(request.url);
 
-    // Check if URL is external
-    const isExternalUrl = url?.hostname !== 'remix';
+      if (url.pathname === '/null') {
+        return new Response('Not Found', { status: 404 });
+      }
 
-    if (isExternalUrl || EXTERNAL_HOSTNAMES_ARRAY.includes(url.hostname)) {
-      return await net.fetch(request.url, {
-        method: request.method,
-        headers: request.headers,
-        body: request.body,
-        duplex: 'half'
-      });
-    }
+      // Check if URL is external
+      const isExternalUrl = url?.hostname !== 'remix';
 
-    // Handle static files and dev server
-    if (
-      url.pathname !== '/' &&
-      (request.method === 'GET' || request.method === 'HEAD')
-    ) {
-      if (viteDevServer) {
-        const staticFile = path.resolve(
-          __dirname,
-          '../../../../public' + url.pathname
-        );
-        if (
-          await fsp
-            .stat(staticFile)
-            .then((s) => s.isFile())
-            .catch(() => false)
-        ) {
-          return new Response(await fsp.readFile(staticFile), {
-            headers: {
-              'content-type':
-                mime.lookup(path.basename(staticFile)) || 'text/plain',
-            },
+      if (isExternalUrl || EXTERNAL_HOSTNAMES_ARRAY.includes(url.hostname)) {
+        return await net
+          .fetch(request.url, {
+            method: request.method,
+            headers: request.headers,
+            body: request.body,
+            duplex: 'half',
+          })
+          .catch(() => {
+            return new Response('External URL fetch error', { status: 500 });
           });
-        }
+      }
 
-        if (request.method === 'HEAD') {
-          return new Response(null, {
-            headers: {
-              'access-control-allow-origin': '*',
-              'access-control-allow-methods': 'GET, HEAD',
-            },
-          });
-        }
-        try {
-          const VALID_ID_PREFIX = `/@id/`;
-          const NULL_BYTE_PLACEHOLDER = `__x00__`;
-          let id = url.pathname + url.search;
-          id = id.startsWith(VALID_ID_PREFIX)
-            ? id
-                .slice(VALID_ID_PREFIX.length)
-                .replace(NULL_BYTE_PLACEHOLDER, '\0')
-            : id;
-
-          const transformed = await viteDevServer.transformRequest(id, {
-            html: false,
-            ssr: false,
-          });
-          if (transformed) {
-            return new Response(transformed.code, {
-              headers: {
-                'content-type': 'application/javascript',
-              },
-            });
-          }
-        } catch (error) {}
-      } else {
-        const file = path.resolve(
-          __dirname,
-          '..',
-          '..',
-          '..',
-          'app',
-          'client',
-          url.pathname.slice(1)
-        );
-        try {
-          const isFile = await fsp.stat(file).then((s) => s.isFile());
-          if (isFile) {
-            return new Response(await fsp.readFile(file), {
+      // Handle static files and dev server
+      if (
+        url.pathname !== '/' &&
+        (request.method === 'GET' || request.method === 'HEAD')
+      ) {
+        if (viteDevServer) {
+          const staticFile = path.resolve(
+            __dirname,
+            '../../../../public' + url.pathname
+          );
+          if (
+            await fsp
+              .stat(staticFile)
+              .then((s) => s.isFile())
+              .catch(() => false)
+          ) {
+            return new Response(await fsp.readFile(staticFile), {
               headers: {
                 'content-type':
-                  mime.lookup(path.basename(file)) || 'text/plain',
+                  mime.lookup(path.basename(staticFile)) || 'text/plain',
               },
             });
           }
-        } catch {}
-      }
-    }
 
-    const remixHandler = createRequestHandler(build);
-    return await remixHandler(request);
+          if (request.method === 'HEAD') {
+            return new Response(null, {
+              headers: {
+                'access-control-allow-origin': '*',
+                'access-control-allow-methods': 'GET, HEAD',
+              },
+            });
+          }
+          try {
+            const VALID_ID_PREFIX = `/@id/`;
+            const NULL_BYTE_PLACEHOLDER = `__x00__`;
+            let id = url.pathname + url.search;
+            id = id.startsWith(VALID_ID_PREFIX)
+              ? id
+                  .slice(VALID_ID_PREFIX.length)
+                  .replace(NULL_BYTE_PLACEHOLDER, '\0')
+              : id;
+
+            const transformed = await viteDevServer.transformRequest(id, {
+              html: false,
+              ssr: false,
+            });
+            if (transformed) {
+              return new Response(transformed.code, {
+                headers: {
+                  'content-type': 'application/javascript',
+                },
+              });
+            }
+          } catch (error) {}
+        } else {
+          const file = path.resolve(
+            __dirname,
+            '..',
+            '..',
+            '..',
+            'app',
+            'client',
+            url.pathname.slice(1)
+          );
+          try {
+            const isFile = await fsp.stat(file).then((s) => s.isFile());
+            if (isFile) {
+              return new Response(await fsp.readFile(file), {
+                headers: {
+                  'content-type':
+                    mime.lookup(path.basename(file)) || 'text/plain',
+                },
+              });
+            }
+          } catch {}
+        }
+      }
+
+      const remixHandler = createRequestHandler(build);
+      return await remixHandler(request);
+    } catch (error) {
+      log.error('Protocol handler error:', error);
+      return new Response('Internal Server Error', { status: 500 });
+    }
   });
 
   // Setup file protocol handler

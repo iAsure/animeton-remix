@@ -12,7 +12,6 @@ export class SubtitlesService {
     
     try {
       const result = await this.extractSubtitles(filePath);
-      log.info('Extraction completed with result:', result);
       return result;
     } catch (error) {
       log.error('Error processing subtitles:', error);
@@ -44,7 +43,11 @@ export class SubtitlesService {
         } else if (result.type === 'complete') {
           this.mainWindow?.webContents.send(IPC_CHANNELS.SUBTITLES.EXTRACTED, {
             success: true,
-            data: result.data
+            data: result.data.subtitles
+          });
+          this.mainWindow?.webContents.send(IPC_CHANNELS.CHAPTERS.EXTRACTED, {
+            success: true,
+            data: result.data.chapters
           });
           resolve({ success: true, data: result.data });
         }

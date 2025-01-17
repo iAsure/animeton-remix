@@ -29,7 +29,9 @@
       "@constants/*": ["app/shared/constants/*"],
       "@components/*": ["app/shared/components/*"],
       "@context/*": ["app/context/*"],
-      "@stores/*": ["app/stores/*"]
+      "@stores/*": ["app/stores/*"],
+      "@canvas/*": ["app/shared/canvas/*"],
+      "@lib/*": ["app/shared/lib/*"]
     }
   }
 }

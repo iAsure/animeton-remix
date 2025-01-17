@@ -1,14 +1,19 @@
 import usePlayerStore from '@stores/player';
 import { Icon } from '@iconify/react';
+import { useEffect, useState } from 'react';
 
 const SubtitleStatus = () => {
   const {
     subtitleStatus,
     availableSubtitles,
-    subtitleRanges,
     isMouseMoving,
     extractionState,
   } = usePlayerStore();
+  const [subtitleRanges, setSubtitleRanges] = useState([]);
+
+  useEffect(() => {
+    setSubtitleRanges(usePlayerStore.getState().getExtractedSubtitleRanges());
+  }, [availableSubtitles]);
 
   // Helper function for consistent text styling
   const InfoRow = ({ children }: { children: React.ReactNode }) => (

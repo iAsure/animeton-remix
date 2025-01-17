@@ -14,6 +14,7 @@ const useSubtitles = (
   const [subtitlesRenderer, setSubtitlesRenderer] = useState<JASSUB | null>(
     null
   );
+  const [infoHash, setInfoHash] = useState<string | null>(null);
 
   const {
     duration,
@@ -32,7 +33,8 @@ const useSubtitles = (
     setConsecutiveMatches,
     setVideoFilePath,
     setExtractionState,
-    setLastSegmentCount
+    setLastSegmentCount,
+    selectedSubtitleTrack,
   } = usePlayerStore();
 
   const initializeSubtitlesRenderer = useCallback(() => {
@@ -47,7 +49,7 @@ const useSubtitles = (
         debug: false,
         asyncRender: true,
         onDemandRender: true,
-        prescaleFactor: 0.8
+        prescaleFactor: 0.8,
       });
 
       log.info('Subtitles renderer initialized');
@@ -55,6 +57,12 @@ const useSubtitles = (
       setSubtitlesRenderer(renderer);
     }
   }, [videoRef, subtitlesRenderer, isVideoReady]);
+
+  useEffect(() => {
+    if (!selectedSubtitleTrack) {
+      loadSubtitles(defaultHeader);
+    }
+  }, [selectedSubtitleTrack]);
 
   useEffect(() => {
     if (isVideoReady) {
@@ -85,34 +93,103 @@ const useSubtitles = (
     [loadSubtitles]
   );
 
-  useEffect(() => {
-    const handleSubtitles = (
-      _: any,
-      result: { success: boolean; data: any[] }
-    ) => {
-      const subtitlesArray = Object.values(result.data);
-      
-      if (result.success && subtitlesArray.length > 0) {
-        // Parse all subtitles and store them
-        const parsedSubtitles = subtitlesArray.map(subtitle => ({
-          ...subtitle,
-          parsedContent: formatAssSubtitles(subtitle)
-        }));
-        
-        setAvailableSubtitles(parsedSubtitles);
+  const loadApiSubtitles = useCallback(
+    (subtitleContent: string) => {
+      const apiSubtitle = {
+        track: {
+          language: 'spa',
+          name: 'Español Latino',
+          default: true,
+          isApiTrack: true,
+        },
+        parsedContent: subtitleContent,
+        source: 'api',
+      };
 
-        // Find Spanish/Latin America subtitle
-        const defaultSubtitle = parsedSubtitles.find(
-          sub => sub.track.language === 'spa' || 
-          (sub.track.name && sub.track.name.includes('Lat'))
+      setAvailableSubtitles([apiSubtitle]);
+      setSelectedSubtitleTrack(apiSubtitle);
+      setSubtitleContent(subtitleContent);
+    },
+    [availableSubtitles]
+  );
+
+  const handleSubtitles = (
+    _: any,
+    result: { success: boolean; data: any[] }
+  ) => {
+    const subtitlesArray = Object.values(result.data);
+
+    if (!result.success || subtitlesArray.length === 0) return;
+
+    const baseSubtitles = subtitlesArray.filter(
+      (sub) =>
+        sub.track.language === 'spa' ||
+        sub.track.language === 'eng' ||
+        sub.track.name === 'English'
+    );
+
+    const parsedSubtitles = baseSubtitles.map((subtitle) => {
+      const updatedSubtitle = { ...subtitle };
+      
+      if (subtitle.track.name === 'English') {
+        updatedSubtitle.track.name = 'Ingles';
+      } else if (subtitle.track.language === 'spa' && !subtitle.track.name?.includes('Lat')) {
+        updatedSubtitle.track.name = 'Español España';
+      } else if (subtitle.track.language === 'spa' && subtitle.track.name?.includes('Lat')) {
+        updatedSubtitle.track.name = 'Español Latino';
+      }
+      
+      return {
+        ...updatedSubtitle,
+        parsedContent: formatAssSubtitles(updatedSubtitle),
+        source: 'extractor',
+      };
+    }).sort((a, b) => {
+      if (a.track.name === 'Ingles') return 1;
+      if (b.track.name === 'Ingles') return -1;
+      return 0;
+    });
+
+    const currentSubtitles = usePlayerStore.getState().availableSubtitles;
+    const currentSelectedSubtitleTrack =
+      usePlayerStore.getState().selectedSubtitleTrack;
+    const currentApiSub = currentSubtitles.find((sub) => sub.source === 'api');
+
+    let newSubtitles;
+    if (currentApiSub) {
+      const latIndex = parsedSubtitles.findIndex(
+        sub => sub.track.name && sub.track.name.includes('Lat')
+      );
+      
+      if (latIndex !== -1) {
+        newSubtitles = [...parsedSubtitles];
+        newSubtitles[latIndex] = currentApiSub;
+      } else {
+        newSubtitles = [currentApiSub, ...parsedSubtitles];
+      }
+    } else {
+      newSubtitles = parsedSubtitles;
+    }
+
+    setAvailableSubtitles(newSubtitles);
+    
+    const currentSubtitleContent = newSubtitles.find((sub) => sub.track.name === currentSelectedSubtitleTrack?.track.name)?.parsedContent;
+    setSubtitleContent(currentSubtitleContent);
+
+    if (!currentSelectedSubtitleTrack) {
+      const defaultLatSubtitle =
+        parsedSubtitles.find(
+          (sub) => sub.track.name && sub.track.name.includes('Lat')
         ) || parsedSubtitles[0];
 
-        setSelectedSubtitleTrack(defaultSubtitle);
-        setSubtitleContent(defaultSubtitle.parsedContent);
-        log.info('Subtitles loaded into renderer');
+      if (defaultLatSubtitle) {
+        setSelectedSubtitleTrack(defaultLatSubtitle);
+        setSubtitleContent(defaultLatSubtitle.parsedContent);
       }
-    };
+    }
+  };
 
+  useEffect(() => {
     const handleError = (_: any, result: { error: string }) => {
       log.error('Subtitle extraction error:', result.error);
     };
@@ -124,7 +201,7 @@ const useSubtitles = (
       window.api.subtitles.onExtracted.unsubscribe(handleSubtitles);
       window.api.subtitles.onError.unsubscribe(handleError);
     };
-  }, [loadSubtitles]);
+  }, []);
 
   useEffect(() => {
     if (subtitleContent !== null && subtitlesRenderer) {
@@ -138,78 +215,86 @@ const useSubtitles = (
     }
   }, [subtitleContent, duration]);
 
-  // Listen for SERVER_DONE event to get the actual file path
   useEffect(() => {
-    const handleServerDone = (_: any, data: { url: string; filePath: string }) => {
+    const handleServerDone = (
+      _: any,
+      data: { url: string; filePath: string; infoHash: string }
+    ) => {
       log.info('Video file path received:', data.filePath);
       setVideoFilePath(data.filePath);
+      setInfoHash(data.infoHash);
     };
 
     window.api.torrent.onServerDone.subscribe(handleServerDone);
     return () => window.api.torrent.onServerDone.unsubscribe(handleServerDone);
   }, []);
 
-  const extractSubtitles = useCallback((filePath: string) => {
-    log.info('Attempting to extract subtitles from:', filePath);
-    
-    if (extractionState.status === 'idle' || 
-        extractionState.status === 'retrying' || 
-        extractionState.status === 'error') {
-      const now = Date.now();
-      
-      setExtractionState(prev => ({
-        status: 'extracting',
-        attempts: prev.status === 'error' ? 1 : prev.attempts + 1,
-        lastAttemptTime: now,
-        progress: 0,
-        error: null
-      }));
-      
-      try {
-        log.info('Calling window.api.subtitles.extractSubtitles');
-        window.api.subtitles.extractSubtitles(filePath)
-          .then(result => {
-            if (result.success) {
-              setExtractionState(prev => ({
-                ...prev,
-                status: 'extracting',
-                progress: Math.min((prev.progress || 0) + 33, 99)
-              }));
-            } else {
-              setExtractionState(prev => ({
+  const extractSubtitles = useCallback(
+    (filePath: string) => {
+      log.info('Attempting to extract subtitles from:', filePath);
+
+      if (
+        extractionState.status === 'idle' ||
+        extractionState.status === 'retrying' ||
+        extractionState.status === 'error'
+      ) {
+        const now = Date.now();
+
+        setExtractionState((prev) => ({
+          status: 'extracting',
+          attempts: prev.status === 'error' ? 1 : prev.attempts + 1,
+          lastAttemptTime: now,
+          progress: 0,
+          error: null,
+        }));
+
+        try {
+          log.info('Calling window.api.subtitles.extractSubtitles');
+          window.api.subtitles
+            .extractSubtitles(filePath)
+            .then((result) => {
+              if (result.success) {
+                setExtractionState((prev) => ({
+                  ...prev,
+                  status: 'extracting',
+                  progress: Math.min((prev.progress || 0) + 33, 99),
+                }));
+              } else {
+                setExtractionState((prev) => ({
+                  ...prev,
+                  status: 'error',
+                  error: result.error,
+                }));
+              }
+            })
+            .catch((error) => {
+              log.error('Error during extraction:', error);
+              setExtractionState((prev) => ({
                 ...prev,
                 status: 'error',
-                error: result.error
+                error: error.message,
               }));
-            }
-          })
-          .catch(error => {
-            log.error('Error during extraction:', error);
-            setExtractionState(prev => ({
-              ...prev,
-              status: 'error',
-              error: error.message
-            }));
-          });
-      } catch (error) {
-        log.error('Failed to call extractSubtitles:', error);
-        setExtractionState(prev => ({
-          ...prev,
-          status: 'error',
-          error: error.message
-        }));
-      }
-      
-      setSubtitleStatus({ 
-        status: 'loading',
-        message: `Analizando archivo...`
-      });
-    } else {
-      log.info('Skipping extraction, current state:', extractionState.status);
-    }
-  }, [extractionState.status]);
+            });
+        } catch (error) {
+          log.error('Failed to call extractSubtitles:', error);
+          setExtractionState((prev) => ({
+            ...prev,
+            status: 'error',
+            error: error.message,
+          }));
+        }
 
-  // Start extraction when video is ready AND we have the file path
+        setSubtitleStatus({
+          status: 'loading',
+          message: `Analizando archivo...`,
+        });
+      } else {
+        log.info('Skipping extraction, current state:', extractionState.status);
+      }
+    },
+    [extractionState.status]
+  );
+
   useEffect(() => {
     if (isVideoReady && videoFilePath) {
       extractSubtitles(videoFilePath);
@@ -221,44 +306,64 @@ const useSubtitles = (
     if (!subtitleContent || !duration) return;
     if (extractionState.status === 'completed') return;
 
-    const MAX_ATTEMPTS = 50;
-    const RETRY_TIMEOUT = 10000;
+    const MAX_ATTEMPTS = 100;
+    const BASE_TIMEOUT = 5000;
+    const TIMEOUT_INCREMENT = 500;
+    const ATTEMPTS_PER_INCREMENT = 5;
+
+    // Calculate dynamic timeout based on attempts
+    const currentRetryTimeout =
+      BASE_TIMEOUT +
+      Math.floor(extractionState.attempts / ATTEMPTS_PER_INCREMENT) *
+        TIMEOUT_INCREMENT;
+
     const currentSegments = subtitleRanges.length;
 
     const checkTimer = setInterval(() => {
       const timeSinceLastAttempt = Date.now() - extractionState.lastAttemptTime;
 
-      if (currentSegments === 0 || timeSinceLastAttempt >= RETRY_TIMEOUT) {
+      if (
+        currentSegments === 0 ||
+        timeSinceLastAttempt >= currentRetryTimeout
+      ) {
         log.info('Checking retry conditions:', {
           attempts: extractionState.attempts,
           maxAttempts: MAX_ATTEMPTS,
+          currentTimeout: currentRetryTimeout,
           hasFilePath: !!videoFilePath,
           currentState: extractionState.status,
           timeSinceLastAttempt,
-          currentSegments
+          currentSegments,
         });
 
         if (extractionState.attempts < MAX_ATTEMPTS && videoFilePath) {
-          setExtractionState(prev => ({
+          setExtractionState((prev) => ({
             ...prev,
-            status: 'retrying'
+            status: 'retrying',
           }));
-          
+
           log.info('Initiating retry for subtitle extraction');
           extractSubtitles(videoFilePath);
         } else {
           log.warn('Max attempts reached or no file path available');
-          setExtractionState(prev => ({
+          setExtractionState((prev) => ({
             ...prev,
             status: 'error',
-            error: 'Max attempts reached'
+            error: 'Max attempts reached',
           }));
         }
       }
-    }, RETRY_TIMEOUT);
+    }, currentRetryTimeout);
 
     return () => clearInterval(checkTimer);
-  }, [subtitleContent, duration, extractionState, videoFilePath, extractSubtitles, subtitleRanges]);
+  }, [
+    subtitleContent,
+    duration,
+    extractionState,
+    videoFilePath,
+    extractSubtitles,
+    subtitleRanges,
+  ]);
 
   // Separate effect for handling matches
   useEffect(() => {
@@ -266,8 +371,9 @@ const useSubtitles = (
     if (extractionState.status === 'completed') return;
     if (extractionState.status !== 'extracting') return;
 
-    const currentSegments = subtitleRanges.length;
-    const REQUIRED_MATCHES = 3;
+    const extractedRanges = usePlayerStore.getState().getExtractedSubtitleRanges();
+    const currentSegments = extractedRanges.length;
+    const REQUIRED_MATCHES = 30;
 
     if (currentSegments > 0) {
       const prevSegmentCount = lastSegmentCount ?? 0;
@@ -276,35 +382,37 @@ const useSubtitles = (
         current: currentSegments,
         last: prevSegmentCount,
         consecutive: consecutiveMatches,
-        required: REQUIRED_MATCHES
+        required: REQUIRED_MATCHES,
       });
 
       if (currentSegments === prevSegmentCount) {
         const newConsecutiveMatches = consecutiveMatches + 1;
-        
+
         if (newConsecutiveMatches >= REQUIRED_MATCHES) {
           log.info('Required matches reached, completing extraction');
 
-          setExtractionState({ 
+          setExtractionState({
             status: 'completed',
             attempts: extractionState.attempts,
             progress: 100,
-            successfulTracks: availableSubtitles.length,
-            lastAttemptTime: extractionState.lastAttemptTime
+            lastAttemptTime: extractionState.lastAttemptTime,
           });
-          
-          setSubtitleStatus({ 
+
+          setSubtitleStatus({
             status: 'ready',
-            message: 'Subtítulos cargados correctamente'
+            message: 'Subtítulos cargados correctamente',
           });
 
           return;
         }
 
         setConsecutiveMatches(newConsecutiveMatches);
-        setExtractionState(prev => ({
+        setExtractionState((prev) => ({
           ...prev,
-          progress: Math.min((prev.progress || 0) + (100 / (REQUIRED_MATCHES * 1.5)), 99)
+          progress: Math.min(
+            (prev.progress || 0) + 100 / (REQUIRED_MATCHES * 1.5),
+            99
+          ),
         }));
       } else {
         setLastSegmentCount(currentSegments);
@@ -312,19 +420,19 @@ const useSubtitles = (
       }
     }
   }, [subtitleContent, extractionState.status === 'extracting']);
-  
+
   // Handle extraction errors
   useEffect(() => {
     const handleError = (_: any, result: { error: string }) => {
       log.error('Subtitle extraction error:', result.error);
-      setExtractionState(prev => ({ 
-        ...prev, 
+      setExtractionState((prev) => ({
+        ...prev,
         status: 'error',
-        error: result.error 
+        error: result.error,
       }));
-      setSubtitleStatus({ 
+      setSubtitleStatus({
         status: 'error',
-        message: 'Error al cargar los subtítulos'
+        message: 'Error al cargar los subtítulos',
       });
     };
 
@@ -335,6 +443,8 @@ const useSubtitles = (
   return {
     loadSubtitles,
     loadSubtitlesFromFile,
+    loadApiSubtitles,
+    infoHash,
   };
 };
 

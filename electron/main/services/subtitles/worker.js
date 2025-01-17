@@ -3,8 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import log from 'electron-log';
 
-async function parseSubtitles(filePath) {
-
+async function parseMkvMetadata(filePath) {
   if (!fs.existsSync(filePath)) {
     log.error('File not found:', filePath);
     throw new Error('File not found: ' + path.basename(filePath));
@@ -25,29 +24,35 @@ async function parseSubtitles(filePath) {
   };
 
   const metadata = new Metadata(file);
-  const subtitles = {};
+  const result = {
+    subtitles: {},
+    chapters: []
+  };
 
   try {
     const tracks = await metadata.getTracks();
     tracks.forEach((track) => {
-      subtitles[track.number] = { track, cues: [] };
+      result.subtitles[track.number] = { track, cues: [] };
     });
 
+    // Get chapters
+    result.chapters = await metadata.getChapters();
+
     metadata.on('subtitle', (subtitle, trackNumber) => {
-      if (subtitles[trackNumber]) {
-        subtitles[trackNumber].cues.push(subtitle);
+      if (result.subtitles[trackNumber]) {
+        result.subtitles[trackNumber].cues.push(subtitle);
       }
     });
 
     if (file.name.endsWith('.mkv') || file.name.endsWith('.webm')) {
       const fileStream = file[Symbol.asyncIterator]();
       await processStream(metadata, fileStream).catch(() => {});
-      return subtitles;
+      return result;
     } else {
       throw new Error('Unsupported file format: ' + file.name);
     }
   } catch (error) {
-    log.error('Error parsing subtitles:', error);
+    log.error('Error parsing MKV metadata:', error);
     throw error;
   }
 }
@@ -59,10 +64,14 @@ async function processStream(metadata, fileStream) {
 }
 
 // Message handler
+let isProcessing = false;
+
 parentPort?.on('message', async ({ filePath }) => {
-  log.info('Subtitle worker received file:', filePath);
-  
-  // Add validation for filePath
+  if (isProcessing) {
+    log.info('Already processing a file, skipping...');
+    return;
+  }
+
   if (!filePath) {
     log.error('No file path provided to worker');
     parentPort?.postMessage({
@@ -73,18 +82,15 @@ parentPort?.on('message', async ({ filePath }) => {
   }
 
   try {
-    const allSubtitles = await parseSubtitles(filePath);
-    
-    // Validate subtitles result
-    if (!allSubtitles || Object.keys(allSubtitles).length === 0) {
-      throw new Error('No subtitles found in file');
-    }
-
-    log.info('Subtitles extracted successfully:', Object.keys(allSubtitles).length, 'tracks found');
+    isProcessing = true;
+    const result = await parseMkvMetadata(filePath);
     
     parentPort?.postMessage({
       type: 'complete',
-      data: allSubtitles,
+      data: {
+        subtitles: result.subtitles,
+        chapters: result.chapters
+      }
     });
   } catch (error) {
     log.error('Subtitle extraction failed:', error);
@@ -92,5 +98,7 @@ parentPort?.on('message', async ({ filePath }) => {
       type: 'error',
       error: error.message || 'Unknown error in subtitle worker'
     });
+  } finally {
+    isProcessing = false;
   }
 });

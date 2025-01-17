@@ -28,17 +28,28 @@ const EpisodeCard = memo(({ episode, isLoading, onPlay, isNew, animeColors, text
   return (
     <motion.div
       onClick={handlePlay}
-      viewport={{ once: true }}
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
+      viewport={{ once: true, margin: '-10% 0px', amount: 0.1 }}
+      initial={{ opacity: 0, y: 15 }}
+      whileInView={{ 
+        opacity: 1,
+        y: 0,
+        transition: {
+          type: 'spring',
+          duration: 0.3,
+          bounce: 0.1
+        }
+      }}
       whileHover={{ scale: 1.05 }}
       transition={{
         type: "spring",
         stiffness: 300,
-        damping: 20,
-        opacity: { delay: 0.3 }
+        damping: 20
       }}
-      className="w-full overflow-visible"
+      className="will-change-transform"
+      style={{
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden',
+      }}
     >
       <Card
         className="w-full h-full relative transition-all duration-300 ease-in-out cursor-pointer group/card rounded-xl border-2"

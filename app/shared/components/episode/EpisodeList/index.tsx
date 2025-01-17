@@ -8,12 +8,13 @@ import EpisodesList from './List';
 
 interface AnimeEpisodesListProps {
   idAnilist: number | string;
+  anime: any;
   animeColors: string[];
   textColor: string;
   sectionTitle: string;
 }
 
-const AnimeEpisodesList = ({ idAnilist, animeColors, textColor, sectionTitle }: AnimeEpisodesListProps) => {
+const AnimeEpisodesList = ({ idAnilist, anime, animeColors, textColor, sectionTitle }: AnimeEpisodesListProps) => {
   const { episodes: episodesData, isLoading } = useAnimeEpisodesData(idAnilist, true);
   const [isReversed, setIsReversed] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -104,6 +105,7 @@ const AnimeEpisodesList = ({ idAnilist, animeColors, textColor, sectionTitle }: 
             isLoading={isLoading}
             animeColors={animeColors}
             textColor={textColor}
+            anime={anime}
           />
         )}
       </div>

@@ -3,16 +3,19 @@ import { useLocation, useNavigate } from '@remix-run/react';
 
 import useSearchStore from '@stores/search';
 
+import { usePostHog } from '@lib/posthog';
+
 const PLAYER_PATH = '/player';
 const POPULAR_ANIME_PATH = '/popular-anime';
 const HOME_PATH = '/';
-const defaultHeaderTitle = 'Beta cerrada';
 const isPlayerRoute = (path) => path?.includes(PLAYER_PATH);
 const isPopularAnimeRoute = (path) => path?.includes(POPULAR_ANIME_PATH);
 
 const useHeaderNavigation = () => {
+  const posthog = usePostHog();
   const navigate = useNavigate();
   const location = useLocation();
+
   const historyRef = useRef<{
     past: string[];
     current: string | null;
@@ -38,20 +41,20 @@ const useHeaderNavigation = () => {
 
     // Send special event when leaving player route
     if (wasPreviousPlayer && !isCurrentPlayer) {
-      // posthog?.capture('exit_player', {
-      //     from: '/player',
-      //     to: currentPath
-      // });
+      posthog?.capture('exit_player', {
+        from: '/player',
+        to: currentPath,
+      });
     }
 
-    // Send special event when leaving popular-anime route
     if (wasPreviousPopularAnime && !isCurrentPopularAnime) {
-      setSearchTerm(null);
+      if (currentPath.startsWith('/anime')) {
+        historyRef.current.past = historyRef.current.past.filter(
+          (path) => !isPopularAnimeRoute(path)
+        );
+      }
     }
 
-    // Only update history if:
-    // 1. It's a new route different from the current one
-    // 2. We're not navigating between player routes
     if (
       historyRef.current.current !== currentPath &&
       !(isCurrentPlayer && wasPreviousPlayer)
@@ -67,12 +70,14 @@ const useHeaderNavigation = () => {
       }
 
       // Track route change
-      // posthog?.capture('route_changed', {
-      //     from: historyRef.current.past[historyRef.current.past.length - 1] || null,
-      //     to: currentPath,
-      //     method: 'navigation'
-      // });
+      posthog?.capture('route_changed', {
+        from:
+          historyRef.current.past[historyRef.current.past.length - 1] || null,
+        to: currentPath,
+        method: 'navigation',
+      });
     }
+
     // Update navigation states considering player routes
     const lastNonPlayerPast = [...historyRef.current.past]
       .reverse()
@@ -142,13 +147,11 @@ const useHeaderNavigation = () => {
         navigate(prevPage, { viewTransition: true });
 
         // Track back navigation
-        // posthog?.capture('route_changed', {
-        //     from: historyRef.current.current,
-        //     to: prevPage,
-        //     method: 'back_button'
-        // });
-
-        // eventBus.emit('historyUpdated');
+        posthog?.capture('route_changed', {
+          from: historyRef.current.current,
+          to: prevPage,
+          method: 'back_button',
+        });
       }
     },
     [historyRef, navigate]
@@ -175,13 +178,11 @@ const useHeaderNavigation = () => {
         navigate(nextPage, { viewTransition: true });
 
         // Track forward navigation
-        // posthog?.capture('route_changed', {
-        //     from: historyRef.current.past[historyRef.current.past.length - 1],
-        //     to: nextPage,
-        //     method: 'forward_button'
-        // });
-
-        // eventBus.emit('historyUpdated');
+        posthog?.capture('route_changed', {
+          from: historyRef.current.past[historyRef.current.past.length - 1],
+          to: nextPage,
+          method: 'forward_button',
+        });
       }
     },
     [historyRef, navigate]

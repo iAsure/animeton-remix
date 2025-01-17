@@ -9,11 +9,16 @@ export const IPC_CHANNELS = {
     MKV_PROCESS: 'process-mkv',
     MKV_ERROR: 'process-mkv-error',
     DOWNLOAD_RANGES: 'torrent-download-ranges',
+    SERVER_STATUS: 'torrent-server-status',
+    WARNING: 'torrent-warning',
   },
   SUBTITLES: {
     EXTRACT: 'extract-subtitles',
     EXTRACTED: 'subtitles-extracted',
     ERROR: 'subtitles-error',
+  },
+  CHAPTERS: {
+    EXTRACTED: 'chapters-extracted',
   },
   WINDOW: {
     MAXIMIZE: 'window-maximize',
@@ -42,5 +47,13 @@ export const IPC_CHANNELS = {
     NOT_AVAILABLE: 'update-not-available',
     CHECKING_FOR_UPDATE: 'update-checking-for-update',
     ERROR: 'update-error',
+  },
+  HISTORY: {
+    GET_PROGRESS: 'history:get-progress',
+    UPDATE_PROGRESS: 'history:update-progress',
+    GET_ALL: 'history:get-all',
+    CLEAR: 'history:clear',
+    CHANGED: 'history:changed',
+    EPISODE_UPDATED: 'history:episode-updated',
   },
 };

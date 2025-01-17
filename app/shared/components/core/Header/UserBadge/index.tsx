@@ -1,18 +1,38 @@
+import { useEffect, useRef, useState } from 'react';
+
 import { Icon } from '@iconify/react';
 import { Button, Divider, Skeleton } from '@nextui-org/react';
+import { usePostHog } from '@lib/posthog';
+
+import { useConfig } from '@context/ConfigContext';
 import useDiscordUser from '@hooks/useDiscordUser';
-import SettingsMenu from '@components/core/Header/SettingsMenu';
-import { useState } from 'react';
 
 import NewBadge from '@components/decoration/NewBadge';
+import SettingsMenu from '@components/core/Header/SettingsMenu';
 
 interface UserBadgeProps {
   discordId: string;
 }
 
 const UserBadge = ({ discordId }: UserBadgeProps) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { config } = useConfig();
+  const posthog = usePostHog();
   const { data: userData, isLoading } = useDiscordUser(discordId);
+  
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const identifySentRef = useRef(false);
+  
+  const appKey = config?.user?.activationKey;
+  const discordUser = userData?.discord;
+
+  useEffect(() => {
+    if (discordUser && !identifySentRef.current) {
+      posthog?.identify(`${discordUser.username}-${discordUser.id}`, {
+        appKey,
+      });
+      identifySentRef.current = true;
+    }
+  }, [userData, appKey]);
 
   return (
     <div className="flex items-center gap-3 bg-zinc-900/50 rounded-full px-3 py-1.5 webkit-app-region-no-drag relative">

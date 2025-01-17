@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-ipcRenderer.setMaxListeners(20);
+ipcRenderer.setMaxListeners(0);
 
 const createEventHandler = (channel) => ({
   subscribe: (callback) => ipcRenderer.on(channel, callback),
@@ -13,6 +13,10 @@ const createEventHandler = (channel) => ({
   );
 
   const electron = {
+    env: {
+      POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
+      ANIMETON_API_KEY: process.env.ANIMETON_API_KEY,
+    },
     ipc: {
       send: (channel, data) => ipcRenderer.send(channel, data),
       invoke: (channel, data) => ipcRenderer.invoke(channel, data),
@@ -24,10 +28,17 @@ const createEventHandler = (channel) => ({
   };
 
   const api = {
-    addTorrent: (torrentId) => {
+    addTorrent: (torrentUrl, torrentHash) => {
       ipcRenderer.send(IPC_CHANNELS.TORRENT.ADD, {
-        action: torrentId === 'destroy' ? 'destroy' : 'add-torrent',
-        torrentId,
+        action: torrentUrl === 'destroy' ? 'destroy' : 'add-torrent',
+        torrentUrl,
+        torrentHash,
+      });
+    },
+    
+    checkTorrentServer: () => {
+      ipcRenderer.send(IPC_CHANNELS.TORRENT.ADD, {
+        action: 'check-server'
       });
     },
 
@@ -39,6 +50,8 @@ const createEventHandler = (channel) => ({
       onError: createEventHandler(IPC_CHANNELS.TORRENT.ERROR),
       onMkvProcess: createEventHandler(IPC_CHANNELS.TORRENT.MKV_PROCESS),
       onDownloadRanges: createEventHandler(IPC_CHANNELS.TORRENT.DOWNLOAD_RANGES),
+      onServerStatus: createEventHandler(IPC_CHANNELS.TORRENT.SERVER_STATUS),
+      onWarning: createEventHandler(IPC_CHANNELS.TORRENT.WARNING),
     },
 
     subtitles: {
@@ -52,6 +65,10 @@ const createEventHandler = (channel) => ({
       },
       onExtracted: createEventHandler(IPC_CHANNELS.SUBTITLES.EXTRACTED),
       onError: createEventHandler(IPC_CHANNELS.SUBTITLES.ERROR),
+    },
+
+    chapters: {
+      onExtracted: createEventHandler(IPC_CHANNELS.CHAPTERS.EXTRACTED),
     },
 
     shell: {
@@ -85,6 +102,29 @@ const createEventHandler = (channel) => ({
         ipcRenderer.send('show-discord-status', show);
       },
       onW2GLink: createEventHandler('w2glink'),
+    },
+
+    history: {
+      getProgress: (episodeId) => 
+        ipcRenderer.invoke(IPC_CHANNELS.HISTORY.GET_PROGRESS, episodeId),
+      
+      updateProgress: (episodeId, progress, duration, episodeInfo) =>
+        ipcRenderer.invoke(
+          IPC_CHANNELS.HISTORY.UPDATE_PROGRESS, 
+          episodeId, 
+          progress, 
+          duration,
+          episodeInfo
+        ),
+      
+      getAll: () => 
+        ipcRenderer.invoke(IPC_CHANNELS.HISTORY.GET_ALL),
+      
+      clear: () => 
+        ipcRenderer.invoke(IPC_CHANNELS.HISTORY.CLEAR),
+      
+      onChanged: createEventHandler(IPC_CHANNELS.HISTORY.CHANGED),
+      onEpisodeUpdated: createEventHandler(IPC_CHANNELS.HISTORY.EPISODE_UPDATED),
     },
   };
 

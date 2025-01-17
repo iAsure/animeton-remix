@@ -36,13 +36,6 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
     setIsDevToolsOpen(!isDevToolsOpen);
   };
 
-  const handleDownloadIndicatorChange = useCallback(
-    async (isSelected: boolean) => {
-      await setConfig('features.downloadIndicator', isSelected);
-    },
-    [setConfig]
-  );
-
   const handleSubtitlesIndicatorChange = useCallback(
     async (isSelected: boolean) => {
       await setConfig('features.subtitlesIndicator', isSelected);
@@ -73,15 +66,6 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
             height="16"
           />
           <h3 className="text-zinc-400 text-xs font-medium">CARACTERÍSTICAS</h3>
-        </div>
-
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <span className="text-zinc-200 text-sm">Indicador de descarga</span>
-          <Switch
-            size="sm"
-            isSelected={config?.features?.downloadIndicator}
-            onValueChange={handleDownloadIndicatorChange}
-          />
         </div>
 
         <div className="flex items-center justify-between gap-2 mb-1">

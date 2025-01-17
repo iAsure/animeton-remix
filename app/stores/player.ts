@@ -84,6 +84,7 @@ interface PlayerStore {
 
   // Subtitle ranges
   updateSubtitleRanges: () => void;
+  getExtractedSubtitleRanges: () => SubtitleRange[];
 
   // Add reset action
   reset: () => void;
@@ -233,6 +234,32 @@ const usePlayerStore = create<PlayerStore>((set, get) => ({
   setTorrentRanges: (ranges) => set({ torrentRanges: ranges }),
   setTorrentProgress: (progress) => set({ torrentProgress: progress }),
   setTorrentFileProgress: (progress) => set({ torrentFileProgress: progress }),
+
+  getExtractedSubtitleRanges: () => {
+    const { availableSubtitles } = get();
+    const extractedSub = availableSubtitles.find(sub => sub.source === 'extractor');
+    
+    if (!extractedSub?.parsedContent) return [];
+
+    const ranges: SubtitleRange[] = [];
+    const lines = extractedSub.parsedContent.split('\n');
+    
+    for (const line of lines) {
+      if (line.startsWith('Dialogue:')) {
+        const parts = line.split(',');
+        if (parts.length >= 3) {
+          const start = parseAssTimestamp(parts[1]);
+          const end = parseAssTimestamp(parts[2]);
+          
+          if (start !== null && end !== null) {
+            ranges.push({ start, end });
+          }
+        }
+      }
+    }
+
+    return mergeTimeRanges(ranges);
+  },
 }));
 
 // Helper functions

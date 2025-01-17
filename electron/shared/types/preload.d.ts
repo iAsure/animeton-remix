@@ -9,8 +9,14 @@ interface IpcApi {
   removeListener: (channel: string, callback: Function) => void;
 }
 
+interface EnviromentApi {
+  POSTHOG_API_KEY: string;
+  ANIMETON_API_KEY: string;
+}
+
 interface CustomElectronAPI {
   ipc: IpcApi;
+  env: EnviromentApi;
 }
 
 declare global {

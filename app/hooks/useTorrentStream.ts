@@ -34,7 +34,7 @@ const INITIAL_STATE: TorrentStreamState = {
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000;
 
-const useTorrentStream = (torrentId: string) => {
+const useTorrentStream = (torrentUrl: string, torrentHash: string) => {
   const { setTorrentRanges, setTorrentProgress } = usePlayerStore();
   const [state, setState] = useState<TorrentStreamState>(INITIAL_STATE);
   const [retryCount, setRetryCount] = useState(0);
@@ -50,12 +50,15 @@ const useTorrentStream = (torrentId: string) => {
   }, []);
 
   const startTorrent = useCallback(async () => {
-    if (!torrentId || !isMounted.current) return;
+    if (!torrentUrl || !isMounted.current) return;
 
     try {
-      log.info('Starting torrent stream', { torrentId, attempt: retryCount + 1 });
+      log.info('Starting torrent stream', { torrentUrl, attempt: retryCount + 1 });
       setState(prev => ({ ...prev, error: null, isBuffering: true }));
-      window.api.addTorrent(torrentId);
+      
+      if (retryCount === 0) {
+        window.api.addTorrent(torrentUrl, torrentHash);
+      }
     } catch (error) {
       if (!isMounted.current) return;
       
@@ -69,15 +72,20 @@ const useTorrentStream = (torrentId: string) => {
       } else {
         setState(prev => ({
           ...prev,
-          error: 'Failed to start torrent after multiple attempts',
+          error: 'No se pudo reproducir después de varios intentos',
           isBuffering: false
         }));
       }
     }
-  }, [torrentId, retryCount]);
+  }, [torrentUrl, retryCount]);
+
+  const checkServerStatus = useCallback(async () => {
+    if (!torrentUrl) return;
+    window.api.checkTorrentServer();
+  }, [torrentUrl]);
 
   useEffect(() => {
-    if (!torrentId) return;
+    if (!torrentUrl) return;
 
     const handleProgress = (_: any, data: any) => {
       if (!isMounted.current) return;
@@ -122,7 +130,7 @@ const useTorrentStream = (torrentId: string) => {
       log.error('Torrent error:', error);
       setState(prev => ({
         ...prev,
-        error: error.message || 'Unknown error occurred',
+        error: error.error || 'No se pudo reproducir',
         isBuffering: false
       }));
 
@@ -132,14 +140,34 @@ const useTorrentStream = (torrentId: string) => {
       }
     };
 
+    const handleServerStatus = (_: any, data: any) => {
+      log.info('Torrent server status:', data);
+      if (!data.active) {
+        // Server is not healthy, retry torrent
+        if (retryCount < MAX_RETRIES) {
+          setTimeout(() => setRetryCount(prev => prev + 1), RETRY_DELAY);
+        } else {
+          setState(prev => ({
+            ...prev,
+            error: 'Torrent server failed to initialize',
+            isBuffering: false
+          }));
+        }
+      }
+    };
+
     // Subscribe to events
     window.api.torrent.onProgress.subscribe(handleProgress);
     window.api.torrent.onDownloadRanges.subscribe(handleDownloadRanges);
     window.api.torrent.onServerDone.subscribe(handleServerDone);
     window.api.torrent.onError.subscribe(handleError);
+    window.api.torrent.onServerStatus.subscribe(handleServerStatus);
 
     // Start torrent with a small delay to avoid race conditions
     const timeoutId = setTimeout(() => startTorrent(), 100);
+
+    // Check server status periodically
+    const statusCheckInterval = setInterval(checkServerStatus, 30000);
 
     // Cleanup
     return () => {
@@ -148,14 +176,16 @@ const useTorrentStream = (torrentId: string) => {
       window.api.torrent.onDownloadRanges.unsubscribe(handleDownloadRanges);
       window.api.torrent.onServerDone.unsubscribe(handleServerDone);
       window.api.torrent.onError.unsubscribe(handleError);
+      window.api.torrent.onServerStatus.unsubscribe(handleServerStatus);
       
       // Only destroy if we're unmounting
       if (!isMounted.current) {
-        window.api.addTorrent('destroy');
+        window.api.addTorrent('destroy', torrentHash);
       }
       setState(INITIAL_STATE);
+      clearInterval(statusCheckInterval);
     };
-  }, [torrentId, startTorrent]);
+  }, [torrentUrl, startTorrent, checkServerStatus]);
 
   return state;
 };

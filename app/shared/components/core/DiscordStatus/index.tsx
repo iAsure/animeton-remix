@@ -7,12 +7,20 @@ const DiscordStatus = ({
   autoTimestamp = true 
 }: DiscordStatusProps) => {
   const updateDiscordStatus = useCallback((rpcOptions: Partial<DiscordRPCOptions>) => {
+    const filteredRpcOptions = Object.fromEntries(
+      Object.entries(rpcOptions).filter(([_, value]) => value !== null)
+    );
+
+    const filteredAssets = rpcOptions.assets ? Object.fromEntries(
+      Object.entries(rpcOptions.assets).filter(([_, value]) => value !== null)
+    ) : undefined;
+
     const mergedOptions = {
       ...DEFAULT_RPC_OPTIONS,
-      ...rpcOptions,
-      assets: {
+      ...filteredRpcOptions,
+      assets: filteredAssets && {
         ...DEFAULT_RPC_OPTIONS.assets,
-        ...rpcOptions.assets
+        ...filteredAssets
       },
       buttons: rpcOptions.buttons || DEFAULT_RPC_OPTIONS.buttons,
       timestamps: {

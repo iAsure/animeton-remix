@@ -36,7 +36,6 @@ export interface TorrentRangeData {
 }
 
 export interface TorrentApi {
-  addTorrent: (torrentId: string) => void;
   onProgress: EventHandler<TorrentProgress>;
   onDone: EventHandler<void>;
   onServerDone: EventHandler<TorrentServerDone>;
@@ -44,6 +43,8 @@ export interface TorrentApi {
   onError: EventHandler<{ error: string }>;
   onMkvProcess: EventHandler<TorrentMkvProcess>;
   onDownloadRanges: EventHandler<TorrentRangeData>;
+  onServerStatus: EventHandler<{ active: boolean; port?: number }>;
+  onWarning: EventHandler<{ warning: string }>;
 }
 
 export interface SubtitleCue {
@@ -119,12 +120,80 @@ export interface DiscordApi {
   onW2GLink: EventHandler<string>;
 }
 
+export interface Chapter {
+  start: number;
+  end: number;
+  text: string;
+  language: string;
+}
+
+export interface ChaptersResult {
+  success: boolean;
+  data?: Chapter[];
+  error?: string;
+}
+
+export interface MkvMetadata {
+  subtitles: SubtitleTrack[];
+  chapters: Chapter[];
+}
+
+export interface ChaptersApi {
+  onExtracted: EventHandler<ChaptersResult>;
+}
+
+export interface WatchProgress {
+  timeStamp: number;
+  duration: number;
+  progress: number;
+  completed: boolean;
+  lastWatched: number;
+}
+
+export interface EpisodeHistory {
+  animeName: string;
+  animeImage: string;
+  animeIdAnilist: number;
+  episodeImage: string;
+  episodeNumber: number;
+  episodeTorrentUrl: string;
+  pubDate: string;
+  progressData: WatchProgress;
+}
+
+export interface WatchHistory {
+  lastUpdated: number;
+  episodes: {
+    [id: string]: EpisodeHistory;
+  }
+}
+
+export interface HistoryApi {
+  getProgress: (episodeId: string) => Promise<EpisodeHistory | undefined>;
+  updateProgress: (
+    episodeId: string, 
+    progress: number, 
+    duration: number,
+    episodeInfo: Omit<EpisodeHistory, 'progressData'>
+  ) => Promise<void>;
+  getAll: () => Promise<WatchHistory>;
+  clear: () => Promise<void>;
+  onChanged: EventHandler<WatchHistory>;
+  onEpisodeUpdated: EventHandler<{
+    episodeId: string;
+    episode: EpisodeHistory;
+  }>;
+}
+
 export interface Api {
-  addTorrent: (torrentId: string) => void;
+  addTorrent: (torrentUrl: string, torrentHash: string) => void;
+  checkTorrentServer: () => void;
   torrent: TorrentApi;
   subtitles: SubtitlesApi;
   shell: ShellApi;
   config: ConfigApi;
   updater: UpdaterApi;
   discord: DiscordApi;
+  chapters: ChaptersApi;
+  history: HistoryApi;
 }

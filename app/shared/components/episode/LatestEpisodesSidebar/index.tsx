@@ -1,7 +1,8 @@
-import { useState, useEffect, memo } from 'react';
-import { useNavigate } from '@remix-run/react';
+import { useEffect, memo } from 'react';
 
 import useRSSData from '@hooks/useRSSData';
+import { useTorrentPlayer } from '@context/TorrentPlayerContext';
+import { useNotification } from '@context/NotificationContext';
 
 import Episode from './episode';
 import EpisodeSkeleton from './skeleton';
@@ -13,8 +14,8 @@ interface LatestEpisodesSidebarProps {
 }
 
 const LatestEpisodesSidebar = memo(({ state, bannerColors, sectionTitle }: LatestEpisodesSidebarProps) => {
-  const navigate = useNavigate();
-  const [loadingEpisodeId, setLoadingEpisodeId] = useState<string | null>(null);
+  const { playEpisode, loadingHash } = useTorrentPlayer();
+  const { showNotification } = useNotification();
 
   const { rssAnimes, isLoading, error } = useRSSData({
     page: 1,
@@ -23,17 +24,13 @@ const LatestEpisodesSidebar = memo(({ state, bannerColors, sectionTitle }: Lates
 
   useEffect(() => {
     if (error) {
-      // sendNotification(state, { message: error });
+      showNotification({
+        title: 'Error',
+        message: error,
+        type: 'error',
+      });
     }
   }, [error, state]);
-
-  const handlePlay = (episode) => {
-    const infoHash = episode?.torrent?.infoHash;
-
-    setLoadingEpisodeId(infoHash);
-    const encodedUrl = encodeURIComponent(episode?.torrent?.link);
-    navigate(`/player?url=${encodedUrl}`, { viewTransition: true });
-  };
 
   return (
     <div className="flex flex-col p-4 gap-2 items-start w-80 overflow-hidden">
@@ -50,8 +47,8 @@ const LatestEpisodesSidebar = memo(({ state, bannerColors, sectionTitle }: Lates
             <Episode
               key={`rss-episode-${i}`}
               anime={anime}
-              isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
-              onPlay={() => handlePlay(anime)}
+              isLoading={loadingHash === anime?.torrent?.infoHash}
+              onPlay={() => playEpisode(anime)}
             />
           ))}
       </div>

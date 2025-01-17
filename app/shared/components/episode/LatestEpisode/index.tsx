@@ -1,13 +1,13 @@
-import { useState, useEffect, memo, Fragment } from 'react';
+import { useEffect, memo, Fragment } from 'react';
 import { Icon } from '@iconify/react';
 import { motion } from 'framer-motion';
 import { useNavigate } from '@remix-run/react';
 
 import useRSSData from '@hooks/useRSSData';
-// import useModernBackground from '@hooks/useModernBackground';
-// import eventBus from '../../../lib/event-bus';
-// import TorrentPlayer from '../../../lib/torrent-player';
-// import { sendNotification } from '../../../lib/errors';
+import useUserActivity from '@hooks/useUserActivity';
+
+import { useTorrentPlayer } from '@context/TorrentPlayerContext';
+import { useNotification } from '@context/NotificationContext';
 
 import EpisodeCard from './episode';
 import EpisodeCardSkeleton from './skeleton';
@@ -28,9 +28,9 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
     cardAnimation = false,
   }) => {
     const navigate = useNavigate();
-    const [loadingEpisodeId, setLoadingEpisodeId] = useState<string | null>(
-      undefined
-    );
+    const { playEpisode, loadingHash } = useTorrentPlayer();
+    const { showNotification } = useNotification();
+    const { history } = useUserActivity();
 
     const { rssAnimes, isLoading, error } = useRSSData({
       page: 1,
@@ -38,26 +38,15 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
       emptyState: false,
     });
 
-    // const background = useModernBackground({
-    //   primaryColor: '#63e8ff',
-    //   secondaryColor: '#ff9af7',
-    //   disablePattern: true,
-    //   opacity: 0.6
-    // });
-
     useEffect(() => {
       if (error) {
-        // sendNotification(state, { message: error });
+        showNotification({
+          title: 'Error',
+          message: error,
+          type: 'error',
+        });
       }
     }, [error]);
-
-    const handlePlay = (anime) => {
-      const infoHash = anime?.torrent?.infoHash;
-
-      setLoadingEpisodeId(infoHash);
-      const encodedUrl = encodeURIComponent(anime?.torrent?.link);
-      navigate(`/player?url=${encodedUrl}`, { viewTransition: true });
-    };
 
     const cardVariants = {
       hidden: {
@@ -77,11 +66,15 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
     };
 
     const renderEpisodeCard = (anime, index: number) => {
+      const progress = history?.episodes[anime?.torrent?.infoHash]?.progressData?.progress;
+
       const card = (
         <EpisodeCard
           anime={anime}
-          isLoading={loadingEpisodeId === anime?.torrent?.infoHash}
-          onPlay={() => handlePlay(anime)}
+          episode={null}
+          isLoading={loadingHash === anime?.torrent?.infoHash}
+          onPlay={() => playEpisode(anime)}
+          progress={progress}
         />
       );
 
@@ -114,17 +107,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
     };
 
     return (
-      <div className="relative flex flex-col items-center py-6">
-        {/* Background */}
-        {/* <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{
-          backgroundImage: `url(${background})`,
-          maskImage: 'linear-gradient(to top, black 70%, transparent)',
-          WebkitMaskImage: 'linear-gradient(to top, black 70%, transparent)'
-        }}
-      /> */}
-
+      <div className="flex flex-col items-center py-6">
         {sectionTitle && (
           <button
             onClick={handleViewMore}
@@ -136,13 +119,13 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
               height="28"
               className="pointer-events-none text-zinc-500"
             />
-            <h2 className="relative text-2xl font-bold text-center text-white">
+            <h2 className="text-2xl font-bold text-center text-white">
               {sectionTitle}
             </h2>
           </button>
         )}
 
-        <div className="relative mx-auto max-w-[90%]">
+        <div className="w-[90%]">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 w-full">
             {isLoading || !rssAnimes
               ? Array.from({ length: perPage }).map((_, i) => (

@@ -1,5 +1,5 @@
-import { memo, useState } from 'react';
-import { useNavigate } from '@remix-run/react';
+import { memo } from 'react';
+import { useTorrentPlayer } from '@context/TorrentPlayerContext';
 
 import EpisodeCard from './episode';
 import EpisodeCardSkeleton from './skeleton';
@@ -9,12 +9,11 @@ interface EpisodesListProps {
   isLoading: boolean;
   animeColors: string[];
   textColor: string;
+  anime: any;
 }
 
-const EpisodesList = memo(({ episodesData, isLoading, animeColors, textColor }: EpisodesListProps) => {
-  const navigate = useNavigate();
-  
-  const [loadingEpisodeId, setLoadingEpisodeId] = useState<string | null>(null);
+const EpisodesList = memo(({ episodesData, isLoading, animeColors, textColor, anime }: EpisodesListProps) => {
+  const { playEpisode, loadingHash } = useTorrentPlayer();
 
   const isWithinLastSixDays = (dateStr?: string): boolean => {
     if (!dateStr) return false;
@@ -37,14 +36,6 @@ const EpisodesList = memo(({ episodesData, isLoading, animeColors, textColor }: 
     return 0;
   });
 
-  const handlePlay = (episode) => {
-    const infoHash = episode?.torrent?.hash;
-
-    setLoadingEpisodeId(infoHash);
-    const encodedUrl = encodeURIComponent(episode?.torrent?.torrentUrl);
-    navigate(`/player?url=${encodedUrl}`, { viewTransition: true });
-  };
-
   return (
     <div className="relative w-full">
       <div className="flex flex-col gap-4 p-4 px-8">
@@ -56,11 +47,11 @@ const EpisodesList = memo(({ episodesData, isLoading, animeColors, textColor }: 
             <EpisodeCard
               episode={episode}
               key={`episode-${episode.episodeNumber}-${i}`}
-              isLoading={loadingEpisodeId === episode?.torrent?.hash}
+              isLoading={loadingHash === episode?.torrent?.hash}
               isNew={isWithinLastSixDays(episode?.torrent?.date)}
               animeColors={animeColors}
               textColor={textColor}
-              onPlay={() => handlePlay(episode)}
+              onPlay={() => playEpisode({ ...anime, ...episode })}
             />
           ))}
       </div>
