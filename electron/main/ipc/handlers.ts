@@ -238,7 +238,6 @@ export async function setupIpcHandlers(
     try {
       const isValid = await validateActivationKey(key);
       if (isValid) {
-        // Actualizar la configuración
         const configService = new ConfigService(BrowserWindow.fromWebContents(event.sender));
         await configService.initialize();
         await configService.update({
@@ -247,7 +246,6 @@ export async function setupIpcHandlers(
           }
         });
 
-        // Cerrar ventana de activación y abrir la principal
         closeActivationWindow();
         const mainWindow = await setupWindow();
         

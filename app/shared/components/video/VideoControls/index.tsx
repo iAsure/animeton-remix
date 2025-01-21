@@ -37,6 +37,7 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
 
   const [showSubtitleSelector, setShowSubtitleSelector] = useState(false);
   const [showSkipButton, setShowSkipButton] = useState(true);
+  const [previousVolume, setPreviousVolume] = useState(1);
 
   const currentChapter = chapters.find(
     chapter => currentTime >= chapter.start/1000 && currentTime <= chapter.end/1000
@@ -101,19 +102,6 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
     };
   }, [videoRef, setPlaybackState, setIsPlaying]);
 
-  // Space key handler
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && e.target === document.body) {
-        e.preventDefault();
-        handlePlayPause();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyPress);
-    return () => document.removeEventListener('keydown', handleKeyPress);
-  }, []);
-
   const handlePlayPause = () => {
     const video = videoRef.current;
     if (!video) return;
@@ -128,6 +116,48 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
       video.pause();
     }
   };
+
+  // Keyboard controls
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      if (
+        e.target === document.body && 
+        ['Space', 'ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(e.code)
+      ) {
+        e.preventDefault();
+      }
+
+      if (e.target === document.body) {
+        switch (e.code) {
+          case 'Space':
+            handlePlayPause();
+            break;
+          case 'ArrowRight':
+            video.currentTime += e.altKey ? 5 : 1;
+            break;
+          case 'ArrowLeft':
+            video.currentTime -= e.altKey ? 5 : 1;
+            break;
+          case 'ArrowDown':
+            const newVolDown = Math.max(0, video.volume - 0.05);
+            video.volume = newVolDown;
+            setVolume(newVolDown);
+            break;
+          case 'ArrowUp':
+            const newVolUp = Math.min(1, video.volume + 0.05);
+            video.volume = newVolUp;
+            setVolume(newVolUp);
+            break;
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [videoRef, handlePlayPause, setVolume]);
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const video = videoRef.current;
@@ -264,6 +294,21 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
     }
   };
 
+  const handleVolumeClick = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (volume > 0) {
+      setPreviousVolume(volume);
+      video.volume = 0;
+      setVolume(0);
+    } else {
+      const newVolume = previousVolume === 0 ? 1 : previousVolume;
+      video.volume = newVolume;
+      setVolume(newVolume);
+    }
+  };
+
   return (
     <>
       <Button
@@ -334,12 +379,14 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
 
             {/* Volume control */}
             <div className="flex items-center space-x-2">
-              <Icon
-                icon="fluent:speaker-2-24-filled"
-                className="text-white/90 pointer-events-none"
-                width="24"
-                height="24"
-              />
+              <button onClick={handleVolumeClick}>
+                <Icon
+                  icon={volume === 0 ? "fluent:speaker-mute-24-filled" : "fluent:speaker-2-24-filled"}
+                  className="text-white/90 pointer-events-none hover:text-white transition-all"
+                  width="24"
+                  height="24"
+                />
+              </button>
               <input
                 type="range"
                 min="0"

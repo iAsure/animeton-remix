@@ -71,7 +71,7 @@ export async function initializeApp() {
     const isValid = await validateActivationKey(config?.user?.activationKey);
 
     let mainWindow;
-    if (!isValid) {
+    if (!isValid && !process.env.DEV) {
       mainWindow = await createActivationWindow();
     } else {
       mainWindow = await setupWindow();

@@ -49,7 +49,6 @@ const Header = () => {
     ));
   };
 
-  const appIsActivated = config?.user?.activationKey;
   const appUserDiscordId = config?.user?.discordId;
 
   return (
@@ -123,7 +122,7 @@ const Header = () => {
             <Divider orientation="vertical" className="bg-zinc-800 h-6 mr-1" />
 
             {/* Search Input */}
-            {!isPlayerRoute(currentPath) && appIsActivated && (
+            {!isPlayerRoute(currentPath) && (
               <SearchInput
                 initialValue={searchTerm}
                 onSearch={setSearchTerm}
@@ -216,7 +215,7 @@ const Header = () => {
           {/* Window Controls and Discord User */}
           <div className="flex flex-row items-center gap-4 justify-end">
             {/* Discord User */}
-            {appIsActivated && appUserDiscordId && (
+            {appUserDiscordId && (
               <UserBadge discordId={appUserDiscordId} />
             )}
 

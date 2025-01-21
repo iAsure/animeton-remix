@@ -9,9 +9,9 @@ import AnimeCarousel from '@components/anime/AnimeCarousel';
 import Spinner from '@components/decoration/Spinner';
 import LatestEpisodes from '@components/episode/LatestEpisode';
 import AnimeSection from '@components/anime/AnimeSection';
-import Activation from '@components/core/Activation';
 import DiscordStatus from '@components/core/DiscordStatus';
 import ContinueWatching from '@components/episode/ContinueWatching';
+import ErrorDisplay from '@components/core/ErrorDisplay';
 
 import { useConfig } from '@context/ConfigContext';
 
@@ -19,14 +19,9 @@ export default function Index() {
   const { animes } = useAnimesData({ displayCount: 10 });
   const { config } = useConfig();
   const { getInProgressEpisodes } = useUserActivity();
+  const [hasTimeout, setHasTimeout] = useState(false);
 
   const [progressEpisodesExists, setProgressEpisodesExists] = useState(false);
-
-  const activationKey = config?.user?.activationKey;
-
-  const { isValid, isLoading, validateKey } = useValidateKey(activationKey);
-  const needActivation =
-    !activationKey || (activationKey && !isValid);
 
     const background = useModernBackground({
       primaryColor: '#63e8ff',
@@ -36,18 +31,29 @@ export default function Index() {
     });
 
   useEffect(() => {
-    if (config?.user?.activationKey) {
-      validateKey();
-    }
-  }, [config]);
-
-  useEffect(() => {
     const inProgressEpisodes = getInProgressEpisodes();
     setProgressEpisodesExists(inProgressEpisodes.length > 0);
   }, [getInProgressEpisodes]);
 
-  if (isLoading) return <Spinner />;
-  // if (needActivation && config) return <Activation isValid={isValid} />;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!animes) {
+        setHasTimeout(true);
+      }
+    }, 10000);
+
+    return () => clearTimeout(timer);
+  }, [animes]);
+
+  if (hasTimeout) {
+    return (
+      <ErrorDisplay 
+        message="Error de conexión. Intenta de nuevo más tarde."
+        icon="fluent:wifi-warning-24-filled"
+      />
+    );
+  }
+
   if (!animes) return <Spinner />;
 
   return (
