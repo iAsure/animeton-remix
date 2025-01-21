@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain, UtilityProcess, shell, app } from 'electron';
+import { BrowserWindow, ipcMain, UtilityProcess, shell, app, Notification } from 'electron';
 import { IPC_CHANNELS } from '../../shared/constants/event-channels.js';
 import { setupTorrentHandlers } from '../services/torrent/handlers.js';
 import { SubtitlesService } from '../services/subtitles/service.js';
@@ -8,6 +8,8 @@ import os from 'os';
 import { Worker as NodeWorker } from 'worker_threads';
 import { ConfigService } from '../services/config/service.js';
 import { HistoryService } from '../services/history/service.js';
+import { validateActivationKey, closeActivationWindow } from '../core/activation-window.js';
+import { setupWindow } from '../core/window.js';
 
 export async function setupIpcHandlers(
   webTorrentProcess: UtilityProcess,
@@ -230,5 +232,46 @@ export async function setupIpcHandlers(
   mainWindow.on('closed', () => {
     configService.cleanup();
     historyService.cleanup();
+  });
+
+  ipcMain.handle('validate-activation', async (event, key) => {
+    try {
+      const isValid = await validateActivationKey(key);
+      if (isValid) {
+        // Actualizar la configuración
+        const configService = new ConfigService(BrowserWindow.fromWebContents(event.sender));
+        await configService.initialize();
+        await configService.update({
+          user: {
+            activationKey: key
+          }
+        });
+
+        // Cerrar ventana de activación y abrir la principal
+        closeActivationWindow();
+        const mainWindow = await setupWindow();
+        
+        event.sender.send('activation-success');
+        return true;
+      } else {
+        event.sender.send('activation-error', { error: 'Clave de activación inválida' });
+        return false;
+      }
+    } catch (error) {
+      event.sender.send('activation-error', { error: 'Error al validar la clave' });
+      return false;
+    }
+  });
+
+  ipcMain.handle('show-notification', async (_, options) => {
+    log.info('Showing notification:', options);
+    const notification = new Notification({
+      title: options.title,
+      body: options.body,
+      icon: path.join(process.env.VITE_PUBLIC ?? '', 'icon.png'),
+      silent: false
+    });
+
+    notification.show();
   });
 }

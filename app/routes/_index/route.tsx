@@ -47,7 +47,7 @@ export default function Index() {
   }, [getInProgressEpisodes]);
 
   if (isLoading) return <Spinner />;
-  if (needActivation && config) return <Activation isValid={isValid} />;
+  // if (needActivation && config) return <Activation isValid={isValid} />;
   if (!animes) return <Spinner />;
 
   return (

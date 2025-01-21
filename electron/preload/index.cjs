@@ -126,6 +126,16 @@ const createEventHandler = (channel) => ({
       onChanged: createEventHandler(IPC_CHANNELS.HISTORY.CHANGED),
       onEpisodeUpdated: createEventHandler(IPC_CHANNELS.HISTORY.EPISODE_UPDATED),
     },
+
+    activation: {
+      validateKey: (key) => ipcRenderer.invoke('validate-activation', key),
+      onActivationSuccess: createEventHandler('activation-success'),
+      onActivationError: createEventHandler('activation-error'),
+    },
+
+    notification: {
+      show: (options) => ipcRenderer.invoke('show-notification', options),
+    },
   };
 
   contextBridge.exposeInMainWorld('electron', electron);

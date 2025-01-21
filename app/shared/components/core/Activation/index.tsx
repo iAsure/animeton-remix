@@ -6,6 +6,7 @@ import { DISCORD_INVITE_CODE } from '@constants/discord';
 import useActivateKey from '@hooks/useActivateKey';
 
 import { useConfig } from '@context/ConfigContext';
+import { useNotification } from '@context/NotificationContext';
 
 interface ActivationProps {
   isValid: boolean;
@@ -13,19 +14,13 @@ interface ActivationProps {
 
 const Activation = ({ isValid }: ActivationProps) => {
   const { updateConfig } = useConfig();
+  const { showAppNotification } = useNotification();
 
   const [activationKey, setActivationKey] = useState('');
   const [isActivated, setIsActivated] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { data, isLoading, error, activateKey } = useActivateKey(activationKey);
-
-  const onActivate = () => {
-    activateKey();
-  };
-
-  // useEffect(() => {
-  //     dispatch('updateDiscordRPC', { details: 'Activando la app' });
-  // }, []);
+  const { data, isLoading: keyLoading, error: keyError, activateKey } = useActivateKey(activationKey);
 
   useEffect(() => {
     if (data) {
@@ -43,12 +38,31 @@ const Activation = ({ isValid }: ActivationProps) => {
     }
   }, [data]);
 
+  const onActivate = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      const result = await window.api.activation.validateKey(activationKey);
+      if (!result) {
+        showAppNotification({
+          title: 'Error de activación',
+          message: 'Clave inválida'
+        });
+      }
+    } catch (error) {
+      showAppNotification({
+        title: 'Error de activación',
+        message: error.message || 'Error al validar la clave'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div
-      className="flex flex-col items-center justify-center bg-zinc-900 pt-4"
-      style={{
-        minHeight: 'calc(100vh - 56px)',
-      }}
+      className="flex flex-col items-center justify-center bg-zinc-900"
     >
       <div className="flex flex-col items-center justify-center bg-zinc-950 p-8 rounded-lg">
         <img
@@ -84,15 +98,9 @@ const Activation = ({ isValid }: ActivationProps) => {
           >
             {isLoading ? 'Activando...' : 'Comenzar mi aventura'}
           </button>
-          {error && <p className="text-red-500 mt-2 text-center">{error}</p>}
-          {isActivated && (
-            <p className="text-green-500 mt-2 text-center">
-              ¡Activación exitosa!
-            </p>
-          )}
         </div>
       </div>
-      <div className="flex flex-col items-center justify-center py-4 rounded-lg mt-6">
+      <div className="flex flex-col items-center justify-center py-4 pb-8 rounded-lg mt-6">
         <p className="text-white text-xl font-bold">¿No tienes una clave?</p>
         <p className="text-white text-lg mb-4">
           Únete a nuestro Discord y consigue una

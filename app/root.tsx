@@ -18,6 +18,7 @@ import './globals.css';
 export default function App() {
   const location = useLocation();
   const isPlayerRoute = location.pathname === '/player';
+  const isActivationRoute = location.pathname === '/activation'
 
   log.info('Renderer initialized');
   return (
@@ -32,9 +33,8 @@ export default function App() {
       </head>
       <body className="text-foreground bg-background font-noto">
         <AppProviders>
-          <Header />
-          <HelpButton />
-          <div className={`h-full w-full ${!isPlayerRoute ? 'mt-14' : ''}`}>
+          {!isActivationRoute && <><Header /> <HelpButton /></>}
+          <div className={`h-full w-full ${!isPlayerRoute && !isActivationRoute ? 'mt-14' : ''}`}>
             <Outlet />
           </div>
           <ScrollRestoration />

@@ -185,6 +185,20 @@ export interface HistoryApi {
   }>;
 }
 
+export interface ActivationApi {
+  validateKey: (key: string) => Promise<boolean>;
+  onActivationSuccess: EventHandler<void>;
+  onActivationError: EventHandler<{ error: string }>;
+}
+
+export interface NotificationApi {
+  show: (options: {
+    title: string;
+    body: string;
+    type?: 'success' | 'error' | 'warning' | 'info';
+  }) => void;
+}
+
 export interface Api {
   addTorrent: (torrentUrl: string, torrentHash: string) => void;
   checkTorrentServer: () => void;
@@ -196,4 +210,6 @@ export interface Api {
   discord: DiscordApi;
   chapters: ChaptersApi;
   history: HistoryApi;
+  activation: ActivationApi;
+  notification: NotificationApi;
 }

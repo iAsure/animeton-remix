@@ -1,10 +1,11 @@
 import path from 'path';
 import { fileURLToPath } from "node:url";
-import { app, UtilityProcess, utilityProcess } from 'electron';
+import { app, UtilityProcess, utilityProcess, BrowserWindow } from 'electron';
 import { Worker } from 'worker_threads';
 import log from 'electron-log';
 
 import { APP_ID } from '../../shared/constants/config.js';
+import { AppConfig } from '../../shared/types/config.js';
 
 import { setupIpcHandlers } from '../ipc/handlers.js';
 import { setupProtocol } from './protocol.js';
@@ -13,6 +14,8 @@ import { init as initUpdater } from './updater.js';
 import { setupWindow } from './window.js';
 import { cleanupTorrentFiles } from '../services/torrent/autoclean.js';
 import { DiscordRPC } from './discord.js';
+import { createActivationWindow, validateActivationKey } from './activation-window.js';
+import { ConfigService } from '../services/config/service.js';
 
 let webTorrentProcess: UtilityProcess | null = null;
 let subtitlesWorker: Worker | null = null;
@@ -41,7 +44,6 @@ async function initializeViteServer() {
 
 export async function initializeApp() {
   try {
-    // Initialize Vite first
     const viteDevServer = await initializeViteServer();
     const build = viteDevServer
       ? () => viteDevServer.ssrLoadModule("virtual:remix/server-build")
@@ -52,16 +54,33 @@ export async function initializeApp() {
     app.setAppUserModelId(APP_ID);
     
     await cleanupTorrentFiles();
-
     await setupProtocol(build, viteDevServer);
-
     initUpdater();
-    
-    // Initialize processes
+
+    // Inicializar procesos
     webTorrentProcess = utilityProcess.fork(path.join(__dirname, '../services/torrent/client.js'));
     subtitlesWorker = new Worker(path.join(__dirname, '../services/subtitles/worker.js'));
+
+    // Crear ventana temporal para inicializar ConfigService
+    const tempWindow = new BrowserWindow({ show: false });
+    const configService = new ConfigService(tempWindow);
+    await configService.initialize();
     
-    const mainWindow = await setupWindow();
+    // Verificar activación
+    const config = await configService.get<AppConfig>();
+    const isValid = await validateActivationKey(config?.user?.activationKey);
+
+    let mainWindow;
+    if (!isValid) {
+      mainWindow = await createActivationWindow();
+    } else {
+      mainWindow = await setupWindow();
+    }
+
+    // Actualizar la ventana en ConfigService
+    configService.mainWindow = mainWindow;
+    tempWindow.destroy();
+
     const discordRPC = new DiscordRPC(mainWindow);
     
     await setupIpcHandlers(webTorrentProcess, subtitlesWorker, mainWindow);
