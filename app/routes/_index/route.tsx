@@ -47,17 +47,20 @@ export default function Index() {
 
   if (hasTimeout) {
     return (
-      <ErrorDisplay 
-        message="Error de conexión. Intenta de nuevo más tarde."
-        icon="fluent:wifi-warning-24-filled"
-      />
+      <div className="my-auto min-h-screen flex justify-center items-center">
+        <ErrorDisplay 
+          title="Error de conexión"
+          description="Intenta de nuevo más tarde."
+          icon="fluent:wifi-warning-24-filled"
+        />
+      </div>
     );
   }
 
   if (!animes) return <Spinner />;
 
   return (
-    <div className="dark min-h-screen">
+    <div className="dark min-h-screen mt-14">
       <DiscordStatus options={{ details: 'En el inicio' }} />
       <AnimeCarousel animes={animes} />
       

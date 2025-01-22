@@ -2,14 +2,16 @@ import { Icon } from '@iconify/react';
 
 interface ErrorDisplayProps {
   icon?: string;
-  message?: string;
+  title?: string;
+  description?: string;
   iconClassName?: string;
   iconSize?: number;
 }
 
 export default function ErrorDisplay({
   icon = "gravity-ui:circle-xmark",
-  message = "Ha ocurrido un error",
+  title = "Ha ocurrido un error",
+  description = "Intenta de nuevo más tarde.",
   iconClassName = "text-zinc-500",
   iconSize = 128
 }: ErrorDisplayProps) {
@@ -22,7 +24,10 @@ export default function ErrorDisplay({
         className={iconClassName}
       />
       <p className="text-2xl font-bold text-zinc-500">
-        {message}
+        {title}
+      </p>
+      <p className="text-lg text-zinc-500">
+        {description}
       </p>
     </div>
   );

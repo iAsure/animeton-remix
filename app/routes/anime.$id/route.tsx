@@ -78,7 +78,7 @@ const AnimeDetails: React.FC<AnimeDetailsProps> = ({ state }) => {
   }
 
   return (
-    <div className="flex flex-row justify-between items-start overflow-hidden">
+    <div className="flex flex-row justify-between items-start overflow-hidden mt-14">
       <DiscordStatus
         options={{
           details: anime?.title?.romaji,
