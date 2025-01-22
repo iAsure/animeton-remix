@@ -15,7 +15,7 @@ export interface Notification {
 interface NotificationContextType {
   showNotification: (notification: Omit<Notification, 'id'>) => void
   removeNotification: (id: string) => void
-  showAppNotification: (options: {
+  showWinNotification: (options: {
     title: string
     message: string
   }) => void
@@ -52,7 +52,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     [removeNotification]
   )
 
-  const showAppNotification = useCallback(({
+  const showWinNotification = useCallback(({
     title,
     message
   }: {
@@ -67,7 +67,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <NotificationContext.Provider value={{ showNotification, removeNotification, showAppNotification }}>
+    <NotificationContext.Provider value={{ showNotification, removeNotification, showWinNotification }}>
       {children}
       <div className="fixed top-20 left-4 z-50 flex flex-col gap-3">
         <AnimatePresence initial={false}>

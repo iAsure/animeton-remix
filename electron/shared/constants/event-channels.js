@@ -56,4 +56,11 @@ export const IPC_CHANNELS = {
     CHANGED: 'history:changed',
     EPISODE_UPDATED: 'history:episode-updated',
   },
+  ACTIVATION: {
+    VALIDATE: 'activation:validate',
+    ACTIVATE: 'activation:activate',
+    SUCCESS: 'activation:success',
+    ERROR: 'activation:error',
+    STATUS_CHANGED: 'activation:status-changed',
+  },
 };

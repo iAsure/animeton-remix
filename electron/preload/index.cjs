@@ -128,9 +128,13 @@ const createEventHandler = (channel) => ({
     },
 
     activation: {
-      validateKey: (key) => ipcRenderer.invoke('validate-activation', key),
-      onActivationSuccess: createEventHandler('activation-success'),
-      onActivationError: createEventHandler('activation-error'),
+      validateKey: (key) => 
+        ipcRenderer.invoke(IPC_CHANNELS.ACTIVATION.VALIDATE, key),
+      activateKey: (key) =>
+        ipcRenderer.invoke(IPC_CHANNELS.ACTIVATION.ACTIVATE, key),
+      onStatusChanged: createEventHandler(IPC_CHANNELS.ACTIVATION.STATUS_CHANGED),
+      onSuccess: createEventHandler(IPC_CHANNELS.ACTIVATION.SUCCESS),
+      onError: createEventHandler(IPC_CHANNELS.ACTIVATION.ERROR),
     },
 
     notification: {

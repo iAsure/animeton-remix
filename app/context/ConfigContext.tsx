@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import type { AppConfig } from '@shared/types/config';
+import type { AppConfig } from '@electron/types/config';
 
 interface ConfigContextType {
   config: AppConfig | null;

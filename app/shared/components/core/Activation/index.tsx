@@ -3,67 +3,77 @@ import { Divider } from '@nextui-org/react';
 import { Icon } from '@iconify/react';
 import { DISCORD_INVITE_CODE } from '@constants/discord';
 
-import useActivateKey from '@hooks/useActivateKey';
-
-import { useConfig } from '@context/ConfigContext';
 import { useNotification } from '@context/NotificationContext';
+
+import log from 'electron-log';
 
 interface ActivationProps {
   isValid: boolean;
 }
 
 const Activation = ({ isValid }: ActivationProps) => {
-  const { updateConfig } = useConfig();
-  const { showAppNotification } = useNotification();
+  const { showWinNotification } = useNotification();
 
   const [activationKey, setActivationKey] = useState('');
-  const [isActivated, setIsActivated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const { data, isLoading: keyLoading, error: keyError, activateKey } = useActivateKey(activationKey);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (data) {
-      console.log('Activation successful:', data);
-      setIsActivated(true);
+    const onSuccess = () => {
+      log.info('Activation successful');
+      showWinNotification({
+        title: 'Activación exitosa',
+        message: '¡Bienvenido a Animeton!',
+      });
+    };
 
-      setTimeout(() => {
-        updateConfig({
-          user: {
-            activationKey: activationKey,
-            discordId: data.discordId,
-          },
+    const onError = (_, { error }) => {
+      log.error('Activation error:', error);
+      showWinNotification({
+        title: 'Error de activación',
+        message: error,
+      });
+      setError(error);
+      setIsLoading(false);
+    };
+
+    const onStatusChanged = (_, { isValid }) => {
+      log.info('Activation status changed:', isValid);
+      if (!isValid) {
+        showWinNotification({
+          title: 'Estado de activación',
+          message: 'Tu clave de activación ya no es válida',
         });
-      }, 1000);
-    }
-  }, [data]);
+        setError('Tu clave de activación ya no es válida');
+      }
+    };
+
+    window.api.activation.onSuccess.subscribe(onSuccess);
+    window.api.activation.onError.subscribe(onError);
+    window.api.activation.onStatusChanged.subscribe(onStatusChanged);
+
+    return () => {
+      window.api.activation.onSuccess.unsubscribe(onSuccess);
+      window.api.activation.onError.unsubscribe(onError);
+      window.api.activation.onStatusChanged.unsubscribe(onStatusChanged);
+    };
+  }, []);
 
   const onActivate = async () => {
-    if (isLoading) return;
-    
+    if (isLoading || !activationKey.trim()) return;
+
     setIsLoading(true);
     try {
-      const result = await window.api.activation.validateKey(activationKey);
-      if (!result) {
-        showAppNotification({
-          title: 'Error de activación',
-          message: 'Clave inválida'
-        });
-      }
+      await window.api.activation.activateKey(activationKey);
     } catch (error) {
-      showAppNotification({
-        title: 'Error de activación',
-        message: error.message || 'Error al validar la clave'
-      });
+      log.error('Error activating key:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div
-      className="flex flex-col items-center justify-center bg-zinc-900"
-    >
+    <div className="flex flex-col items-center justify-center bg-zinc-900">
       <div className="flex flex-col items-center justify-center bg-zinc-950 p-8 rounded-lg">
         <img
           src="assets/animeton.png"
@@ -98,6 +108,7 @@ const Activation = ({ isValid }: ActivationProps) => {
           >
             {isLoading ? 'Activando...' : 'Comenzar mi aventura'}
           </button>
+          {error && <p className="text-red-500 mt-2 text-center">{error}</p>}
         </div>
       </div>
       <div className="flex flex-col items-center justify-center py-4 pb-8 rounded-lg mt-6">

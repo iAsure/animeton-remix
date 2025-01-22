@@ -8,8 +8,9 @@ import os from 'os';
 import { Worker as NodeWorker } from 'worker_threads';
 import { ConfigService } from '../services/config/service.js';
 import { HistoryService } from '../services/history/service.js';
-import { validateActivationKey, closeActivationWindow } from '../core/activation-window.js';
+import { validateActivationKey, closeActivationWindow, activateKey } from '../core/activation-window.js';
 import { setupWindow } from '../core/window.js';
+import { AppConfig } from 'electron/shared/types/config.js';
 
 export async function setupIpcHandlers(
   webTorrentProcess: UtilityProcess,
@@ -234,32 +235,58 @@ export async function setupIpcHandlers(
     historyService.cleanup();
   });
 
-  ipcMain.handle('validate-activation', async (event, key) => {
+  ipcMain.handle(IPC_CHANNELS.ACTIVATION.VALIDATE, async (_, key) => {
+    return await validateActivationKey(key);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ACTIVATION.ACTIVATE, async (event, key) => {
     try {
-      const isValid = await validateActivationKey(key);
-      if (isValid) {
+      const activationResult = await activateKey(key);
+      
+      if (activationResult.success) {
         const configService = new ConfigService(BrowserWindow.fromWebContents(event.sender));
         await configService.initialize();
         await configService.update({
           user: {
-            activationKey: key
+            activationKey: activationResult.key,
+            discordId: activationResult.discordId,
+            createdAt: activationResult.createdAt,
+            activatedAt: activationResult.activatedAt
           }
-        });
+        })
 
         closeActivationWindow();
         const mainWindow = await setupWindow();
+        configService.mainWindow = mainWindow;
         
-        event.sender.send('activation-success');
-        return true;
+        event.sender.send(IPC_CHANNELS.ACTIVATION.SUCCESS);
+        return activationResult;
       } else {
-        event.sender.send('activation-error', { error: 'Clave de activación inválida' });
-        return false;
+        event.sender.send(IPC_CHANNELS.ACTIVATION.ERROR, { 
+          error: activationResult.message || 'Error al activar la clave' 
+        });
+        return activationResult;
       }
     } catch (error) {
-      event.sender.send('activation-error', { error: 'Error al validar la clave' });
-      return false;
+      log.error('Activation error:', error);
+      event.sender.send(IPC_CHANNELS.ACTIVATION.ERROR, { 
+        error: 'Error al activar la clave' 
+      });
+      return { success: false, message: error.message };
     }
   });
+
+  const notifyActivationStatus = async () => {
+    try {
+      const config = await configService.get<AppConfig>();
+      const isValid = await validateActivationKey(config?.user?.activationKey);
+      mainWindow.webContents.send(IPC_CHANNELS.ACTIVATION.STATUS_CHANGED, { isValid });
+    } catch (error) {
+      log.error('Error checking activation status:', error);
+    }
+  };
+
+  ipcMain.on(IPC_CHANNELS.CONFIG.CHANGED, notifyActivationStatus);
 
   ipcMain.handle('show-notification', async (_, options) => {
     log.info('Showing notification:', options);

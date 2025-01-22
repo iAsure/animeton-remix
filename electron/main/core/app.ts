@@ -69,6 +69,7 @@ export async function initializeApp() {
     // Verificar activación
     const config = await configService.get<AppConfig>();
     const isValid = await validateActivationKey(config?.user?.activationKey);
+    log.info(`Activation key status: ${isValid}`);
 
     let mainWindow;
     if (!isValid && !process.env.DEV) {
@@ -86,6 +87,10 @@ export async function initializeApp() {
     await setupIpcHandlers(webTorrentProcess, subtitlesWorker, mainWindow);
     setupShortcuts(mainWindow);
 
+    if (!process.env.DEV) {
+      startKeyValidationInterval(configService, mainWindow);
+    }
+
     // Cleanup
     app.on('before-quit', async () => {
       log.info('Cleaning up workers...');
@@ -100,4 +105,36 @@ export async function initializeApp() {
     log.error('Failed to initialize application:', error);
     throw error;
   }
+}
+
+function startKeyValidationInterval(configService: ConfigService, mainWindow: BrowserWindow) {
+  const VALIDATION_INTERVAL = 1000 * 60 * 60;
+  let validationInterval: NodeJS.Timeout;
+
+  const validateKey = async () => {
+    try {
+      if (mainWindow.isDestroyed()) {
+        clearInterval(validationInterval);
+        return;
+      }
+
+      const config = await configService.get<AppConfig>();
+      const isValid = await validateActivationKey(config?.user?.activationKey);
+
+      if (!isValid && !mainWindow.isDestroyed()) {
+        log.info('Activation key is no longer valid');
+        const activationWindow = await createActivationWindow();
+        configService.mainWindow = activationWindow;
+        mainWindow.close();
+      }
+    } catch (error) {
+      log.error('Error validating activation key:', error);
+    }
+  };
+
+  validationInterval = setInterval(validateKey, VALIDATION_INTERVAL);
+
+  mainWindow.on('closed', () => {
+    clearInterval(validationInterval);
+  });
 }

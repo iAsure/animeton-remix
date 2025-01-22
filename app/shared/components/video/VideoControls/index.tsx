@@ -11,6 +11,8 @@ import { videoFormatTime } from '@utils/strings';
 import SubtitleSelector from '@components/video/SubtitleSelector';
 import Timeline from '@components/video/Timeline';
 
+import { IPC_CHANNELS } from '@electron/constants/event-channels';
+
 interface VideoControlsProps {
   videoRef: React.RefObject<HTMLVideoElement>;
   chapters: any[];
@@ -178,7 +180,7 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
   };
 
   const handleFullScreen = useCallback(() => {
-    window.electron.ipc.send('window:set-fullscreen', !isFullscreen);
+    window.electron.ipc.send(IPC_CHANNELS.WINDOW.SET_FULLSCREEN, !isFullscreen);
   }, [isFullscreen]);
 
   // Listen for fullscreen changes from Electron
@@ -187,11 +189,11 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
       setFullscreen(isFullscreen);
     };
 
-    window.electron.ipc.on('window:fullscreen-change', handleFullscreenChange);
+    window.electron.ipc.on(IPC_CHANNELS.WINDOW.FULLSCREEN_CHANGE, handleFullscreenChange);
 
     return () => {
       window.electron.ipc.removeListener(
-        'window:fullscreen-change',
+        IPC_CHANNELS.WINDOW.FULLSCREEN_CHANGE,
         handleFullscreenChange
       );
     };
