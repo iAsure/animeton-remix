@@ -103,10 +103,6 @@
       "repo": "webtorrent-animeton"
     },
     "win": {
-      "signingHashAlgorithms": [
-        "sha256"
-      ],
-      "sign": "./scripts/sign.cjs",
       "target": [
         {
           "target": "nsis-web"
