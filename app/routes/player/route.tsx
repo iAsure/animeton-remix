@@ -1,30 +1,33 @@
-import { useState, useRef, useCallback, useEffect, use } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useSearchParams, useLocation, useNavigate } from '@remix-run/react';
-
 import log from 'electron-log';
+
+import { IPC_CHANNELS } from '@electron/constants/event-channels';
+
 
 import useTorrentStream from '@hooks/useTorrentStream';
 import useSubtitles from '@hooks/useSubtitles';
 import useApiSubtitles from '@hooks/useApiSubtitles';
 import useChapters from '@hooks/useChapters';
 import useUserActivity from '@hooks/useUserActivity';
+import useCanvasRpcFrame from '@hooks/useCanvasRpcFrame';
 
 import VideoSpinner from '@components/video/VideoSpinner';
 import VideoControls from '@components/video/VideoControls';
 import VideoPlayPauseOverlay from '@components/video/VideoPlayPauseOverlay';
 import SubtitleStatus from '@components/video/SubtitleStatus';
 import VideoInfo from '@components/video/VideoInfo';
+import DiscordStatus from '@components/core/DiscordStatus';
 
 import usePlayerStore from '@stores/player';
 
 import { useNotification } from '@context/NotificationContext';
 import { useConfig } from '@context/ConfigContext';
-import useCanvasRpcFrame from '@hooks/useCanvasRpcFrame';
-import DiscordStatus from '@components/core/DiscordStatus';
 
 const Player = () => {
   const {
     isPlaying,
+    isFullscreen,
     duration,
     subtitleContent,
     isMouseMoving,
@@ -184,7 +187,7 @@ const Player = () => {
 
   useEffect(() => {
     const handleTorrentServerDone = (event: any, data: any) => {
-      const { url, filePath } = data;
+      const { url } = data;
       if (videoRef.current) {
         videoRef.current.src = url;
       }
@@ -198,6 +201,14 @@ const Player = () => {
       reset();
     };
   }, [reset]);
+
+  useEffect(() => {
+    return () => {
+      if (isFullscreen) {
+        window.electron.ipc.send(IPC_CHANNELS.WINDOW.SET_FULLSCREEN, false);
+      }
+    };
+  }, [isFullscreen]);
 
   return (
     <div

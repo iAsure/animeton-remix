@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { IPC_CHANNELS } from '@constants/event-channels';
+import { IPC_CHANNELS } from '@electron/constants/event-channels';
 
 const useWindowControls = () => {
   const [isMaximized, setIsMaximized] = useState(false);

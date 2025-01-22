@@ -31,7 +31,7 @@ const VideoInfo: FC<VideoInfoProps> = ({
 
   return (
     <div
-      className={`absolute top-14 left-4 text-white transition-opacity duration-300 bg-gradient-to-r from-black/80 to-transparent p-4 rounded-lg ${!isMouseMoving ? 'opacity-0' : 'opacity-100'
+      className={`absolute top-14 left-0 text-white transition-opacity duration-300 bg-gradient-to-r from-black/80 to-transparent p-4 ${!isMouseMoving ? 'opacity-0' : 'opacity-100'
         }`}
       style={{
         zIndex: 1000,
