@@ -207,6 +207,10 @@ const Player = () => {
       if (isFullscreen) {
         window.electron.ipc.send(IPC_CHANNELS.WINDOW.SET_FULLSCREEN, false);
       }
+
+      if (videoRef.current) {
+        videoRef.current.src = '';
+      }
     };
   }, [isFullscreen]);
 
