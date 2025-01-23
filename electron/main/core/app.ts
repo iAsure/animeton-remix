@@ -57,16 +57,13 @@ export async function initializeApp() {
     await setupProtocol(build, viteDevServer);
     initUpdater();
 
-    // Inicializar procesos
     webTorrentProcess = utilityProcess.fork(path.join(__dirname, '../services/torrent/client.js'));
     subtitlesWorker = new Worker(path.join(__dirname, '../services/subtitles/worker.js'));
 
-    // Crear ventana temporal para inicializar ConfigService
     const tempWindow = new BrowserWindow({ show: false });
     const configService = new ConfigService(tempWindow);
     await configService.initialize();
     
-    // Verificar activación
     const config = await configService.get<AppConfig>();
     const isValid = await validateActivationKey(config?.user?.activationKey);
     log.info(`Activation key status: ${isValid}`);
@@ -78,7 +75,6 @@ export async function initializeApp() {
       mainWindow = await setupWindow();
     }
 
-    // Actualizar la ventana en ConfigService
     configService.mainWindow = mainWindow;
     tempWindow.destroy();
 
