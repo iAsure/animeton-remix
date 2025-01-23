@@ -251,7 +251,7 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
   const SKIPPABLE_CHAPTERS = [
     ['Opening', /^op$|opening$|^ncop/i],
     ['Ending', /^ed$|ending$|^nced/i],
-    ['Recap', /recap/i]
+    ['Recap', /^(?!.*end).*recap.*/i]
   ] as const;
 
   const getSkippableChapterType = useCallback((chapter?: any) => {
