@@ -1,22 +1,31 @@
-import { useCallback, useState } from 'react';
-import eLog from 'electron-log';
+import { useCallback, useState, useRef } from 'react';
+import log from 'electron-log';
 import { API_BASE_URL } from '@constants/config';
-
-interface AnimeResult {
-  // Add your anime type properties here
-  id: string;
-  title: string;
-  // ... other properties
-}
+import { Anime } from '@shared/types/anime';
 
 export default function useSearchAnimes(query: string, limit: number = 1) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<AnimeResult[]>([]);
+  const [data, setData] = useState<Anime[]>([]);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const dataRef = useRef<Anime[]>([]);
 
-  const searchAnimes = useCallback(async (): Promise<AnimeResult[]> => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const searchAnimes = useCallback(async (): Promise<Anime[]> => {
+    if (!query.trim()) {
+      setData([]);
+      return [];
+    }
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    abortControllerRef.current = new AbortController();
+    const timeoutId = setTimeout(() => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    }, 15000);
 
     try {
       setIsLoading(true);
@@ -26,26 +35,36 @@ export default function useSearchAnimes(query: string, limit: number = 1) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ animeName: query, limit }),
-        signal: controller.signal
+        signal: abortControllerRef.current.signal,
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`Error en la búsqueda: ${response.status}`);
       }
 
       const result = await response.json();
       setData(result);
+      dataRef.current = result;
+      setError(null);
       return result;
     } catch (err) {
       const error = err as Error;
-      eLog.error('Error searching animes:', error);
-      
-      setError(error.name === 'AbortError' 
-        ? 'La búsqueda tardó demasiado tiempo. Por favor, inténtelo de nuevo.' 
-        : `Error: ${error.message}`);
-      
-      setData([]);
-      return [];
+      if (!error) return dataRef.current;
+
+      log.error('Error searching animes:', error);
+
+      if (error.name === 'AbortError') {
+        if (!dataRef.current.length) {
+          setError(
+            'La búsqueda tardó demasiado tiempo. Por favor, inténtelo de nuevo.'
+          );
+        }
+      } else {
+        setError(`Error: ${error.message}`);
+        setData([]);
+      }
+
+      return dataRef.current;
     } finally {
       clearTimeout(timeoutId);
       setIsLoading(false);
@@ -56,6 +75,6 @@ export default function useSearchAnimes(query: string, limit: number = 1) {
     searchAnimes,
     isLoading,
     error,
-    data
+    data,
   };
-};
+}

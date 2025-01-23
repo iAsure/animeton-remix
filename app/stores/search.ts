@@ -10,26 +10,28 @@ interface SearchStore {
 }
 
 const useSearchStore = create<SearchStore>()(
-  subscribeWithSelector((set) => ({
-    searchTerm: '',
-    debouncedSearchTerm: '',
-    setSearchTerm: (term) => {
-      const newTerm = term === null ? '' : term;
-      set({ searchTerm: newTerm });
-      debouncedSetSearch(newTerm, set);
-    },
-    resetSearch: () => {
-      set({
-        searchTerm: '',
-        debouncedSearchTerm: '',
-      });
-      debouncedSetSearch.cancel();
-    },
-  }))
-);
+  subscribeWithSelector((set) => {
+    const debouncedSetSearch = debounce((term: string) => {
+      set({ debouncedSearchTerm: term });
+    }, 750);
 
-const debouncedSetSearch = debounce((term: string, set) => {
-  set({ debouncedSearchTerm: term });
-}, 500);
+    return {
+      searchTerm: '',
+      debouncedSearchTerm: '',
+      setSearchTerm: (term) => {
+        const newTerm = term === null ? '' : term;
+        set({ searchTerm: newTerm });
+        debouncedSetSearch(newTerm);
+      },
+      resetSearch: () => {
+        set({
+          searchTerm: '',
+          debouncedSearchTerm: '',
+        });
+        debouncedSetSearch.cancel();
+      },
+    };
+  })
+);
 
 export default useSearchStore;

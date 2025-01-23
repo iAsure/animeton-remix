@@ -3,7 +3,6 @@ import { Divider } from '@nextui-org/react';
 import { useNavigate } from '@remix-run/react';
 
 import useHeaderNavigation from '@hooks/useHeaderNavigation';
-import useHeaderTitle from '@hooks/useHeaderTitle';
 import useWindowControls from '@hooks/useWindowControls';
 import useUpdateDownload from '@hooks/useUpdateDownload';
 import useAnimeSearch from '@hooks/useAnimeSearch';
@@ -40,7 +39,6 @@ const Header = () => {
     handleHome,
     currentPath,
   } = useHeaderNavigation();
-  const { headerTitle } = useHeaderTitle();
   const { updateDownloaded, handleUpdateClick } = useUpdateDownload();
 
   const handleClosedBeta = () => {
@@ -175,7 +173,7 @@ const Header = () => {
                   className="text-zinc-400 mt-1 leading-none"
                   style={{ cursor: 'pointer' }}
                 >
-                  {headerTitle}
+                  Beta Cerrada
                 </span>
                 <span className="text-zinc-500 mt-1 cursor-pointer">
                   {' - '}

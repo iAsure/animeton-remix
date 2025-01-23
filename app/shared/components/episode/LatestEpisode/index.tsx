@@ -11,6 +11,7 @@ import { useNotification } from '@context/NotificationContext';
 
 import EpisodeCard from './episode';
 import EpisodeCardSkeleton from './skeleton';
+import { AnimeEpisode } from '@shared/types/anime';
 
 interface LatestEpisodesProps {
   sectionTitle?: string;
@@ -65,7 +66,7 @@ const LatestEpisodes: React.FC<LatestEpisodesProps> = memo(
       },
     };
 
-    const renderEpisodeCard = (anime, index: number) => {
+    const renderEpisodeCard = (anime: AnimeEpisode, index: number) => {
       const progress = history?.episodes[anime?.torrent?.infoHash]?.progressData?.progress;
 
       const card = (
