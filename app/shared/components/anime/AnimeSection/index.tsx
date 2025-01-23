@@ -91,8 +91,16 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
         <motion.div
           key={index}
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-10% 0px', amount: 0.1 }}
+          whileInView={{ 
+            opacity: 1,
+            y: 0,
+            transition: {
+              type: 'spring',
+              duration: 0.3,
+              bounce: 0.1
+            }
+          }}
+          viewport={{ once: true, margin: '-1% 0px', amount: 0.1 }}
           variants={cardVariants}
           className="will-change-transform"
           style={{
