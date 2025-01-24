@@ -212,7 +212,7 @@ const Player = () => {
         videoRef.current.src = '';
       }
     };
-  }, [isFullscreen]);
+  }, []);
 
   return (
     <div
