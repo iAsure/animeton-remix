@@ -218,6 +218,10 @@ export interface NotificationApi {
   }) => void;
 }
 
+export interface LogApi {
+  getContent: () => Promise<string>;
+}
+
 export interface Api {
   addTorrent: (torrentUrl: string, torrentHash: string) => void;
   checkTorrentServer: () => void;
@@ -231,4 +235,5 @@ export interface Api {
   history: HistoryApi;
   activation: ActivationApi;
   notification: NotificationApi;
+  log: LogApi;
 }

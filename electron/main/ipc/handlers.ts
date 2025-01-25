@@ -11,6 +11,7 @@ import { HistoryService } from '../services/history/service.js';
 import { validateActivationKey, closeActivationWindow, activateKey } from '../core/activation-window.js';
 import { setupWindow } from '../core/window.js';
 import { AppConfig } from 'electron/shared/types/config.js';
+import fs from 'fs/promises';
 
 export async function setupIpcHandlers(
   webTorrentProcess: UtilityProcess,
@@ -298,5 +299,16 @@ export async function setupIpcHandlers(
     });
 
     notification.show();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.LOG.GET_CONTENT, async () => {
+    try {
+      const logFilePath = log.transports.file.getFile().path;
+      const logContent = await fs.readFile(logFilePath, 'utf-8');
+      return logContent;
+    } catch (error) {
+      log.error('Failed to read log file:', error);
+      throw error;
+    }
   });
 }

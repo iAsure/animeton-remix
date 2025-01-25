@@ -140,6 +140,10 @@ const createEventHandler = (channel) => ({
     notification: {
       show: (options) => ipcRenderer.invoke('show-notification', options),
     },
+
+    log: {
+      getContent: () => ipcRenderer.invoke(IPC_CHANNELS.LOG.GET_CONTENT),
+    },
   };
 
   contextBridge.exposeInMainWorld('electron', electron);

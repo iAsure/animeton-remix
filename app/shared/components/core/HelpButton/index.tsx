@@ -1,16 +1,20 @@
 import { Button } from '@nextui-org/react';
 import { Icon } from '@iconify/react';
 import { useLocation } from '@remix-run/react';
+
 import { useModal } from '@context/ModalContext';
+import { useConfig } from '@context/ConfigContext';
+
 import DiscordTicketModal from '@components/modals/DiscordTicket';
 
 const HelpButton = () => {
   const location = useLocation();
   const { openModal } = useModal();
+  const { config } = useConfig();
 
   const handleHelpClick = () => {
     openModal('discord-ticket', ({ onClose }) => (
-      <DiscordTicketModal onClose={onClose} userId={''} />
+      <DiscordTicketModal onClose={onClose} userId={config.user?.discordId} />
     ));
   };
 

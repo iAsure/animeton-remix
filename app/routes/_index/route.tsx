@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 
 import useAnimesData from '@hooks/useAnimesData';
-import useValidateKey from '@hooks/useValidateKey';
 import useUserActivity from '@hooks/useUserActivity';
 import useModernBackground from '@hooks/useModernBackground';
 
@@ -11,15 +10,10 @@ import LatestEpisodes from '@components/episode/LatestEpisode';
 import AnimeSection from '@components/anime/AnimeSection';
 import DiscordStatus from '@components/core/DiscordStatus';
 import ContinueWatching from '@components/episode/ContinueWatching';
-import ErrorDisplay from '@components/core/ErrorDisplay';
-
-import { useConfig } from '@context/ConfigContext';
 
 export default function Index() {
   const { animes } = useAnimesData({ displayCount: 10 });
-  const { config } = useConfig();
   const { getInProgressEpisodes } = useUserActivity();
-  const [hasTimeout, setHasTimeout] = useState(false);
 
   const [progressEpisodesExists, setProgressEpisodesExists] = useState(false);
 
@@ -34,28 +28,6 @@ export default function Index() {
     const inProgressEpisodes = getInProgressEpisodes();
     setProgressEpisodesExists(inProgressEpisodes.length > 0);
   }, [getInProgressEpisodes]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!animes) {
-        setHasTimeout(true);
-      }
-    }, 10000);
-
-    return () => clearTimeout(timer);
-  }, [animes]);
-
-  if (hasTimeout) {
-    return (
-      <div className="my-auto min-h-screen flex justify-center items-center">
-        <ErrorDisplay 
-          title="Error de conexión"
-          description="Intenta de nuevo más tarde."
-          icon="fluent:wifi-warning-24-filled"
-        />
-      </div>
-    );
-  }
 
   if (!animes) return <Spinner />;
 

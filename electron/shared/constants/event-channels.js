@@ -63,4 +63,7 @@ export const IPC_CHANNELS = {
     ERROR: 'activation:error',
     STATUS_CHANGED: 'activation:status-changed',
   },
+  LOG: {
+    GET_CONTENT: 'log:get-content',
+  },
 };

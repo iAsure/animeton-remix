@@ -3,23 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Icon } from '@iconify/react';
 import { translateGenres } from '@utils/strings';
-
-interface AnimeTitle {
-  romaji: string;
-}
-
-interface AnimeImage {
-  extraLarge?: string;
-}
-
-interface Anime {
-  idAnilist: number;
-  title: AnimeTitle;
-  bannerImage?: string;
-  coverImage?: AnimeImage;
-  genres: string[];
-  description: string;
-}
+import { Anime } from '@shared/types/anime';
 
 interface AnimeCarouselProps {
   animes: Anime[];
