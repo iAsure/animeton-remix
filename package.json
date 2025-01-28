@@ -100,7 +100,7 @@
     "publish": {
       "provider": "github",
       "owner": "Tiahui-Tech",
-      "repo": "webtorrent-animeton"
+      "repo": "animeton-remix"
     },
     "win": {
       "target": [
