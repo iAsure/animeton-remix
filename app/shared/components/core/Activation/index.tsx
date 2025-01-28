@@ -5,6 +5,8 @@ import { DISCORD_INVITE_CODE } from '@constants/discord';
 
 import { useNotification } from '@context/NotificationContext';
 
+import WindowControls from '@components/core/Header/WindowControls';
+
 import log from 'electron-log';
 
 interface ActivationProps {
@@ -74,6 +76,10 @@ const Activation = ({ isValid }: ActivationProps) => {
 
   return (
     <div className="flex flex-col items-center justify-center bg-zinc-900">
+      <div className="flex flex-row items-center justify-end w-full bg-zinc-950 p-2 webkit-app-region-drag">
+        <WindowControls hideMaximize />
+      </div>
+
       <div className="flex flex-col items-center justify-center bg-zinc-950 p-8 rounded-lg">
         <img
           src="assets/animeton.png"
@@ -89,10 +95,7 @@ const Activation = ({ isValid }: ActivationProps) => {
             : 'Activa de nuevo tu cuenta ingresando otra clave.'}
         </p>
         <Divider />
-        <h2 className="text-2xl font-semibold my-6 text-white">
-          Activación de tu cuenta
-        </h2>
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md mt-6">
           <input
             type="text"
             placeholder="Ingresa tu clave de activación"

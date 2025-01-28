@@ -61,8 +61,12 @@ export function createActivationWindow(
 
   activationWindow = new BrowserWindow({
     icon: './public/favicon.png',
+    minWidth: 460,
     width: 460,
+    maxWidth: 460,
+    minHeight: 530,
     height: 530,
+    maxHeight: 530,
     frame: false,
     resizable: false,
     webPreferences: {
