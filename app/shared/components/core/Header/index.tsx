@@ -3,7 +3,6 @@ import { Divider } from '@nextui-org/react';
 import { useNavigate } from '@remix-run/react';
 
 import useHeaderNavigation from '@hooks/useHeaderNavigation';
-import useHeaderTitle from '@hooks/useHeaderTitle';
 import useWindowControls from '@hooks/useWindowControls';
 import useUpdateDownload from '@hooks/useUpdateDownload';
 import useAnimeSearch from '@hooks/useAnimeSearch';
@@ -16,7 +15,9 @@ import usePlayerStore from '@stores/player';
 import ClosedBetaModal from '@components/modals/ClosedBeta';
 import NewBadge from '@components/decoration/NewBadge';
 import SearchInput from '@components/core/SearchInput';
+
 import UserBadge from '@components/core/Header/UserBadge';
+import WindowControls from '@components/core/Header/WindowControls';
 
 const isPlayerRoute = (path: string) => path.includes('/player');
 import { version as appVersion } from '../../../../../package.json';
@@ -29,7 +30,6 @@ const Header = () => {
   const { openModal } = useModal();
   const { config } = useConfig();
 
-  const { isMaximized, handleWindowControl } = useWindowControls();
   const {
     canGoBack,
     canGoForward,
@@ -40,7 +40,6 @@ const Header = () => {
     handleHome,
     currentPath,
   } = useHeaderNavigation();
-  const { headerTitle } = useHeaderTitle();
   const { updateDownloaded, handleUpdateClick } = useUpdateDownload();
 
   const handleClosedBeta = () => {
@@ -49,7 +48,6 @@ const Header = () => {
     ));
   };
 
-  const appIsActivated = config?.user?.activationKey;
   const appUserDiscordId = config?.user?.discordId;
 
   return (
@@ -123,7 +121,7 @@ const Header = () => {
             <Divider orientation="vertical" className="bg-zinc-800 h-6 mr-1" />
 
             {/* Search Input */}
-            {!isPlayerRoute(currentPath) && appIsActivated && (
+            {!isPlayerRoute(currentPath) && (
               <SearchInput
                 initialValue={searchTerm}
                 onSearch={setSearchTerm}
@@ -176,7 +174,7 @@ const Header = () => {
                   className="text-zinc-400 mt-1 leading-none"
                   style={{ cursor: 'pointer' }}
                 >
-                  {headerTitle}
+                  Beta Cerrada
                 </span>
                 <span className="text-zinc-500 mt-1 cursor-pointer">
                   {' - '}
@@ -216,7 +214,7 @@ const Header = () => {
           {/* Window Controls and Discord User */}
           <div className="flex flex-row items-center gap-4 justify-end">
             {/* Discord User */}
-            {appIsActivated && appUserDiscordId && (
+            {appUserDiscordId && (
               <UserBadge discordId={appUserDiscordId} />
             )}
 
@@ -244,45 +242,7 @@ const Header = () => {
 
             <Divider orientation="vertical" className="bg-zinc-800 h-6" />
 
-            {/* Window Controls */}
-            <div className="flex flex-row items-center gap-1">
-              <button
-                onClick={handleWindowControl('minimize')}
-                style={{ zIndex: 9999 }}
-                className="p-1 hover:bg-zinc-800 rounded webkit-app-region-no-drag"
-              >
-                <Icon
-                  icon="gravity-ui:minus"
-                  className="pointer-events-none text-white"
-                  width="26"
-                  height="26"
-                />
-              </button>
-              <button
-                onClick={handleWindowControl('maximize')}
-                style={{ zIndex: 9999 }}
-                className="p-1 hover:bg-zinc-800 rounded webkit-app-region-no-drag"
-              >
-                <Icon
-                  icon={isMaximized ? 'gravity-ui:copy' : 'gravity-ui:square'}
-                  className="pointer-events-none text-white"
-                  width="26"
-                  height="26"
-                />
-              </button>
-              <button
-                onClick={handleWindowControl('close')}
-                style={{ zIndex: 9999 }}
-                className="p-1 hover:bg-zinc-800 rounded webkit-app-region-no-drag"
-              >
-                <Icon
-                  icon="gravity-ui:xmark"
-                  className="pointer-events-none text-white"
-                  width="26"
-                  height="26"
-                />
-              </button>
-            </div>
+            <WindowControls />
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { API_BASE_URL } from '@constants/config';
+import { Anime } from '@shared/types/anime';
 
 interface UseAnimesDataProps {
   page?: number;
@@ -12,7 +13,7 @@ const useAnimesData = ({
   perPage = 28, 
   displayCount 
 }: UseAnimesDataProps = {}) => {
-  const [animes, setAnimes] = useState<any[] | null>(null);
+  const [animes, setAnimes] = useState<Anime[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

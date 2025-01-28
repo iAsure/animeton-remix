@@ -9,6 +9,7 @@ import useModernBackground from '@hooks/useModernBackground';
 
 import AnimeCard from './anime';
 import AnimeCardSkeleton from './skeleton';
+import AnimeGrid from './AnimeGrid';
 
 interface AnimeSectionProps {
   sectionTitle?: string;
@@ -32,19 +33,22 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
     cardAnimation = false,
     gridClassName = 'grid-cols-auto-fit',
     showViewMore = false,
-    viewMoreText = false,
   }) => {
     const navigate = useNavigate();
-    const [filteredAnimes, setFilteredAnimes] = useState<any[]>([]);
+    const [displayMode, setDisplayMode] = useState<'popular' | 'search'>(
+      'popular'
+    );
+
     const {
-      animes,
-      isLoading: isLoadingAnimes,
-      error: animesError,
+      animes: popularAnimes,
+      isLoading: isLoadingPopular,
+      error: popularError,
     } = useAnimesData({ perPage });
+
     const {
       searchAnimes,
       data: searchResults,
-      isLoading: isSearchLoading,
+      isLoading: isSearching,
       error: searchError,
     } = useSearchAnimes(searchTerm, perPage);
 
@@ -56,22 +60,16 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
     });
 
     useEffect(() => {
-      const fetchAnimes = async () => {
-        if (!searchTerm) {
-          setFilteredAnimes(animes || []);
-        } else {
-          await searchAnimes();
-        }
-      };
-
-      fetchAnimes();
-    }, [searchTerm, animes, searchAnimes]);
+      if (searchTerm) {
+        setDisplayMode('search');
+        searchAnimes();
+      } else {
+        setDisplayMode('popular');
+      }
+    }, [searchTerm, searchAnimes]);
 
     const cardVariants = {
-      hidden: {
-        opacity: 0,
-        y: 15,
-      },
+      hidden: { opacity: 0, y: 15 },
       visible: {
         opacity: 1,
         y: 0,
@@ -84,7 +82,7 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
       },
     };
 
-    const renderAnimeCard = (anime, index) => {
+    const renderAnimeCard = (anime: any, index: number) => {
       const card = (
         <AnimeCard key={`anime-${anime.id}-${index}`} anime={anime} />
       );
@@ -93,12 +91,16 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
         <motion.div
           key={index}
           initial="hidden"
-          whileInView="visible"
-          viewport={{
-            once: true,
-            margin: '-10% 0px',
-            amount: 0.1,
+          whileInView={{ 
+            opacity: 1,
+            y: 0,
+            transition: {
+              type: 'spring',
+              duration: 0.3,
+              bounce: 0.1
+            }
           }}
+          viewport={{ once: true, margin: '-1% 0px', amount: 0.1 }}
           variants={cardVariants}
           className="will-change-transform"
           style={{
@@ -113,26 +115,73 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
       );
     };
 
-    const displayAnimes = searchTerm ? searchResults : filteredAnimes;
-    const isEmpty = !displayAnimes?.length;
-
-    const handleViewMore = () => {
+    const handleViewMore = () =>
       navigate('/popular-anime', { viewTransition: true });
-    };
 
-    const isLoadingContent =
-      (searchTerm && isSearchLoading) || (!searchTerm && isLoadingAnimes);
-    const error = searchTerm ? searchError : animesError;
-    const hasError = Boolean(error);
-    const hasNoResults = !isLoadingContent && !hasError && isEmpty;
+    const renderContent = () => {
+      const isLoading =
+        displayMode === 'search'
+          ? isSearching || (searchTerm && !searchResults.length)
+          : isLoadingPopular;
+      const error = displayMode === 'search' ? searchError : popularError;
+      const animes = displayMode === 'search' ? searchResults : popularAnimes;
+      const isEmpty = !animes?.length;
+
+      if (isLoading) {
+        return (
+          <AnimeGrid className={gridClassName}>
+            {Array.from({ length: perPage }).map((_, index) => (
+              <AnimeCardSkeleton key={`skeleton-${index}`} />
+            ))}
+          </AnimeGrid>
+        );
+      }
+
+      if (error) {
+        return (
+          <div className="flex flex-col justify-center items-center w-full min-h-[400px]">
+            <Icon
+              icon="gravity-ui:circle-xmark"
+              width="128"
+              height="128"
+              className="text-zinc-500"
+            />
+            <p className="text-2xl font-bold text-zinc-500">
+              {error || 'Ha ocurrido un error'}
+            </p>
+          </div>
+        );
+      }
+
+      if (isEmpty && displayMode === 'search') {
+        return (
+          <div className="flex flex-col justify-center items-center w-full min-h-[400px]">
+            <Icon
+              icon="gravity-ui:circle-xmark"
+              width="128"
+              height="128"
+              className="text-zinc-500"
+            />
+            <p className="text-2xl font-bold text-zinc-500">
+              No se encontraron animes
+            </p>
+          </div>
+        );
+      }
+
+      return (
+        <AnimeGrid className={gridClassName}>
+          {animes.map((anime, i) => renderAnimeCard(anime, i))}
+        </AnimeGrid>
+      );
+    };
 
     return (
       <div
-        className={`relative flex flex-col p-8 px-12 ${
-          isEmpty ? 'justify-center' : 'justify-start'
-        } items-center ${fullScreen ? 'min-h-[calc(100vh-56px)]' : ''}`}
+        className={`relative flex flex-col p-8 px-12 items-center ${
+          fullScreen ? 'min-h-[calc(100vh-56px)]' : ''
+        }`}
       >
-        {/* Background */}
         {showBackground && (
           <div
             className="absolute inset-0 bg-cover bg-center"
@@ -162,67 +211,21 @@ const AnimeSection: React.FC<AnimeSectionProps> = React.memo(
           </button>
         )}
 
-        {isLoadingContent && (
-          <div
-            className={`grid ${gridClassName} gap-4 sm:gap-6 md:gap-8 justify-center items-center min-h-[400px] w-full`}
+        {renderContent()}
+
+        {showViewMore && popularAnimes?.length > 0 && (
+          <button
+            onClick={handleViewMore}
+            className="group flex items-center gap-2 mt-6 px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 transition-all duration-300"
           >
-            {Array.from({ length: perPage }).map((_, index) => (
-              <AnimeCardSkeleton key={`skeleton-${index}`} />
-            ))}
-          </div>
-        )}
-
-        {hasError && (
-          <div className="flex flex-col justify-center items-center w-full min-h-[400px]">
+            <span className="text-xl font-semibold text-white">Ver más</span>
             <Icon
-              icon="gravity-ui:circle-xmark"
-              width="128"
-              height="128"
-              className="text-zinc-500"
+              icon="gravity-ui:chevron-right"
+              width="26"
+              height="26"
+              className="pointer-events-none transition-transform duration-300 group-hover:translate-x-1 text-zinc-500"
             />
-            <p className="text-2xl font-bold text-zinc-500">
-              {error || 'Ha ocurrido un error'}
-            </p>
-          </div>
-        )}
-
-        {hasNoResults && (
-          <div className="flex flex-col justify-center items-center w-full min-h-[400px]">
-            <Icon
-              icon="gravity-ui:circle-xmark"
-              width="128"
-              height="128"
-              className="text-zinc-500"
-            />
-            <p className="text-2xl font-bold text-zinc-500">
-              No se encontraron animes
-            </p>
-          </div>
-        )}
-
-        {!isLoadingContent && !hasError && !hasNoResults && (
-          <div
-            className={`grid ${gridClassName} gap-8 justify-center items-start min-h-[400px] w-full`}
-          >
-            {displayAnimes.map((anime, i) => renderAnimeCard(anime, i))}
-          </div>
-        )}
-
-        {!isEmpty && showViewMore && (
-          <div className="flex flex-col items-center justify-center w-full">
-            <button
-              onClick={handleViewMore}
-              className="group flex items-center gap-2 mt-6 px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 transition-all duration-300"
-            >
-              <span className="text-xl font-semibold text-white">Ver más</span>
-              <Icon
-                icon="gravity-ui:chevron-right"
-                width="26"
-                height="26"
-                className="pointer-events-none transition-transform duration-300 group-hover:translate-x-1 text-zinc-500"
-              />
-            </button>
-          </div>
+          </button>
         )}
       </div>
     );

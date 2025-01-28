@@ -185,6 +185,43 @@ export interface HistoryApi {
   }>;
 }
 
+export interface ActivationResult {
+  success: boolean;
+  message?: string;
+  key?: string;
+  discordId?: string;
+  createdAt?: string;
+  activatedAt?: string;
+}
+
+export interface ActivationStatus {
+  isValid: boolean;
+}
+
+export interface ActivationError {
+  error: string;
+}
+
+export interface ActivationApi {
+  validateKey: (key: string) => Promise<boolean>;
+  activateKey: (key: string) => Promise<ActivationResult>;
+  onSuccess: EventHandler<void>;
+  onError: EventHandler<ActivationError>;
+  onStatusChanged: EventHandler<ActivationStatus>;
+}
+
+export interface NotificationApi {
+  show: (options: {
+    title: string;
+    body: string;
+    type?: 'success' | 'error' | 'warning' | 'info';
+  }) => void;
+}
+
+export interface LogApi {
+  getContent: () => Promise<string>;
+}
+
 export interface Api {
   addTorrent: (torrentUrl: string, torrentHash: string) => void;
   checkTorrentServer: () => void;
@@ -196,4 +233,7 @@ export interface Api {
   discord: DiscordApi;
   chapters: ChaptersApi;
   history: HistoryApi;
+  activation: ActivationApi;
+  notification: NotificationApi;
+  log: LogApi;
 }

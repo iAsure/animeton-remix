@@ -1,7 +1,8 @@
 export interface UserConfig {
     discordId?: string;
     activationKey?: string;
-    username?: string;
+    createdAt?: string;
+    activatedAt?: string;
   }
   
   export interface AppConfig {

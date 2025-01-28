@@ -3,53 +3,83 @@ import { Divider } from '@nextui-org/react';
 import { Icon } from '@iconify/react';
 import { DISCORD_INVITE_CODE } from '@constants/discord';
 
-import useActivateKey from '@hooks/useActivateKey';
+import { useNotification } from '@context/NotificationContext';
 
-import { useConfig } from '@context/ConfigContext';
+import WindowControls from '@components/core/Header/WindowControls';
+
+import log from 'electron-log';
 
 interface ActivationProps {
   isValid: boolean;
 }
 
 const Activation = ({ isValid }: ActivationProps) => {
-  const { updateConfig } = useConfig();
+  const { showWinNotification } = useNotification();
 
   const [activationKey, setActivationKey] = useState('');
-  const [isActivated, setIsActivated] = useState(false);
-
-  const { data, isLoading, error, activateKey } = useActivateKey(activationKey);
-
-  const onActivate = () => {
-    activateKey();
-  };
-
-  // useEffect(() => {
-  //     dispatch('updateDiscordRPC', { details: 'Activando la app' });
-  // }, []);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (data) {
-      console.log('Activation successful:', data);
-      setIsActivated(true);
+    const onSuccess = () => {
+      log.info('Activation successful');
+      showWinNotification({
+        title: 'Activación exitosa',
+        message: '¡Bienvenido a Animeton!',
+      });
+    };
 
-      setTimeout(() => {
-        updateConfig({
-          user: {
-            activationKey: activationKey,
-            discordId: data.discordId,
-          },
+    const onError = (_, { error }) => {
+      log.error('Activation error:', error);
+      showWinNotification({
+        title: 'Error de activación',
+        message: error,
+      });
+      setError(error);
+      setIsLoading(false);
+    };
+
+    const onStatusChanged = (_, { isValid }) => {
+      log.info('Activation status changed:', isValid);
+      if (!isValid) {
+        showWinNotification({
+          title: 'Estado de activación',
+          message: 'Tu clave de activación ya no es válida',
         });
-      }, 1000);
+        setError('Tu clave de activación ya no es válida');
+      }
+    };
+
+    window.api.activation.onSuccess.subscribe(onSuccess);
+    window.api.activation.onError.subscribe(onError);
+    window.api.activation.onStatusChanged.subscribe(onStatusChanged);
+
+    return () => {
+      window.api.activation.onSuccess.unsubscribe(onSuccess);
+      window.api.activation.onError.unsubscribe(onError);
+      window.api.activation.onStatusChanged.unsubscribe(onStatusChanged);
+    };
+  }, []);
+
+  const onActivate = async () => {
+    if (isLoading || !activationKey.trim()) return;
+
+    setIsLoading(true);
+    try {
+      await window.api.activation.activateKey(activationKey);
+    } catch (error) {
+      log.error('Error activating key:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [data]);
+  };
 
   return (
-    <div
-      className="flex flex-col items-center justify-center bg-zinc-900 pt-4"
-      style={{
-        minHeight: 'calc(100vh - 56px)',
-      }}
-    >
+    <div className="flex flex-col items-center justify-center bg-zinc-900">
+      <div className="flex flex-row items-center justify-end w-full bg-zinc-950 p-2 webkit-app-region-drag">
+        <WindowControls hideMaximize />
+      </div>
+
       <div className="flex flex-col items-center justify-center bg-zinc-950 p-8 rounded-lg">
         <img
           src="assets/animeton.png"
@@ -65,10 +95,7 @@ const Activation = ({ isValid }: ActivationProps) => {
             : 'Activa de nuevo tu cuenta ingresando otra clave.'}
         </p>
         <Divider />
-        <h2 className="text-2xl font-semibold my-6 text-white">
-          Activación de tu cuenta
-        </h2>
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md mt-6">
           <input
             type="text"
             placeholder="Ingresa tu clave de activación"
@@ -85,14 +112,9 @@ const Activation = ({ isValid }: ActivationProps) => {
             {isLoading ? 'Activando...' : 'Comenzar mi aventura'}
           </button>
           {error && <p className="text-red-500 mt-2 text-center">{error}</p>}
-          {isActivated && (
-            <p className="text-green-500 mt-2 text-center">
-              ¡Activación exitosa!
-            </p>
-          )}
         </div>
       </div>
-      <div className="flex flex-col items-center justify-center py-4 rounded-lg mt-6">
+      <div className="flex flex-col items-center justify-center py-4 pb-8 rounded-lg mt-6">
         <p className="text-white text-xl font-bold">¿No tienes una clave?</p>
         <p className="text-white text-lg mb-4">
           Únete a nuestro Discord y consigue una

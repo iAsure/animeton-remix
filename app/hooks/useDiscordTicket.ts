@@ -11,12 +11,16 @@ const useDiscordTicket = () => {
       setIsLoading(true);
       setError(null);
 
+      const logContent = await window.api.log.getContent();
+
+      const formData = new FormData();
+      formData.append('userId', userId);
+      formData.append('details', details);
+      formData.append('logContent', new Blob([logContent], { type: 'text/plain' }));
+
       const response = await fetch(`${API_BASE_URL}/discord/ticket`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId, details }),
+        body: formData,
       });
 
       const result = await response.json();

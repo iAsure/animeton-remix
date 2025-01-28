@@ -6,7 +6,7 @@ const PopularAnimePage = () => {
   const { searchTerm } = useSearchStore();
 
   return (
-    <div className='py-6'>
+    <div className='py-6 mt-14'>
       <AnimeSection
         fullScreen={true}
         perPage={70}

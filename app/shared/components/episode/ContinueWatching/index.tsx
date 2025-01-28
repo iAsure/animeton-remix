@@ -59,7 +59,7 @@ const ContinueWatching = memo(
           whileInView="visible"
           viewport={{
             once: true,
-            margin: '-10% 0px',
+            margin: '-1% 0px',
             amount: 0.1,
           }}
           variants={cardVariants}

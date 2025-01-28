@@ -15,6 +15,10 @@ export interface Notification {
 interface NotificationContextType {
   showNotification: (notification: Omit<Notification, 'id'>) => void
   removeNotification: (id: string) => void
+  showWinNotification: (options: {
+    title: string
+    message: string
+  }) => void
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
@@ -48,8 +52,22 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     [removeNotification]
   )
 
+  const showWinNotification = useCallback(({
+    title,
+    message
+  }: {
+    title: string
+    message: string
+    type?: NotificationType
+  }) => {
+    window.api.notification.show({
+      title,
+      body: message
+    })
+  }, [])
+
   return (
-    <NotificationContext.Provider value={{ showNotification, removeNotification }}>
+    <NotificationContext.Provider value={{ showNotification, removeNotification, showWinNotification }}>
       {children}
       <div className="fixed top-20 left-4 z-50 flex flex-col gap-3">
         <AnimatePresence initial={false}>
@@ -69,7 +87,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 ${notification.type === 'info' && 'border-blue-500/50 bg-[#0c141f] text-blue-200 shadow-blue-500/30'}
               `}
             >
-              <div 
+              <div
                 className={`
                   absolute bottom-0 left-0 right-0 h-full bg-gradient-to-r opacity-10
                   ${notification.type === 'success' && 'from-green-500 to-green-400'}
@@ -84,12 +102,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               />
               <div className="relative flex items-start gap-3 p-4">
                 <div className="mt-0.5">
-                  <Icon 
+                  <Icon
                     icon={
                       notification.type === 'success' ? 'mdi:check-circle' :
-                      notification.type === 'error' ? 'mdi:alert-circle' :
-                      notification.type === 'warning' ? 'mdi:alert' :
-                      'mdi:information'
+                        notification.type === 'error' ? 'mdi:alert-circle' :
+                          notification.type === 'warning' ? 'mdi:alert' :
+                            'mdi:information'
                     }
                     className={`
                       h-5 w-5

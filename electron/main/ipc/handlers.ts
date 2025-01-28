@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain, UtilityProcess, shell, app } from 'electron';
+import { BrowserWindow, ipcMain, UtilityProcess, shell, app, Notification } from 'electron';
 import { IPC_CHANNELS } from '../../shared/constants/event-channels.js';
 import { setupTorrentHandlers } from '../services/torrent/handlers.js';
 import { SubtitlesService } from '../services/subtitles/service.js';
@@ -8,6 +8,10 @@ import os from 'os';
 import { Worker as NodeWorker } from 'worker_threads';
 import { ConfigService } from '../services/config/service.js';
 import { HistoryService } from '../services/history/service.js';
+import { validateActivationKey, closeActivationWindow, activateKey } from '../core/activation-window.js';
+import { setupWindow } from '../core/window.js';
+import { AppConfig } from 'electron/shared/types/config.js';
+import fs from 'fs/promises';
 
 export async function setupIpcHandlers(
   webTorrentProcess: UtilityProcess,
@@ -230,5 +234,81 @@ export async function setupIpcHandlers(
   mainWindow.on('closed', () => {
     configService.cleanup();
     historyService.cleanup();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ACTIVATION.VALIDATE, async (_, key) => {
+    return await validateActivationKey(key);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ACTIVATION.ACTIVATE, async (event, key) => {
+    try {
+      const activationResult = await activateKey(key);
+      
+      if (activationResult.success) {
+        const configService = new ConfigService(BrowserWindow.fromWebContents(event.sender));
+        await configService.initialize();
+        await configService.update({
+          user: {
+            activationKey: activationResult.key,
+            discordId: activationResult.discordId,
+            createdAt: activationResult.createdAt,
+            activatedAt: activationResult.activatedAt
+          }
+        })
+
+        closeActivationWindow();
+        const mainWindow = await setupWindow();
+        configService.mainWindow = mainWindow;
+        
+        event.sender.send(IPC_CHANNELS.ACTIVATION.SUCCESS);
+        return activationResult;
+      } else {
+        event.sender.send(IPC_CHANNELS.ACTIVATION.ERROR, { 
+          error: activationResult.message || 'Error al activar la clave' 
+        });
+        return activationResult;
+      }
+    } catch (error) {
+      log.error('Activation error:', error);
+      event.sender.send(IPC_CHANNELS.ACTIVATION.ERROR, { 
+        error: 'Error al activar la clave' 
+      });
+      return { success: false, message: error.message };
+    }
+  });
+
+  const notifyActivationStatus = async () => {
+    try {
+      const config = await configService.get<AppConfig>();
+      const isValid = await validateActivationKey(config?.user?.activationKey);
+      mainWindow.webContents.send(IPC_CHANNELS.ACTIVATION.STATUS_CHANGED, { isValid });
+    } catch (error) {
+      log.error('Error checking activation status:', error);
+    }
+  };
+
+  ipcMain.on(IPC_CHANNELS.CONFIG.CHANGED, notifyActivationStatus);
+
+  ipcMain.handle('show-notification', async (_, options) => {
+    log.info('Showing notification:', options);
+    const notification = new Notification({
+      title: options.title,
+      body: options.body,
+      icon: path.join(process.env.VITE_PUBLIC ?? '', 'icon.png'),
+      silent: false
+    });
+
+    notification.show();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.LOG.GET_CONTENT, async () => {
+    try {
+      const logFilePath = log.transports.file.getFile().path;
+      const logContent = await fs.readFile(logFilePath, 'utf-8');
+      return logContent;
+    } catch (error) {
+      log.error('Failed to read log file:', error);
+      throw error;
+    }
   });
 }

@@ -11,6 +11,8 @@ import { videoFormatTime } from '@utils/strings';
 import SubtitleSelector from '@components/video/SubtitleSelector';
 import Timeline from '@components/video/Timeline';
 
+import { IPC_CHANNELS } from '@electron/constants/event-channels';
+
 interface VideoControlsProps {
   videoRef: React.RefObject<HTMLVideoElement>;
   chapters: any[];
@@ -37,6 +39,7 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
 
   const [showSubtitleSelector, setShowSubtitleSelector] = useState(false);
   const [showSkipButton, setShowSkipButton] = useState(true);
+  const [previousVolume, setPreviousVolume] = useState(1);
 
   const currentChapter = chapters.find(
     chapter => currentTime >= chapter.start/1000 && currentTime <= chapter.end/1000
@@ -101,19 +104,6 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
     };
   }, [videoRef, setPlaybackState, setIsPlaying]);
 
-  // Space key handler
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && e.target === document.body) {
-        e.preventDefault();
-        handlePlayPause();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyPress);
-    return () => document.removeEventListener('keydown', handleKeyPress);
-  }, []);
-
   const handlePlayPause = () => {
     const video = videoRef.current;
     if (!video) return;
@@ -128,6 +118,48 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
       video.pause();
     }
   };
+
+  // Keyboard controls
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      if (
+        e.target === document.body && 
+        ['Space', 'ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(e.code)
+      ) {
+        e.preventDefault();
+      }
+
+      if (e.target === document.body) {
+        switch (e.code) {
+          case 'Space':
+            handlePlayPause();
+            break;
+          case 'ArrowRight':
+            video.currentTime += e.altKey ? 5 : 1;
+            break;
+          case 'ArrowLeft':
+            video.currentTime -= e.altKey ? 5 : 1;
+            break;
+          case 'ArrowDown':
+            const newVolDown = Math.max(0, video.volume - 0.05);
+            video.volume = newVolDown;
+            setVolume(newVolDown);
+            break;
+          case 'ArrowUp':
+            const newVolUp = Math.min(1, video.volume + 0.05);
+            video.volume = newVolUp;
+            setVolume(newVolUp);
+            break;
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [videoRef, handlePlayPause, setVolume]);
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const video = videoRef.current;
@@ -148,7 +180,7 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
   };
 
   const handleFullScreen = useCallback(() => {
-    window.electron.ipc.send('window:set-fullscreen', !isFullscreen);
+    window.electron.ipc.send(IPC_CHANNELS.WINDOW.SET_FULLSCREEN, !isFullscreen);
   }, [isFullscreen]);
 
   // Listen for fullscreen changes from Electron
@@ -157,11 +189,11 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
       setFullscreen(isFullscreen);
     };
 
-    window.electron.ipc.on('window:fullscreen-change', handleFullscreenChange);
+    window.electron.ipc.on(IPC_CHANNELS.WINDOW.FULLSCREEN_CHANGE, handleFullscreenChange);
 
     return () => {
       window.electron.ipc.removeListener(
-        'window:fullscreen-change',
+        IPC_CHANNELS.WINDOW.FULLSCREEN_CHANGE,
         handleFullscreenChange
       );
     };
@@ -219,7 +251,7 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
   const SKIPPABLE_CHAPTERS = [
     ['Opening', /^op$|opening$|^ncop/i],
     ['Ending', /^ed$|ending$|^nced/i],
-    ['Recap', /recap/i]
+    ['Recap', /^(?!.*end).*recap.*/i]
   ] as const;
 
   const getSkippableChapterType = useCallback((chapter?: any) => {
@@ -261,6 +293,21 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
       case 'Ending': return 'Saltar ending';
       case 'Recap': return 'Saltar recap';
       default: return 'Saltar';
+    }
+  };
+
+  const handleVolumeClick = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (volume > 0) {
+      setPreviousVolume(volume);
+      video.volume = 0;
+      setVolume(0);
+    } else {
+      const newVolume = previousVolume === 0 ? 1 : previousVolume;
+      video.volume = newVolume;
+      setVolume(newVolume);
     }
   };
 
@@ -334,12 +381,14 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
 
             {/* Volume control */}
             <div className="flex items-center space-x-2">
-              <Icon
-                icon="fluent:speaker-2-24-filled"
-                className="text-white/90 pointer-events-none"
-                width="24"
-                height="24"
-              />
+              <button onClick={handleVolumeClick}>
+                <Icon
+                  icon={volume === 0 ? "fluent:speaker-mute-24-filled" : "fluent:speaker-2-24-filled"}
+                  className="text-white/90 pointer-events-none hover:text-white transition-all"
+                  width="24"
+                  height="24"
+                />
+              </button>
               <input
                 type="range"
                 min="0"

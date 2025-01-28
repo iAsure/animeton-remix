@@ -3,7 +3,7 @@
   "include": [
     "app/**/*",
     "vite.config.ts",
-    "electron/shared/types/preload.d.ts",
+    "electron/shared/**/*",
     "public/vendor/jassub/jassub.es.js"
   ],
   "compilerOptions": {
@@ -31,7 +31,8 @@
       "@context/*": ["app/context/*"],
       "@stores/*": ["app/stores/*"],
       "@canvas/*": ["app/shared/canvas/*"],
-      "@lib/*": ["app/shared/lib/*"]
+      "@lib/*": ["app/shared/lib/*"],
+      "@electron/*": ["electron/shared/*"]
     }
   }
 }

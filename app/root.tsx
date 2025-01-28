@@ -12,12 +12,13 @@ import AppProviders from '@components/core/Providers';
 import Header from '@components/core/Header';
 import Fonts from '@components/core/Fonts';
 import HelpButton from '@components/core/HelpButton';
+import InternetVerification from '@components/core/InternetVerification';
 
 import './globals.css';
 
 export default function App() {
   const location = useLocation();
-  const isPlayerRoute = location.pathname === '/player';
+  const isActivationRoute = location.pathname === '/activation';
 
   log.info('Renderer initialized');
   return (
@@ -32,13 +33,18 @@ export default function App() {
       </head>
       <body className="text-foreground bg-background font-noto">
         <AppProviders>
-          <Header />
-          <HelpButton />
-          <div className={`h-full w-full ${!isPlayerRoute ? 'mt-14' : ''}`}>
-            <Outlet />
-          </div>
-          <ScrollRestoration />
-          <Scripts />
+          <InternetVerification>
+            {!isActivationRoute && (
+              <>
+                <Header /> <HelpButton />
+              </>
+            )}
+            <div className="h-full w-full">
+              <Outlet />
+            </div>
+            <ScrollRestoration />
+            <Scripts />
+          </InternetVerification>
         </AppProviders>
       </body>
     </html>

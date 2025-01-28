@@ -11,7 +11,7 @@ export class ConfigService {
   private configPath: string;
   private config: AppConfig;
   private watcher: FSWatcher | null = null;
-  private mainWindow: BrowserWindow | null = null;
+  public mainWindow: BrowserWindow | null = null;
 
   constructor(mainWindow: BrowserWindow) {
     this.configPath = path.join(app.getPath('userData'), 'config.json');

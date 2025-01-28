@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { API_BASE_URL } from '@constants/config';
+import { AnimeEpisode } from '@shared/types/anime';
 
 const RETRY_INTERVAL = 2500;
 const UPDATE_INTERVAL = 15000;
@@ -20,7 +21,7 @@ interface RSSDataProps {
 }
 
 interface RSSDataReturn {
-  rssAnimes: any[] | null;
+  rssAnimes: AnimeEpisode[] | null;
   isLoading: boolean;
   error: string | null;
 }

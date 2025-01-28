@@ -181,8 +181,8 @@ const usePlayerStore = create<PlayerStore>((set, get) => ({
     duration: 0,
     
     // Volume state
-    volume: 1,
-    isMuted: false,
+    // volume: 1,
+    // isMuted: false,
     
     // UI state
     isFullscreen: false,
