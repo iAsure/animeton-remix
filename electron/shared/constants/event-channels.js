@@ -47,6 +47,7 @@ export const IPC_CHANNELS = {
     NOT_AVAILABLE: 'update-not-available',
     CHECKING_FOR_UPDATE: 'update-checking-for-update',
     ERROR: 'update-error',
+    QUIT_AND_INSTALL: 'updater:quit-and-install',
   },
   HISTORY: {
     GET_PROGRESS: 'history:get-progress',

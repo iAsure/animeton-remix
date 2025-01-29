@@ -81,7 +81,7 @@ const UpdateDownloadedModal = ({ onClose }) => {
                 height="20"
               />
             }
-            onClick={() => window.electron.ipc.send('quit-and-install')}
+            onClick={() => window.api.updater.quitAndInstall()}
           >
             Reiniciar ahora
           </Button>

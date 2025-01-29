@@ -3,7 +3,6 @@ import { Divider } from '@nextui-org/react';
 import { useNavigate } from '@remix-run/react';
 
 import useHeaderNavigation from '@hooks/useHeaderNavigation';
-import useWindowControls from '@hooks/useWindowControls';
 import useUpdateDownload from '@hooks/useUpdateDownload';
 import useAnimeSearch from '@hooks/useAnimeSearch';
 

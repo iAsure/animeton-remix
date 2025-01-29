@@ -55,7 +55,6 @@ export async function initializeApp() {
     
     await cleanupTorrentFiles();
     await setupProtocol(build, viteDevServer);
-    initUpdater();
 
     webTorrentProcess = utilityProcess.fork(path.join(__dirname, '../services/torrent/client.js'));
     subtitlesWorker = new Worker(path.join(__dirname, '../services/subtitles/worker.js'));
