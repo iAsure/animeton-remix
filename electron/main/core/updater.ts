@@ -13,6 +13,8 @@ export const init = (mainWindow: Electron.BrowserWindow) => {
   log.info('Initializing updater');
   const autoUpdater = getAutoUpdater();
 
+  autoUpdater.logger = log;
+
   autoUpdater.on('error', (err) => {
     log.error(`Update error: ${err.message}`);
     mainWindow.webContents.send(IPC_CHANNELS.UPDATER.ERROR, err);
