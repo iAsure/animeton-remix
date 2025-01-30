@@ -257,11 +257,9 @@ export async function setupIpcHandlers(
           }
         })
 
-        closeActivationWindow();
-        const mainWindow = await setupWindow();
-        configService.mainWindow = mainWindow;
+        app.relaunch();
+        app.exit();
         
-        event.sender.send(IPC_CHANNELS.ACTIVATION.SUCCESS);
         return activationResult;
       } else {
         event.sender.send(IPC_CHANNELS.ACTIVATION.ERROR, { 
