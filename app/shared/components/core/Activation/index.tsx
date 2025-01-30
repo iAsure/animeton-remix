@@ -9,11 +9,7 @@ import WindowControls from '@components/core/Header/WindowControls';
 
 import log from 'electron-log';
 
-interface ActivationProps {
-  isValid: boolean;
-}
-
-const Activation = ({ isValid }: ActivationProps) => {
+const Activation = () => {
   const { showWinNotification } = useNotification();
 
   const [activationKey, setActivationKey] = useState('');
@@ -87,12 +83,10 @@ const Activation = ({ isValid }: ActivationProps) => {
           className="w-32 h-32 mb-6"
         />
         <h1 className="text-3xl font-bold mb-4 text-white">
-          {isValid ? '¡Bienvenido a Animeton!' : 'Tu clave ya no es válida :('}
+          ¡Bienvenido a Animeton!
         </h1>
         <p className="text-lg text-gray-300 mb-6 text-center">
-          {isValid
-            ? 'Tu portal al mundo del anime.'
-            : 'Activa de nuevo tu cuenta ingresando otra clave.'}
+          Tu portal al mundo del anime.
         </p>
         <Divider />
         <div className="w-full max-w-md mt-6">
