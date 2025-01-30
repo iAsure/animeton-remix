@@ -71,12 +71,12 @@ const Activation = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center bg-zinc-900">
+    <div className="flex flex-col items-center justify-center bg-zinc-950 w-full">
       <div className="flex flex-row items-center justify-end w-full bg-zinc-950 p-2 webkit-app-region-drag">
         <WindowControls hideMaximize />
       </div>
 
-      <div className="flex flex-col items-center justify-center bg-zinc-950 p-8 rounded-lg">
+      <div className="flex flex-col items-center justify-center bg-zinc-950 p-8 rounded-lg w-full">
         <img
           src="assets/animeton.png"
           alt="Animeton Logo"
@@ -108,7 +108,7 @@ const Activation = () => {
           {error && <p className="text-red-500 mt-2 text-center">{error}</p>}
         </div>
       </div>
-      <div className="flex flex-col items-center justify-center py-4 pb-8 rounded-lg mt-6">
+      <div className="flex flex-col items-center justify-center py-4 pb-8 rounded-lg mt-6 w-full">
         <p className="text-white text-xl font-bold">¿No tienes una clave?</p>
         <p className="text-white text-lg mb-4">
           Únete a nuestro Discord y consigue una
