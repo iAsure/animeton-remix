@@ -10,7 +10,6 @@ import { AppConfig } from '../../shared/types/config.js';
 import { setupIpcHandlers } from '../ipc/handlers.js';
 import { setupProtocol } from './protocol.js';
 import { setupShortcuts, unregisterShortcuts } from './shortcuts.js';
-import { init as initUpdater } from './updater.js';
 import { setupWindow } from './window.js';
 import { cleanupTorrentFiles } from '../services/torrent/autoclean.js';
 import { DiscordRPC } from './discord.js';
@@ -55,7 +54,6 @@ export async function initializeApp() {
     
     await cleanupTorrentFiles();
     await setupProtocol(build, viteDevServer);
-    initUpdater();
 
     webTorrentProcess = utilityProcess.fork(path.join(__dirname, '../services/torrent/client.js'));
     subtitlesWorker = new Worker(path.join(__dirname, '../services/subtitles/worker.js'));

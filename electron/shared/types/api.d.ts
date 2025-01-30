@@ -96,6 +96,7 @@ export interface UpdaterApi {
   onAvailable: EventHandler<void>;
   onNotAvailable: EventHandler<void>;
   onDownloaded: EventHandler<any>;
+  quitAndInstall: () => void;
 }
 
 export interface DiscordActivity {

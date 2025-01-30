@@ -92,6 +92,7 @@ const createEventHandler = (channel) => ({
       onAvailable: createEventHandler(IPC_CHANNELS.UPDATER.AVAILABLE),
       onNotAvailable: createEventHandler(IPC_CHANNELS.UPDATER.NOT_AVAILABLE),
       onDownloaded: createEventHandler(IPC_CHANNELS.UPDATER.DOWNLOADED),
+      quitAndInstall: () => ipcRenderer.invoke(IPC_CHANNELS.UPDATER.QUIT_AND_INSTALL),
     },
 
     discord: {

@@ -64,9 +64,9 @@ export function createActivationWindow(
     minWidth: 460,
     width: 460,
     maxWidth: 460,
-    minHeight: 530,
-    height: 530,
-    maxHeight: 530,
+    minHeight: 510,
+    height: 510,
+    maxHeight: 510,
     frame: false,
     resizable: false,
     webPreferences: {

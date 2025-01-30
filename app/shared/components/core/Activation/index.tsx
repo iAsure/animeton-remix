@@ -9,11 +9,7 @@ import WindowControls from '@components/core/Header/WindowControls';
 
 import log from 'electron-log';
 
-interface ActivationProps {
-  isValid: boolean;
-}
-
-const Activation = ({ isValid }: ActivationProps) => {
+const Activation = () => {
   const { showWinNotification } = useNotification();
 
   const [activationKey, setActivationKey] = useState('');
@@ -75,24 +71,22 @@ const Activation = ({ isValid }: ActivationProps) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center bg-zinc-900">
+    <div className="flex flex-col items-center justify-center bg-zinc-950 w-full">
       <div className="flex flex-row items-center justify-end w-full bg-zinc-950 p-2 webkit-app-region-drag">
         <WindowControls hideMaximize />
       </div>
 
-      <div className="flex flex-col items-center justify-center bg-zinc-950 p-8 rounded-lg">
+      <div className="flex flex-col items-center justify-center bg-zinc-950 p-8 rounded-lg w-full">
         <img
           src="assets/animeton.png"
           alt="Animeton Logo"
           className="w-32 h-32 mb-6"
         />
         <h1 className="text-3xl font-bold mb-4 text-white">
-          {isValid ? '¡Bienvenido a Animeton!' : 'Tu clave ya no es válida :('}
+          ¡Bienvenido a Animeton!
         </h1>
         <p className="text-lg text-gray-300 mb-6 text-center">
-          {isValid
-            ? 'Tu portal al mundo del anime.'
-            : 'Activa de nuevo tu cuenta ingresando otra clave.'}
+          Tu portal al mundo del anime.
         </p>
         <Divider />
         <div className="w-full max-w-md mt-6">
@@ -114,7 +108,7 @@ const Activation = ({ isValid }: ActivationProps) => {
           {error && <p className="text-red-500 mt-2 text-center">{error}</p>}
         </div>
       </div>
-      <div className="flex flex-col items-center justify-center py-4 pb-8 rounded-lg mt-6">
+      <div className="flex flex-col items-center justify-center py-4 pb-8 rounded-lg mt-6 w-full">
         <p className="text-white text-xl font-bold">¿No tienes una clave?</p>
         <p className="text-white text-lg mb-4">
           Únete a nuestro Discord y consigue una

@@ -12,6 +12,7 @@ import { validateActivationKey, closeActivationWindow, activateKey } from '../co
 import { setupWindow } from '../core/window.js';
 import { AppConfig } from 'electron/shared/types/config.js';
 import fs from 'fs/promises';
+import { init as initUpdater } from '../core/updater.js';
 
 export async function setupIpcHandlers(
   webTorrentProcess: UtilityProcess,
@@ -256,11 +257,9 @@ export async function setupIpcHandlers(
           }
         })
 
-        closeActivationWindow();
-        const mainWindow = await setupWindow();
-        configService.mainWindow = mainWindow;
+        app.relaunch();
+        app.exit();
         
-        event.sender.send(IPC_CHANNELS.ACTIVATION.SUCCESS);
         return activationResult;
       } else {
         event.sender.send(IPC_CHANNELS.ACTIVATION.ERROR, { 
@@ -311,4 +310,6 @@ export async function setupIpcHandlers(
       throw error;
     }
   });
+
+  initUpdater(mainWindow);
 }
