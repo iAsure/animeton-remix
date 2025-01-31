@@ -163,7 +163,7 @@ const Header = () => {
                 className="text-white font-bold font-exo text-2xl leading-none"
                 style={{ cursor: canGoHome ? 'pointer' : 'default' }}
               >
-                ANITORRENT
+                AniTorrent
               </p>
               <div className="flex items-center gap-1 text-xs">
                 <span
