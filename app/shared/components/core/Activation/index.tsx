@@ -21,7 +21,7 @@ const Activation = () => {
       log.info('Activation successful');
       showWinNotification({
         title: 'Activación exitosa',
-        message: '¡Bienvenido a Animeton!',
+        message: '¡Bienvenido a AniTorrent!',
       });
     };
 
@@ -83,7 +83,7 @@ const Activation = () => {
           className="w-32 h-32 mb-6"
         />
         <h1 className="text-3xl font-bold mb-4 text-white">
-          ¡Bienvenido a Animeton!
+          ¡Bienvenido a AniTorrent!
         </h1>
         <p className="text-lg text-gray-300 mb-6 text-center">
           Tu portal al mundo del anime.
@@ -128,7 +128,7 @@ const Activation = () => {
             height="26"
             style={{ color: 'white' }}
           />
-          <p className="text-white text-lg font-bold">Animeton</p>
+          <p className="text-white text-lg font-bold">AniTorrent</p>
         </button>
       </div>
     </div>

@@ -153,7 +153,7 @@ const Header = () => {
 
             <Divider orientation="vertical" className="bg-zinc-800 h-6 mr-1" />
 
-            {/* Animeton Logo */}
+            {/* AniTorrent Logo */}
             <div
               className="flex flex-col items-center webkit-app-region-no-drag"
               style={{ zIndex: 9999 }}
@@ -163,7 +163,7 @@ const Header = () => {
                 className="text-white font-bold font-exo text-2xl leading-none"
                 style={{ cursor: canGoHome ? 'pointer' : 'default' }}
               >
-                ANIMETON
+                ANITORRENT
               </p>
               <div className="flex items-center gap-1 text-xs">
                 <span

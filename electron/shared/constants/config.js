@@ -1,1 +1,1 @@
-export const APP_ID = 'com.tiahui.animeton';
+export const APP_ID = 'com.tiahui.anitorrent';

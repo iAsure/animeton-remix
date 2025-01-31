@@ -1,4 +1,4 @@
-# Animeton
+# AniTorrent
 
 <img src="./public/favicon.png" width="200" />
 

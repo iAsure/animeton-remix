@@ -25,7 +25,7 @@ const UpdateDownloadedModal = ({ onClose }) => {
           />
           {isLoading
             ? 'Preparando actualización...'
-            : `Animeton v${version?.version}`}
+            : `AniTorrent v${version?.version}`}
         </ModalHeader>
         <Divider className="bg-zinc-700" />
         <ModalBody>

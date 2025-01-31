@@ -6,7 +6,7 @@ const sessionTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
 log.initialize();
 log.transports.file.resolvePathFn = () => {
   const userDataPath = app.getPath('userData');
-  return `${userDataPath}/logs/animeton-${sessionTimestamp}.log`;
+  return `${userDataPath}/logs/anitorrent-${sessionTimestamp}.log`;
 };
 
 // Register privileged schemes before app is ready

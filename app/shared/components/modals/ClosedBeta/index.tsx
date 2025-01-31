@@ -24,7 +24,7 @@ const ClosedBetaModal = ({ onClose }: ClosedBetaModalProps) => {
                         width="32"
                         height="32"
                         className="text-white mt-1" />
-                    {isLoading ? 'Cargando...' : `Animeton v${version?.version || appVersion}`}
+                    {isLoading ? 'Cargando...' : `AniTorrent v${version?.version || appVersion}`}
                 </ModalHeader>
                 <Divider className="bg-zinc-700" />
                 <ModalBody>
@@ -59,7 +59,7 @@ const ClosedBetaModal = ({ onClose }: ClosedBetaModalProps) => {
                         startContent={<Icon icon="ic:baseline-discord" width="20" height="20" />}
                         onClick={() => window.api.shell.openExternal(`https://discord.gg/${DISCORD_INVITE_CODE}`)}
                     >
-                        Animeton
+                        AniTorrent
                     </Button>
                     <Button
                         className="bg-white text-black font-medium hover:opacity-90"

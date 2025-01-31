@@ -45,7 +45,7 @@ export class DiscordRPC {
         buttons: [
           {
             label: 'Descarga la App',
-            url: 'https://www.animeton.com/'
+            url: 'https://www.anitorrent.com/'
           }
         ],
         assets: {

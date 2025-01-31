@@ -1,5 +1,5 @@
 {
-  "name": "animeton",
+  "name": "anitorrent",
   "version": "0.1.0",
   "type": "module",
   "description": "Anime torrent player",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Tiahui-Tech/webtorrent-animeton.git"
+    "url": "https://github.com/Tiahui-Tech/anitorrent.git"
   },
   "sideEffects": false,
   "main": "build/electron/main/index.js",
@@ -82,8 +82,8 @@
     "node": ">=18.0.0"
   },
   "build": {
-    "appId": "com.tiahui.animeton",
-    "productName": "Animeton",
+    "appId": "com.tiahui.anitorrent",
+    "productName": "AniTorrent",
     "icon": "public/favicon.ico",
     "copyright": "Copyright © 2024 Tiahui Tech",
     "files": [
@@ -100,7 +100,7 @@
     "publish": {
       "provider": "github",
       "owner": "Tiahui-Tech",
-      "repo": "animeton-remix"
+      "repo": "anitorrent"
     },
     "win": {
       "target": [
