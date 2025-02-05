@@ -11,6 +11,14 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const { config, setConfig } = useConfig();
   const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
+  const [isOnDev, setIsOnDev] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsOnDev(window?.electron?.env?.onDEV);
+    }
+  }, []);
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -123,16 +131,19 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
           </button>
         </div>
 
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-zinc-200 text-sm">Consola de desarrollo</span>
-          <button
-            onClick={handleToggleDevTools}
-            className="text-sm px-3 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-md transition-colors flex items-center gap-2"
-          >
-            <Icon icon="gravity-ui:code" className="text-zinc-400" />
-            <span>{isDevToolsOpen ? 'Cerrar' : 'Abrir'}</span>
-          </button>
-        </div>
+        {isOnDev && (
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-zinc-200 text-sm">Consola de desarrollo</span>
+            <button
+
+              onClick={handleToggleDevTools}
+              className="text-sm px-3 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-md transition-colors flex items-center gap-2"
+            >
+              <Icon icon="gravity-ui:code" className="text-zinc-400" />
+              <span>{isDevToolsOpen ? 'Cerrar' : 'Abrir'}</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="my-2 border-t border-zinc-800" />

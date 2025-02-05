@@ -31,12 +31,17 @@ export async function setupWindow(partition = 'persist:partition'): Promise<Brow
       preload: path.join(__dirname, "../../preload/index.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
+      sandbox: false,
+      devTools: process.env.DEV === '1'
     },
   });
 
   if (process.env.DEV) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
+  } else {
+    mainWindow.webContents.on('devtools-opened', () => {
+      mainWindow.webContents.closeDevTools();
+    });
   }
 
   const port = process.env.DEV ? ':5173' : '';

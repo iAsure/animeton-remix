@@ -10,9 +10,9 @@ interface IpcApi {
 }
 
 interface EnviromentApi {
-  AMPLITUDE_API_KEY: string;
-  ANIMETON_API_KEY: string;
+  onDEV: boolean;
 }
+
 
 interface CustomElectronAPI {
   ipc: IpcApi;

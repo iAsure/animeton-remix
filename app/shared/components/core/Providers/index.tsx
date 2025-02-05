@@ -12,11 +12,7 @@ import { initAmplitude } from '@lib/amplitude';
 
 const AppProviders = ({ children }: PropsWithChildren) => {
   useEffect(() => {
-    const apiKey = window.electron?.env?.AMPLITUDE_API_KEY;
-
-    if (apiKey) {
-      initAmplitude(apiKey);
-    }
+    initAmplitude();
   }, []);
 
   return (

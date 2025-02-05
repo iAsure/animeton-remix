@@ -1,7 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
-const dotenv = require('dotenv');
-
-dotenv.config();
+require('dotenv').config();
 
 ipcRenderer.setMaxListeners(0);
 
@@ -17,9 +15,9 @@ const createEventHandler = (channel) => ({
 
   const electron = {
     env: {
-      AMPLITUDE_API_KEY: process.env.AMPLITUDE_API_KEY,
-      ANIMETON_API_KEY: process.env.ANIMETON_API_KEY,
+      onDEV: process.env.DEV,
     },
+
     ipc: {
       send: (channel, data) => ipcRenderer.send(channel, data),
       invoke: (channel, data) => ipcRenderer.invoke(channel, data),

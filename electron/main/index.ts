@@ -4,10 +4,20 @@ import { initializeApp } from './core/app.js';
 
 const sessionTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
 log.initialize();
+
 log.transports.file.resolvePathFn = () => {
   const userDataPath = app.getPath('userData');
   return `${userDataPath}/logs/anitorrent-${sessionTimestamp}.log`;
 };
+
+log.transports.file.getFile().clear();
+const errorLog = log.create({ logId: 'error-only' });
+
+errorLog.transports.file.resolvePathFn = () => {
+  const userDataPath = app.getPath('userData');
+  return `${userDataPath}/logs/anitorrent-${sessionTimestamp}-errors.log`;
+};
+errorLog.transports.file.level = 'error';
 
 // Register privileged schemes before app is ready
 protocol.registerSchemesAsPrivileged([

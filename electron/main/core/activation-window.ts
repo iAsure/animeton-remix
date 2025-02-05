@@ -75,10 +75,17 @@ export function createActivationWindow(
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      devTools: process.env.DEV === '1',
     },
   });
 
   const port = process.env.DEV ? ':5173' : '';
+
+  if (!process.env.DEV) {
+    activationWindow.webContents.on('devtools-opened', () => {
+      activationWindow.webContents.closeDevTools();
+    });
+  }
 
   return activationWindow
     .loadURL(`https://remix${port}/activation`)

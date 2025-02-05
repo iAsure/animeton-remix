@@ -14,6 +14,12 @@ export function setupShortcuts(mainWindow: BrowserWindow) {
       }
     });
 
+    if (!process.env.DEV) {
+      globalShortcut.register('Control+Shift+I', () => {
+        return false;
+      });
+    }
+
     log.info('Global shortcuts registered successfully');
   } catch (error) {
     log.error('Failed to register shortcuts:', error);

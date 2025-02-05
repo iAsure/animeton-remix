@@ -51,7 +51,7 @@ async function checkServerHealth() {
           port: port,
           path: '/webtorrent',
           method: 'GET',
-          timeout: 1000,
+          timeout: 5000,
         },
         (res) => {
           resolve(true);
@@ -59,10 +59,13 @@ async function checkServerHealth() {
       );
 
       req.on('error', () => {
+        log.error('Server health check error');
         resolve(false);
       });
 
+
       req.on('timeout', () => {
+        log.error('Server health check timeout');
         req.destroy();
         resolve(false);
       });
