@@ -10,7 +10,7 @@ interface IpcApi {
 }
 
 interface EnviromentApi {
-  POSTHOG_API_KEY: string;
+  AMPLITUDE_API_KEY: string;
   ANIMETON_API_KEY: string;
 }
 

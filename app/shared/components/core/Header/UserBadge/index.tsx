@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 
 import { Icon } from '@iconify/react';
 import { Button, Divider, Skeleton } from '@nextui-org/react';
-import { usePostHog } from '@lib/posthog';
+import { useAmplitude } from '@lib/amplitude';
 
 import { useConfig } from '@context/ConfigContext';
+
 import useDiscordUser from '@hooks/useDiscordUser';
 
 import NewBadge from '@components/decoration/NewBadge';
@@ -16,20 +17,20 @@ interface UserBadgeProps {
 
 const UserBadge = ({ discordId }: UserBadgeProps) => {
   const { config } = useConfig();
-  const posthog = usePostHog();
+  const amplitude = useAmplitude();
   const { data: userData, isLoading } = useDiscordUser(discordId);
-  
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const identifySentRef = useRef(false);
-  
+
   const appKey = config?.user?.activationKey;
   const discordUser = userData?.discord;
 
   useEffect(() => {
     if (discordUser && !identifySentRef.current) {
-      posthog?.identify(`${discordUser.username}-${discordUser.id}`, {
-        appKey,
-      });
+      amplitude?.setUserId(`${discordUser.username}-${discordUser.id}`);
+      amplitude?.setSessionId(Date.now());
+
       identifySentRef.current = true;
     }
   }, [userData, appKey]);

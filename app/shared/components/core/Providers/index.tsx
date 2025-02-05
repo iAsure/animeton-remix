@@ -8,13 +8,16 @@ import { ConfigProvider } from '@context/ConfigContext';
 import { TorrentPlayerProvider } from '@context/TorrentPlayerContext';
 import { NotificationProvider } from '@context/NotificationContext';
 
-import { initPostHog } from '@lib/posthog';
+import { initAmplitude } from '@lib/amplitude';
+import log from 'electron-log';
 
 const AppProviders = ({ children }: PropsWithChildren) => {
   useEffect(() => {
-    const apiKey = window.electron?.env?.POSTHOG_API_KEY;
+    const apiKey = '4746569d48277390af01771a9b011c53';
+
+    log.info('initAmplitude from providers', apiKey);
     if (apiKey) {
-      initPostHog(apiKey);
+      initAmplitude(apiKey);
     }
   }, []);
 

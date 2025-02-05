@@ -14,7 +14,7 @@ const createEventHandler = (channel) => ({
 
   const electron = {
     env: {
-      POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
+      AMPLITUDE_API_KEY: process.env.AMPLITUDE_API_KEY,
       ANIMETON_API_KEY: process.env.ANIMETON_API_KEY,
     },
     ipc: {
