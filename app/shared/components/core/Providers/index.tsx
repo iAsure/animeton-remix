@@ -13,7 +13,7 @@ import log from 'electron-log';
 
 const AppProviders = ({ children }: PropsWithChildren) => {
   useEffect(() => {
-    const apiKey = '4746569d48277390af01771a9b011c53';
+    const apiKey = window.electron?.env?.AMPLITUDE_API_KEY;
 
     log.info('initAmplitude from providers', apiKey);
     if (apiKey) {
