@@ -1,4 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 ipcRenderer.setMaxListeners(0);
 

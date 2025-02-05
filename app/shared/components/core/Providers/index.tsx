@@ -9,13 +9,11 @@ import { TorrentPlayerProvider } from '@context/TorrentPlayerContext';
 import { NotificationProvider } from '@context/NotificationContext';
 
 import { initAmplitude } from '@lib/amplitude';
-import log from 'electron-log';
 
 const AppProviders = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     const apiKey = window.electron?.env?.AMPLITUDE_API_KEY;
 
-    log.info('initAmplitude from providers', apiKey);
     if (apiKey) {
       initAmplitude(apiKey);
     }
