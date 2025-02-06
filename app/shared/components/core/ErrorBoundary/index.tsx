@@ -1,7 +1,6 @@
-import { Component, ReactNode, useEffect, useState } from 'react';
+import { Component, ReactNode, useEffect } from 'react';
 import ErrorDisplay from '../ErrorDisplay';
 import { useAmplitude } from '@shared/lib/amplitude';
-import * as amplitude from '@amplitude/analytics-browser';
 import { Button } from '@nextui-org/react';
 
 interface Props {
@@ -26,12 +25,6 @@ class ErrorBoundaryClass extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ errorInfo });
-    amplitude.track('React Error', {
-      message: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack,
-      type: 'react.error',
-    });
   }
 
   render() {
