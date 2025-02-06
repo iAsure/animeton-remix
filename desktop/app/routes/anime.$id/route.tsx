@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
+import { useAmplitude } from '@lib/amplitude';
 
 import useExtractColor from '@hooks/useExtractColor';
 import useModernBackground from '@hooks/useModernBackground';
@@ -29,6 +30,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 const AnimeDetails: React.FC<AnimeDetailsProps> = ({ state }) => {
   const idAnilist = useLoaderData<typeof loader>();
+  const amplitude = useAmplitude();
 
   const [isLoading, setIsLoading] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
@@ -73,9 +75,19 @@ const AnimeDetails: React.FC<AnimeDetailsProps> = ({ state }) => {
     }
   }, [anime, animeColors, bannerColors]);
 
+  useEffect(() => {
+    if (anime) {
+      amplitude.track('Anime Viewed', {
+        id: idAnilist,
+        title: anime.title.romaji || anime.title.english || anime.title.native,
+      })
+    }
+  }, [anime]);
+
   if (isLoading) {
     return <Spinner />;
   }
+
 
   return (
     <div className="flex flex-row justify-between items-start overflow-hidden mt-14">

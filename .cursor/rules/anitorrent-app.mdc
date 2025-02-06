@@ -1,5 +1,7 @@
-WORKSPACE - Rules for AniTorrent Desktop App
-
+---
+description: AniTorrent App Electron and Remix general rules
+globs: *.tsx, *.ts, !build/**/*
+---
 ABOUT THIS PROJECT:
 This project is a desktop application built using Electron and integrated with Remix. The integration involves a protocol that intercepts all requests made by Remix and reroutes them through Electron, ensuring comprehensive functionality, including page requests.
 
@@ -13,14 +15,13 @@ WHEN GENERATING CODE:
 FRONT-END & UI CONSIDERATIONS:
 - Follow design principles from Refactoring UI, Practical UI, and Laws of UX for consistent and intuitive interfaces
 - Implement responsive layouts using Tailwind CSS's dark mode classes
-- Utilize NextUI components with modern futuristic color palette (cyan, violet, indigo) for a sleek dark theme
+- Utilize NextUI components with modern futuristic color palette for a sleek dark theme
 - Maintain dark mode consistency across all interfaces with rich blacks and subtle gradients
 - Ensure visual hierarchy and contrast ratios meet accessibility standards in dark mode
 - Optimize component rendering and implement progressive loading for better performance
 - Follow common UI patterns and interactions documented in Laws of UX for predictable user experiences
 - Use NextUI's semantic colors and gradients for a cohesive futuristic appearance
 - Create custom hooks when logic complexity increases or when similar functionality is needed across multiple components to improve code reusability and maintainability
-- Use arrow functions for all components and export them as default
 
 STATE MANAGEMENT:
 - Use React's built-in state management (useState, useReducer) for local state.
@@ -31,6 +32,7 @@ LOGGING:
 - Use electron-log for all logging needs.
 - Implement comprehensive error tracking and logging strategies.
 - Use Amplitude to track user interactions and events within the app. Example:
+
 ```js
 import { useAmplitude } from '@lib/amplitude';
 const amplitude = useAmplitude();
