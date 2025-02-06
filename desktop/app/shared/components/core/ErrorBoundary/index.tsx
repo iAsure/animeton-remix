@@ -66,7 +66,7 @@ function ErrorBoundaryFallback({
   }, [error, errorInfo, amplitude]);
 
   return (
-    <div className="h-full flex flex-col items-center justify-center bg-zinc-950 p-8">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 p-8">
       <ErrorDisplay
         icon="icon-park-outline:error-computer"
         title="Ha ocurrido un error"

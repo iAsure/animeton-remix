@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAmplitude } from '@lib/amplitude';
 
 import useAnimesData from '@hooks/useAnimesData';
 import useUserActivity from '@hooks/useUserActivity';
@@ -12,6 +13,7 @@ import DiscordStatus from '@components/core/DiscordStatus';
 import ContinueWatching from '@components/episode/ContinueWatching';
 
 export default function Index() {
+  const amplitude = useAmplitude();
   const { animes } = useAnimesData({ displayCount: 10 });
   const { getInProgressEpisodes } = useUserActivity();
 
@@ -28,6 +30,10 @@ export default function Index() {
     const inProgressEpisodes = getInProgressEpisodes();
     setProgressEpisodesExists(inProgressEpisodes.length > 0);
   }, [getInProgressEpisodes]);
+
+  useEffect(() => {
+    amplitude.track('Home Page Viewed');
+  }, []);
 
   if (!animes) return <Spinner />;
 

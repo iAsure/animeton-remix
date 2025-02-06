@@ -4,16 +4,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Icon } from '@iconify/react';
 import { translateGenres } from '@utils/strings';
 import { Anime } from '@shared/types/anime';
-
+import { useAmplitude } from '@lib/amplitude';
 interface AnimeCarouselProps {
   animes: Anime[];
 }
 
 const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ animes }) => {
+  const amplitude = useAmplitude();
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isUserInteraction, setIsUserInteraction] = useState(false);
+
 
   useEffect(() => {
     const interval = setInterval(
@@ -57,8 +59,13 @@ const AnimeCarousel: React.FC<AnimeCarouselProps> = ({ animes }) => {
   };
 
   const handleAnimeClick = (anime) => {
+    amplitude.track('Anime Carousel Clicked', {
+      animeId: anime?.idAnilist,
+      animeTitle: anime?.title?.romaji || anime?.title?.english || anime?.title?.native,
+    });
     navigate(`/anime/${anime?.idAnilist}`, { viewTransition: true });
   };
+
 
   return (
     <div className="relative w-full h-[480px] overflow-hidden">
