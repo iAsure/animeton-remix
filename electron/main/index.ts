@@ -10,15 +10,6 @@ log.transports.file.resolvePathFn = () => {
   return `${userDataPath}/logs/anitorrent-${sessionTimestamp}.log`;
 };
 
-log.transports.file.getFile().clear();
-const errorLog = log.create({ logId: 'error-only' });
-
-errorLog.transports.file.resolvePathFn = () => {
-  const userDataPath = app.getPath('userData');
-  return `${userDataPath}/logs/anitorrent-${sessionTimestamp}-errors.log`;
-};
-errorLog.transports.file.level = 'error';
-
 // Register privileged schemes before app is ready
 protocol.registerSchemesAsPrivileged([
   {
@@ -32,6 +23,6 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 app.whenReady().then(initializeApp).catch((error) => {
-  console.error('Failed to initialize app:', error);
+  log.error('Failed to initialize app:', error);
   app.quit();
 });

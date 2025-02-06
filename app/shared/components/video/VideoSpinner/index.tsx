@@ -1,5 +1,4 @@
 import { Icon } from '@iconify/react';
-import { prettyBytes } from '@utils/strings';
 
 interface VideoSpinnerProps {
   progress: number;
@@ -15,7 +14,12 @@ const VideoSpinner = ({
   const parsedProgress = Number(progress).toFixed(0);
 
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm z-40">
+    <div
+      className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm"
+      style={{
+        zIndex: 99999,
+      }}
+    >
       <Icon
         icon="fluent:spinner-ios-16-filled"
         width="128"

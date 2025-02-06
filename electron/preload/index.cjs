@@ -77,6 +77,7 @@ const createEventHandler = (channel) => ({
       openPath: (filePath) => ipcRenderer.invoke(IPC_CHANNELS.SHELL.OPEN_FILE_PATH, filePath),
       toggleDevTools: () => ipcRenderer.invoke(IPC_CHANNELS.SHELL.TOGGLE_DEV_TOOLS),
       isDevToolsOpened: () => ipcRenderer.invoke(IPC_CHANNELS.SHELL.IS_DEV_TOOLS_OPENED),
+      quitApp: () => ipcRenderer.invoke(IPC_CHANNELS.SHELL.QUIT_APP),
     },
 
     config: {

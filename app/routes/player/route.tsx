@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useSearchParams, useLocation, useNavigate } from '@remix-run/react';
-import log from 'electron-log';
 
 import { IPC_CHANNELS } from '@electron/constants/event-channels';
 
@@ -100,7 +99,7 @@ const Player = () => {
 
   useEffect(() => {
     if (torrentError) {
-      log.error('Torrent error:', torrentError);
+      console.error('Torrent error:', torrentError);
 
       showNotification({
         title: 'Error',
@@ -151,7 +150,7 @@ const Player = () => {
   }, []);
 
   const handleVideoReady = useCallback(() => {
-    log.info('Video ready');
+    console.info('Video ready');
     setIsVideoReady(true);
   }, []);
 
@@ -171,7 +170,7 @@ const Player = () => {
     if (videoRef.current) {
       setIsPlaying(true);
       videoRef.current.play().catch((error) => {
-        log.error('Error playing video', { error });
+        console.error('Error playing video', { error });
       });
     }
   }, [setIsPlaying]);

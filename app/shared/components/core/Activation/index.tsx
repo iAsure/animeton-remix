@@ -7,8 +7,6 @@ import { useNotification } from '@context/NotificationContext';
 
 import WindowControls from '@components/core/Header/WindowControls';
 
-import log from 'electron-log';
-
 const Activation = () => {
   const { showWinNotification } = useNotification();
 
@@ -18,7 +16,7 @@ const Activation = () => {
 
   useEffect(() => {
     const onSuccess = () => {
-      log.info('Activation successful');
+      console.info('Activation successful');
       showWinNotification({
         title: 'Activación exitosa',
         message: '¡Bienvenido a AniTorrent!',
@@ -26,7 +24,7 @@ const Activation = () => {
     };
 
     const onError = (_, { error }) => {
-      log.error('Activation error:', error);
+      console.error('Activation error:', error);
       showWinNotification({
         title: 'Error de activación',
         message: error,
@@ -36,7 +34,7 @@ const Activation = () => {
     };
 
     const onStatusChanged = (_, { isValid }) => {
-      log.info('Activation status changed:', isValid);
+      console.info('Activation status changed:', isValid);
       if (!isValid) {
         showWinNotification({
           title: 'Estado de activación',
@@ -64,7 +62,7 @@ const Activation = () => {
     try {
       await window.api.activation.activateKey(activationKey);
     } catch (error) {
-      log.error('Error activating key:', error);
+      console.error('Error activating key:', error);
     } finally {
       setIsLoading(false);
     }

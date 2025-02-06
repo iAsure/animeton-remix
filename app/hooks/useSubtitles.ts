@@ -4,7 +4,6 @@ import { defaultHeader } from '@/shared/constants/subtitles';
 import { formatAssSubtitles } from '@/shared/utils/subtitles';
 
 import JASSUB from 'public/vendor/jassub/jassub.es.js';
-import log from 'electron-log';
 import usePlayerStore from '@stores/player';
 
 const useSubtitles = (
@@ -52,7 +51,7 @@ const useSubtitles = (
         prescaleFactor: 0.8,
       });
 
-      log.info('Subtitles renderer initialized');
+      console.info('Subtitles renderer initialized');
 
       setSubtitlesRenderer(renderer);
     }
@@ -191,7 +190,7 @@ const useSubtitles = (
 
   useEffect(() => {
     const handleError = (_: any, result: { error: string }) => {
-      log.error('Subtitle extraction error:', result.error);
+      console.error('Subtitle extraction error:', result.error);
     };
 
     window.api.subtitles.onExtracted.subscribe(handleSubtitles);
@@ -220,7 +219,7 @@ const useSubtitles = (
       _: any,
       data: { url: string; filePath: string; infoHash: string }
     ) => {
-      log.info('Video file path received:', data.filePath);
+      console.info('Video file path received:', data.filePath);
       setVideoFilePath(data.filePath);
       setInfoHash(data.infoHash);
     };
@@ -231,7 +230,7 @@ const useSubtitles = (
 
   const extractSubtitles = useCallback(
     (filePath: string) => {
-      log.info('Attempting to extract subtitles from:', filePath);
+      console.info('Attempting to extract subtitles from:', filePath);
 
       if (
         extractionState.status === 'idle' ||
@@ -249,7 +248,7 @@ const useSubtitles = (
         }));
 
         try {
-          log.info('Calling window.api.subtitles.extractSubtitles');
+          console.info('Calling window.api.subtitles.extractSubtitles');
           window.api.subtitles
             .extractSubtitles(filePath)
             .then((result) => {
@@ -268,7 +267,7 @@ const useSubtitles = (
               }
             })
             .catch((error) => {
-              log.error('Error during extraction:', error);
+              console.error('Error during extraction:', error);
               setExtractionState((prev) => ({
                 ...prev,
                 status: 'error',
@@ -276,7 +275,7 @@ const useSubtitles = (
               }));
             });
         } catch (error) {
-          log.error('Failed to call extractSubtitles:', error);
+          console.error('Failed to call extractSubtitles:', error);
           setExtractionState((prev) => ({
             ...prev,
             status: 'error',
@@ -289,7 +288,7 @@ const useSubtitles = (
           message: `Analizando archivo...`,
         });
       } else {
-        log.info('Skipping extraction, current state:', extractionState.status);
+        console.info('Skipping extraction, current state:', extractionState.status);
       }
     },
     [extractionState.status]
@@ -326,7 +325,7 @@ const useSubtitles = (
         currentSegments === 0 ||
         timeSinceLastAttempt >= currentRetryTimeout
       ) {
-        log.info('Checking retry conditions:', {
+        console.info('Checking retry conditions:', {
           attempts: extractionState.attempts,
           maxAttempts: MAX_ATTEMPTS,
           currentTimeout: currentRetryTimeout,
@@ -342,10 +341,10 @@ const useSubtitles = (
             status: 'retrying',
           }));
 
-          log.info('Initiating retry for subtitle extraction');
+          console.info('Initiating retry for subtitle extraction');
           extractSubtitles(videoFilePath);
         } else {
-          log.warn('Max attempts reached or no file path available');
+          console.warn('Max attempts reached or no file path available');
           setExtractionState((prev) => ({
             ...prev,
             status: 'error',
@@ -378,7 +377,7 @@ const useSubtitles = (
     if (currentSegments > 0) {
       const prevSegmentCount = lastSegmentCount ?? 0;
 
-      log.info('Checking segments:', {
+      console.info('Checking segments:', {
         current: currentSegments,
         last: prevSegmentCount,
         consecutive: consecutiveMatches,
@@ -389,7 +388,7 @@ const useSubtitles = (
         const newConsecutiveMatches = consecutiveMatches + 1;
 
         if (newConsecutiveMatches >= REQUIRED_MATCHES) {
-          log.info('Required matches reached, completing extraction');
+          console.info('Required matches reached, completing extraction');
 
           setExtractionState({
             status: 'completed',
@@ -424,7 +423,7 @@ const useSubtitles = (
   // Handle extraction errors
   useEffect(() => {
     const handleError = (_: any, result: { error: string }) => {
-      log.error('Subtitle extraction error:', result.error);
+      console.error('Subtitle extraction error:', result.error);
       setExtractionState((prev) => ({
         ...prev,
         status: 'error',

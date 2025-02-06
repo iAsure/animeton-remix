@@ -34,6 +34,7 @@ export const IPC_CHANNELS = {
     OPEN_FILE_PATH: 'shell-open-file-path',
     TOGGLE_DEV_TOOLS: 'shell-toggle-dev-tools',
     IS_DEV_TOOLS_OPENED: 'shell-is-dev-tools-opened',
+    QUIT_APP: 'shell-quit-app',
   },
   CONFIG: {
     GET: 'config:get',

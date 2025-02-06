@@ -206,6 +206,10 @@ export async function setupIpcHandlers(
     return mainWindow.webContents.isDevToolsOpened();
   });
 
+  ipcMain.handle(IPC_CHANNELS.SHELL.QUIT_APP, () => {
+    app.quit();
+  });
+
   // History handlers
   
   ipcMain.handle(IPC_CHANNELS.HISTORY.GET_PROGRESS, async (_, episodeId) => {

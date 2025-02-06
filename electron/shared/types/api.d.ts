@@ -81,6 +81,7 @@ export interface ShellApi {
   openPath: (path: string) => Promise<boolean>;
   toggleDevTools: () => Promise<void>;
   isDevToolsOpened: () => Promise<boolean>;
+  quitApp: () => void;
 }
 
 export interface ConfigApi {

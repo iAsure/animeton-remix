@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import log from 'electron-log';
 import { prettyBytes } from '@/shared/utils/strings';
 import usePlayerStore from '@stores/player';
 
@@ -53,7 +52,7 @@ const useTorrentStream = (torrentUrl: string, torrentHash: string) => {
     if (!torrentUrl || !isMounted.current) return;
 
     try {
-      log.info('Starting torrent stream', { torrentUrl, attempt: retryCount + 1 });
+      console.info('Starting torrent stream', { torrentUrl, attempt: retryCount + 1 });
       setState(prev => ({ ...prev, error: null, isBuffering: true }));
       
       if (retryCount === 0) {
@@ -62,7 +61,7 @@ const useTorrentStream = (torrentUrl: string, torrentHash: string) => {
     } catch (error) {
       if (!isMounted.current) return;
       
-      log.error('Error starting torrent:', error);
+      console.error('Error starting torrent:', error);
       if (retryCount < MAX_RETRIES) {
         setTimeout(() => {
           if (isMounted.current) {
@@ -127,7 +126,7 @@ const useTorrentStream = (torrentUrl: string, torrentHash: string) => {
     };
 
     const handleError = (_: any, error: any) => {
-      log.error('Torrent error:', error);
+      console.error('Torrent error:', error);
       setState(prev => ({
         ...prev,
         error: error.error || 'No se pudo reproducir',
@@ -141,7 +140,7 @@ const useTorrentStream = (torrentUrl: string, torrentHash: string) => {
     };
 
     const handleServerStatus = (_: any, data: any) => {
-      log.info('Torrent server status:', data);
+      console.info('Torrent server status:', data);
       if (!data.active) {
         // Server is not healthy, retry torrent
         if (retryCount < MAX_RETRIES) {

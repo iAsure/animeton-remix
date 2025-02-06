@@ -16,7 +16,6 @@ const useHeaderNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-
   const historyRef = useRef<{
     past: string[];
     current: string | null;
@@ -42,7 +41,7 @@ const useHeaderNavigation = () => {
 
     // Send special event when leaving player route
     if (wasPreviousPlayer && !isCurrentPlayer) {
-      amplitude?.track('exit_player', {
+      amplitude.track('Exit Player', {
         from: '/player',
         to: currentPath,
       });
@@ -71,13 +70,12 @@ const useHeaderNavigation = () => {
       }
 
       // Track route change
-      amplitude?.track('route_changed', {
+      amplitude.track('Route Changed', {
         from:
           historyRef.current.past[historyRef.current.past.length - 1] || null,
         to: currentPath,
         method: 'navigation',
       });
-
     }
 
     // Update navigation states considering player routes
@@ -149,12 +147,11 @@ const useHeaderNavigation = () => {
         navigate(prevPage, { viewTransition: true });
 
         // Track back navigation
-        amplitude?.track('route_changed', {
+        amplitude.track('Route Changed', {
           from: historyRef.current.current,
           to: prevPage,
           method: 'back_button',
         });
-
       }
     },
     [historyRef, navigate]
@@ -181,7 +178,7 @@ const useHeaderNavigation = () => {
         navigate(nextPage, { viewTransition: true });
 
         // Track forward navigation
-        amplitude?.track('route_changed', {
+        amplitude.track('Route Changed', {
           from: historyRef.current.past[historyRef.current.past.length - 1],
           to: nextPage,
           method: 'forward_button',

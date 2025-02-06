@@ -1,5 +1,4 @@
 import { useCallback, useState, useRef } from 'react';
-import log from 'electron-log';
 import { API_BASE_URL } from '@constants/config';
 import { Anime } from '@shared/types/anime';
 
@@ -51,7 +50,7 @@ export default function useSearchAnimes(query: string, limit: number = 1) {
       const error = err as Error;
       if (!error) return dataRef.current;
 
-      log.error('Error searching animes:', error);
+      console.error('Error searching animes:', error);
 
       if (error.name === 'AbortError') {
         if (!dataRef.current.length) {

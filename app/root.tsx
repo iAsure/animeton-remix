@@ -13,8 +13,11 @@ import Header from '@components/core/Header';
 import Fonts from '@components/core/Fonts';
 import HelpButton from '@components/core/HelpButton';
 import InternetVerification from '@components/core/InternetVerification';
+import ErrorBoundary from '@components/core/ErrorBoundary';
 
 import './globals.css';
+
+Object.assign(console, log.functions);
 
 export default function App() {
   const location = useLocation();
@@ -32,20 +35,22 @@ export default function App() {
         <Links />
       </head>
       <body className="text-foreground bg-background font-noto">
-        <AppProviders>
-          <InternetVerification>
-            {!isActivationRoute && (
-              <>
-                <Header /> <HelpButton />
-              </>
-            )}
-            <div className="h-full w-full">
-              <Outlet />
-            </div>
-            <ScrollRestoration />
-            <Scripts />
-          </InternetVerification>
-        </AppProviders>
+        <ErrorBoundary>
+          <AppProviders>
+            <InternetVerification>
+              {!isActivationRoute && (
+                <>
+                  <Header /> <HelpButton />
+                </>
+              )}
+              <div className="h-full w-full">
+                <Outlet />
+              </div>
+              <ScrollRestoration />
+              <Scripts />
+            </InternetVerification>
+          </AppProviders>
+        </ErrorBoundary>
       </body>
     </html>
   );
