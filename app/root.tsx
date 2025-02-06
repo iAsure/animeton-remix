@@ -35,8 +35,8 @@ export default function App() {
         <Links />
       </head>
       <body className="text-foreground bg-background font-noto">
-        <ErrorBoundary>
-          <AppProviders>
+        <AppProviders>
+          <ErrorBoundary>
             <InternetVerification>
               {!isActivationRoute && (
                 <>
@@ -49,8 +49,8 @@ export default function App() {
               <ScrollRestoration />
               <Scripts />
             </InternetVerification>
-          </AppProviders>
-        </ErrorBoundary>
+          </ErrorBoundary>
+        </AppProviders>
       </body>
     </html>
   );

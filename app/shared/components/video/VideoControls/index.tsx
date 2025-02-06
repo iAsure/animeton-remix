@@ -314,13 +314,14 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
   return (
     <>
       <Button
-        className="fixed right-10 bottom-24 bg-white text-black text-base font-extrabold z-50 shadow-sm rounded-lg"
+        className="fixed right-10 bottom-24 bg-white text-black text-base font-extrabold shadow-sm rounded-lg"
         onClick={handleSkipChapter}
         isDisabled={!currentChapter || !getSkippableChapterType(currentChapter)}
         style={{
           opacity: (getSkippableChapterType(currentChapter) && showSkipButton) ? 1 : 0,
           transition: 'opacity 0.3s ease-in-out',
           height: '36px',
+          zIndex: 1000,
         }}
       >
         <Icon icon="gravity-ui:chevrons-right" className="text-black h-5 w-5" />
@@ -328,10 +329,11 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
       </Button>
 
       <div
-        className="fixed bottom-0 w-full bg-gradient-to-t from-black/95 to-transparent z-50"
+        className="fixed bottom-0 w-full bg-gradient-to-t from-black/95 to-transparent"
         style={{
           opacity: isMouseMoving ? 1 : 0,
           transition: 'opacity 0.3s ease-in-out',
+          zIndex: 1000,
         }}
       >
         {/* Subtitle ranges indicator */}

@@ -52,12 +52,16 @@ function ErrorBoundaryFallback({
 
   useEffect(() => {
     if (error && errorInfo && amplitude) {
-      amplitude.track('React Error', {
-        message: error.message,
-        stack: error.stack,
-        componentStack: errorInfo.componentStack,
-        type: 'react.error',
-      });
+      try {
+        amplitude.track('React Error', {
+          message: error.message,
+          stack: error.stack,
+          componentStack: errorInfo.componentStack,
+          type: 'react.error',
+        });
+      } catch (e) {
+        console.error('Failed to track error:', e);
+      }
     }
   }, [error, errorInfo, amplitude]);
 

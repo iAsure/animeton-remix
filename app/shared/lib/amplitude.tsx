@@ -5,16 +5,23 @@ import { AMPLITUDE_CONFIG_KEY } from '@constants/config';
 import { useEffect, useState } from 'react';
 
 export function useAmplitude() {
-  const [client, setClient] = useState<typeof amplitude | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    setClient(amplitude);
-  }, []);
+    if (!isInitialized) {
+      initAmplitude();
+      setIsInitialized(true);
+    }
+  }, [isInitialized]);
 
-  return client;
+  return amplitude;
 }
 
 export function initAmplitude() {
+  if (amplitude.getUserId()) {
+    return amplitude;
+  }
+
   const sessionReplayTracking = sessionReplayPlugin({ sampleRate: 1 });
   amplitude.add(sessionReplayTracking);
 

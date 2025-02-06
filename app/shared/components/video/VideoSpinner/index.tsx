@@ -17,7 +17,7 @@ const VideoSpinner = ({
     <div
       className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm"
       style={{
-        zIndex: 99999,
+        zIndex: 999,
       }}
     >
       <Icon
