@@ -22,6 +22,8 @@ import usePlayerStore from '@stores/player';
 import { useNotification } from '@context/NotificationContext';
 import { useConfig } from '@context/ConfigContext';
 
+import { useAmplitude } from '@lib/amplitude';
+
 const Player = () => {
   const {
     isPlaying,
@@ -39,6 +41,7 @@ const Player = () => {
   const [searchParams] = useSearchParams();
   const { state } = useLocation();
   const navigate = useNavigate();
+  const amplitude = useAmplitude();
 
   const { updateProgress, getEpisodeProgress, history } = useUserActivity();
 
@@ -214,6 +217,18 @@ const Player = () => {
       }
     };
   }, [isFullscreen]);
+
+  useEffect(() => {
+    if (animeData) {
+      amplitude.track('Episode Viewed', {
+        idAnilist: animeData.idAnilist,
+        title: animeTitle,
+        episode: animeEpisode,
+        torrent: torrentUrl,
+        hash: torrentHash,
+      });
+    }
+  }, [animeData]);
 
   return (
     <div

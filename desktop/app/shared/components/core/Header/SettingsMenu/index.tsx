@@ -2,23 +2,35 @@ import { Icon } from '@iconify/react';
 import { Switch } from '@nextui-org/react';
 import { useConfig } from '@context/ConfigContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useAmplitude } from '@lib/amplitude';
 
 interface SettingsMenuProps {
   onClose: () => void;
 }
 
 const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
+  const amplitude = useAmplitude();
+
   const menuRef = useRef<HTMLDivElement>(null);
   const { config, setConfig } = useConfig();
   const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
   const [isOnDev, setIsOnDev] = useState(false);
+
+  const handleMenuInteraction = useCallback(
+    (type: string, value: string) => {
+      amplitude.track('Settings Menu Interaction', {
+        type,
+        value,
+      });
+    },
+    [amplitude]
+  );
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsOnDev(window?.electron?.env?.onDEV);
     }
   }, []);
-
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -47,6 +59,10 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
   const handleSubtitlesIndicatorChange = useCallback(
     async (isSelected: boolean) => {
       await setConfig('features.subtitlesIndicator', isSelected);
+      handleMenuInteraction(
+        'subtitlesIndicator',
+        isSelected ? 'enabled' : 'disabled'
+      );
     },
     [setConfig]
   );
@@ -54,9 +70,18 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
   const handleSubtitlesStatusChange = useCallback(
     async (isSelected: boolean) => {
       await setConfig('features.subtitlesStatus', isSelected);
+      handleMenuInteraction(
+        'subtitlesStatus',
+        isSelected ? 'enabled' : 'disabled'
+      );
     },
     [setConfig]
   );
+
+  const handleOpenPath = useCallback((path: string) => {
+    window.api.shell.openPath(path);
+    handleMenuInteraction('openPath', path);
+  }, []);
 
   return (
     <div
@@ -112,7 +137,7 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
         <div className="flex items-center justify-between gap-2 mb-1">
           <span className="text-zinc-200 text-sm">Archivos de registro</span>
           <button
-            onClick={() => window.api.shell.openPath('logs')}
+            onClick={() => handleOpenPath('logs')}
             className="text-sm px-3 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-md transition-colors flex items-center gap-2"
           >
             <Icon icon="gravity-ui:folder-open" className="text-zinc-400" />
@@ -123,7 +148,7 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
         <div className="flex items-center justify-between gap-2 mb-1">
           <span className="text-zinc-200 text-sm">Carpeta de descargas</span>
           <button
-            onClick={() => window.api.shell.openPath('downloads')}
+            onClick={() => handleOpenPath('downloads')}
             className="text-sm px-3 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-md transition-colors flex items-center gap-2"
           >
             <Icon icon="gravity-ui:folder-open" className="text-zinc-400" />
@@ -135,7 +160,6 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
           <div className="flex items-center justify-between gap-2">
             <span className="text-zinc-200 text-sm">Consola de desarrollo</span>
             <button
-
               onClick={handleToggleDevTools}
               className="text-sm px-3 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-md transition-colors flex items-center gap-2"
             >

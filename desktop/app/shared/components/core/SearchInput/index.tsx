@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAmplitude } from '@lib/amplitude';
 
 interface SearchInputProps {
   onSearch?: (term: string) => void;
@@ -9,12 +10,15 @@ interface SearchInputProps {
   placeholder?: string;
 }
 
+
 const SearchInput = ({
   onSearch,
   onClear,
   initialValue = '',
   placeholder = 'Buscar',
 }: SearchInputProps) => {
+  const amplitude = useAmplitude();
+
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputValue, setInputValue] = useState(initialValue);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -59,9 +63,15 @@ const SearchInput = ({
     onClear?.();
   };
 
+  const handleExpand = () => {
+    setIsExpanded(!isExpanded);
+    amplitude.track('Search Input Opened');
+  };
+
   return (
     <div
       ref={containerRef}
+
       className="relative inline-flex items-center webkit-app-region-no-drag"
       style={{ zIndex: 9999 }}
     >
@@ -102,7 +112,7 @@ const SearchInput = ({
       </AnimatePresence>
 
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleExpand}
         className={`focus:outline-none p-1 hover:bg-zinc-800 rounded 
                                transition-colors ${isExpanded ? 'ml-2' : ''}`}
       >

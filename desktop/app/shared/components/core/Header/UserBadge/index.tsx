@@ -16,8 +16,9 @@ interface UserBadgeProps {
 }
 
 const UserBadge = ({ discordId }: UserBadgeProps) => {
-  const { config } = useConfig();
   const amplitude = useAmplitude();
+  
+  const { config } = useConfig();
   const { data: userData, isLoading } = useDiscordUser(discordId);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -34,6 +35,15 @@ const UserBadge = ({ discordId }: UserBadgeProps) => {
       identifySentRef.current = true;
     }
   }, [userData, appKey]);
+
+  const handleMenuToggle = () => {
+    const newMenuState = !isMenuOpen;
+    setIsMenuOpen(newMenuState);
+    
+    if (newMenuState) {
+      amplitude?.track('Settings Menu Opened');
+    }
+  };
 
   return (
     <div className="flex items-center gap-3 bg-zinc-900/50 rounded-full px-3 py-1.5 webkit-app-region-no-drag relative">
@@ -65,7 +75,7 @@ const UserBadge = ({ discordId }: UserBadgeProps) => {
               variant="light"
               size="sm"
               className="text-white bg-zinc-900"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={handleMenuToggle}
             >
               <Icon icon="gravity-ui:sliders" width="22" height="22" />
             </Button>

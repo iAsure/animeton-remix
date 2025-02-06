@@ -1,6 +1,7 @@
 import { Button } from '@nextui-org/react';
 import { Icon } from '@iconify/react';
 import { useLocation } from '@remix-run/react';
+import { useAmplitude } from '@lib/amplitude';
 
 import { useModal } from '@context/ModalContext';
 import { useConfig } from '@context/ConfigContext';
@@ -8,11 +9,15 @@ import { useConfig } from '@context/ConfigContext';
 import DiscordTicketModal from '@components/modals/DiscordTicket';
 
 const HelpButton = () => {
+  const amplitude = useAmplitude();
+
   const location = useLocation();
   const { openModal } = useModal();
   const { config } = useConfig();
 
   const handleHelpClick = () => {
+    amplitude.track('Help Button Clicked');
+
     openModal('discord-ticket', ({ onClose }) => (
       <DiscordTicketModal onClose={onClose} userId={config.user?.discordId} />
     ));

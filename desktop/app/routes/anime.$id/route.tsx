@@ -78,7 +78,7 @@ const AnimeDetails: React.FC<AnimeDetailsProps> = ({ state }) => {
   useEffect(() => {
     if (anime) {
       amplitude.track('Anime Viewed', {
-        id: idAnilist,
+        idAnilist,
         title: anime.title.romaji || anime.title.english || anime.title.native,
       })
     }

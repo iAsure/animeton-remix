@@ -1,8 +1,11 @@
 import { useCallback, useState, useRef } from 'react';
 import { API_BASE_URL } from '@constants/config';
 import { Anime } from '@shared/types/anime';
+import { useAmplitude } from '@lib/amplitude';
 
 export default function useSearchAnimes(query: string, limit: number = 1) {
+  const amplitude = useAmplitude();
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<Anime[]>([]);
@@ -29,6 +32,10 @@ export default function useSearchAnimes(query: string, limit: number = 1) {
     try {
       setIsLoading(true);
       setError(null);
+
+      amplitude.track('Search Anime', {
+        query,
+      });
 
       const response = await fetch(`${API_BASE_URL}/anime/search`, {
         method: 'POST',
