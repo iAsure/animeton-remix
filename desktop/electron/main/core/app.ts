@@ -15,6 +15,7 @@ import { cleanupTorrentFiles } from '../services/torrent/autoclean.js';
 import { DiscordRPC } from './discord.js';
 import { createActivationWindow, validateActivationKey } from './activation-window.js';
 import { ConfigService } from '../services/config/service.js';
+import { uploadLogFile } from '../services/logs/uploader.js';
 
 let webTorrentProcess: UtilityProcess | null = null;
 let subtitlesWorker: Worker | null = null;
@@ -82,12 +83,21 @@ export async function initializeApp() {
     setupShortcuts(mainWindow);
 
     // Cleanup
-    app.on('before-quit', async () => {
+    app.on('before-quit', async (event) => {
+      event.preventDefault();
       log.info('Cleaning up workers...');
       unregisterShortcuts();
-      discordRPC.destroy();
-      if (subtitlesWorker) await subtitlesWorker.terminate();
-      if (webTorrentProcess) webTorrentProcess.kill();
+      
+      try {
+        discordRPC.destroy();
+        await uploadLogFile(mainWindow);
+        if (subtitlesWorker) await subtitlesWorker.terminate();
+        if (webTorrentProcess) webTorrentProcess.kill();
+        app.exit();
+      } catch (error) {
+        log.error('Error during cleanup:', error);
+        app.exit(1);
+      }
     });
 
     return { webTorrentProcess, subtitlesWorker, discordRPC };

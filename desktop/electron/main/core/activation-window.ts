@@ -1,8 +1,10 @@
 import { BrowserWindow } from 'electron';
 import path from 'path';
 import log from 'electron-log';
+import fetch from 'node-fetch';
 import { fileURLToPath } from 'node:url';
 import { ActivationResult } from '../../shared/types/api.js';
+import { API_URL } from '../../shared/constants/config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -15,10 +17,11 @@ export async function validateActivationKey(
 
   try {
     const response = await fetch(
-      `https://api.animeton.com/keys/validate/${key}`
+      `${API_URL}/keys/validate/${key}`
     );
-    const result = await response.json();
+    const result = await response.json() as { valid: boolean };
     return Boolean(result?.valid);
+
   } catch (error) {
     log.error('Error validating key:', error);
     return false;
@@ -27,13 +30,14 @@ export async function validateActivationKey(
 
 export async function activateKey(key: string): Promise<ActivationResult> {
   try {
-    const response = await fetch('https://api.animeton.com/keys/activate', {
+    const response = await fetch(`${API_URL}/keys/activate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key }),
     });
 
-    const result = await response.json();
+
+    const result = await response.json() as { success: boolean, message: string };
 
     if (!response.ok) {
       throw new Error(result.message || 'Error activating key');
