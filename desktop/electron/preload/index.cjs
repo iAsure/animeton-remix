@@ -55,6 +55,8 @@ const createEventHandler = (channel) => ({
       ),
       onServerStatus: createEventHandler(IPC_CHANNELS.TORRENT.SERVER_STATUS),
       onWarning: createEventHandler(IPC_CHANNELS.TORRENT.WARNING),
+      onActiveTorrents: createEventHandler(IPC_CHANNELS.TORRENT.ACTIVE_TORRENTS),
+      getActiveTorrents: () => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.GET_ACTIVE_TORRENTS),
     },
 
     subtitles: {

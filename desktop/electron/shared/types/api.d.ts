@@ -45,6 +45,8 @@ export interface TorrentApi {
   onDownloadRanges: EventHandler<TorrentRangeData>;
   onServerStatus: EventHandler<{ active: boolean; port?: number }>;
   onWarning: EventHandler<{ warning: string }>;
+  onActiveTorrents: EventHandler<ActiveTorrent[]>;
+  getActiveTorrents: () => Promise<ActiveTorrent[]>;
 }
 
 export interface SubtitleCue {

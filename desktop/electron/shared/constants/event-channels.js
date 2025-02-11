@@ -11,6 +11,8 @@ export const IPC_CHANNELS = {
     DOWNLOAD_RANGES: 'torrent-download-ranges',
     SERVER_STATUS: 'torrent-server-status',
     WARNING: 'torrent-warning',
+    ACTIVE_TORRENTS: 'torrent:active-torrents',
+    GET_ACTIVE_TORRENTS: 'torrent:get-active-torrents',
   },
   SUBTITLES: {
     EXTRACT: 'extract-subtitles',

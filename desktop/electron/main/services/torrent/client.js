@@ -316,6 +316,7 @@ async function handleTorrent(torrent, instance) {
   progressInterval = setInterval(() => {
     if (torrent.infoHash === activeTorrentInfoHash) {
       sendProgressUpdate(torrent);
+      sendActiveTorrentsUpdate();
     }
   }, 500);
 
@@ -476,6 +477,32 @@ async function validateTorrent(torrentUrl) {
   }
 }
 
+function sendActiveTorrentsUpdate() {
+  if (!activeClient) return;
+
+  const activeTorrents = activeClient.torrents.map(torrent => ({
+    infoHash: torrent.infoHash,
+    name: torrent.name,
+    created: torrent.created,
+    progress: {
+      numPeers: torrent.numPeers,
+      downloaded: torrent.downloaded,
+      total: torrent.length,
+      progress: torrent.progress,
+      downloadSpeed: torrent.downloadSpeed,
+      uploadSpeed: torrent.uploadSpeed,
+      remaining: torrent.done ? 'Completado' : humanizeDuration(torrent.timeRemaining),
+      isBuffering: torrent.progress < 0.01,
+      ready: torrent.progress > 0.01,
+    }
+  }));
+
+  process.parentPort?.postMessage({
+    type: IPC_CHANNELS.TORRENT.ACTIVE_TORRENTS,
+    data: activeTorrents
+  });
+}
+
 // Message handler
 process.parentPort?.on('message', async (message) => {
   if (message.data?.action === 'add-torrent') {
@@ -527,6 +554,8 @@ process.parentPort?.on('message', async (message) => {
         port: torrentServer?.server.address().port,
       },
     });
+  } else if (message.type === IPC_CHANNELS.TORRENT.GET_ACTIVE_TORRENTS) {
+    sendActiveTorrentsUpdate();
   }
 });
 

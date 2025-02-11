@@ -95,8 +95,11 @@ export async function initializeApp() {
     const isValid = await validateActivationKey(config?.user?.activationKey);
     log.info(`Activation key status: ${isValid}`);
 
+    const keyExists = config?.user?.activationKey && config?.user?.discordId;
+    const appIsActivated = isValid || keyExists;
+
     let mainWindow;
-    if (!isValid && !process.env.DEV) {
+    if (!appIsActivated && !process.env.DEV) {
       mainWindow = await createActivationWindow();
     } else {
       mainWindow = await setupWindow();
