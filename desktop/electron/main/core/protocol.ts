@@ -15,8 +15,10 @@ const PROTOCOL_NAME = 'anitorrent';
 
 const protocolActions: Record<string, ProtocolAction> = {
   activate: {
-    handler: async (key: string) => {
+    handler: async (params: string) => {
+      const [key] = params;
       try {
+        log.info('Activating key from protocol:', key);
         const activationResult = await activateKey(key);
 
         if (activationResult.success) {
