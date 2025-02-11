@@ -224,6 +224,10 @@ export interface LogApi {
   getContent: () => Promise<string>;
 }
 
+export interface NavigationApi {
+  onNavigate: EventHandler<{ path: string }>;
+}
+
 export interface Api {
   addTorrent: (torrentUrl: string, torrentHash: string) => void;
   checkTorrentServer: () => void;
@@ -238,4 +242,5 @@ export interface Api {
   activation: ActivationApi;
   notification: NotificationApi;
   log: LogApi;
+  navigation: NavigationApi;
 }

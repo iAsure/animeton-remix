@@ -68,4 +68,7 @@ export const IPC_CHANNELS = {
   LOG: {
     GET_CONTENT: 'log:get-content',
   },
+  NAVIGATION: {
+    NAVIGATE: 'navigation:navigate',
+  },
 };

@@ -1,172 +1,111 @@
-import { protocol, session } from 'electron';
-import * as fsp from 'node:fs/promises';
-import * as path from 'node:path';
-import * as mime from 'mime-types';
+import path from 'path';
+import { app, BrowserWindow, Notification } from 'electron';
 import log from 'electron-log';
-import { net } from 'electron';
-import { createRequestHandler } from '@remix-run/node';
-import { fileURLToPath } from 'node:url';
-import { EXTERNAL_HOSTNAMES_ARRAY } from '../../shared/constants/external-hostnames.js';
+import { activateKey } from './activation-window.js';
+import { ConfigService } from '../services/config/service.js';
+import { getMainWindow } from './window.js';
+import { IPC_CHANNELS } from '../../shared/constants/event-channels.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+type ProtocolAction = {
+  handler: (params: any) => Promise<any>;
+  requiresAuth?: boolean;
+};
 
-function isValidPath(filePath) {
-  // Prevent directory traversal
-  const normalizedPath = path.normalize(filePath);
-  return !normalizedPath.includes('..');
-}
+const PROTOCOL_NAME = 'anitorrent';
 
-export async function setupProtocol(build, viteDevServer) {
-  // Setup HTTPS handler
-  const partition = 'persist:partition';
-  const ses = session.fromPartition(partition);
+const protocolActions: Record<string, ProtocolAction> = {
+  activate: {
+    handler: async (key: string) => {
+      try {
+        const activationResult = await activateKey(key);
 
-  ses.protocol.handle('https', async (request) => {
-    try {
-      const url = new URL(request.url);
+        if (activationResult.success) {
+          const tempWindow = new BrowserWindow({ show: false });
+          const configService = new ConfigService(tempWindow);
+          await configService.initialize();
 
-      if (url.pathname === '/null') {
-        return new Response('Not Found', { status: 404 });
-      }
-
-      // Check if URL is external
-      const isExternalUrl = url?.hostname !== 'remix';
-
-      if (isExternalUrl || EXTERNAL_HOSTNAMES_ARRAY.includes(url.hostname)) {
-        return await net
-          .fetch(request.url, {
-            method: request.method,
-            headers: request.headers,
-            body: request.body,
-            duplex: 'half',
-          })
-          .catch(() => {
-            return new Response('External URL fetch error', { status: 500 });
+          await configService.update({
+            user: {
+              activationKey: activationResult.key,
+              discordId: activationResult.discordId,
+              createdAt: activationResult.createdAt,
+              activatedAt: activationResult.activatedAt,
+            },
           });
-      }
 
-      // Handle static files and dev server
-      if (
-        url.pathname !== '/' &&
-        (request.method === 'GET' || request.method === 'HEAD')
-      ) {
-        if (viteDevServer) {
-          const staticFile = path.resolve(
-            __dirname,
-            '../../../../public' + url.pathname
+          showNotification(
+            'AniTorrent se ha activado',
+            'Gracias por confiar en nosotros'
           );
-          if (
-            await fsp
-              .stat(staticFile)
-              .then((s) => s.isFile())
-              .catch(() => false)
-          ) {
-            return new Response(await fsp.readFile(staticFile), {
-              headers: {
-                'content-type':
-                  mime.lookup(path.basename(staticFile)) || 'text/plain',
-              },
-            });
-          }
-
-          if (request.method === 'HEAD') {
-            return new Response(null, {
-              headers: {
-                'access-control-allow-origin': '*',
-                'access-control-allow-methods': 'GET, HEAD',
-              },
-            });
-          }
-          try {
-            const VALID_ID_PREFIX = `/@id/`;
-            const NULL_BYTE_PLACEHOLDER = `__x00__`;
-            let id = url.pathname + url.search;
-            id = id.startsWith(VALID_ID_PREFIX)
-              ? id
-                  .slice(VALID_ID_PREFIX.length)
-                  .replace(NULL_BYTE_PLACEHOLDER, '\0')
-              : id;
-
-            const transformed = await viteDevServer.transformRequest(id, {
-              html: false,
-              ssr: false,
-            });
-            if (transformed) {
-              return new Response(transformed.code, {
-                headers: {
-                  'content-type': 'application/javascript',
-                },
-              });
-            }
-          } catch (error) {}
-        } else {
-          const file = path.resolve(
-            __dirname,
-            '..',
-            '..',
-            '..',
-            'app',
-            'client',
-            url.pathname.slice(1)
-          );
-          try {
-            const isFile = await fsp.stat(file).then((s) => s.isFile());
-            if (isFile) {
-              return new Response(await fsp.readFile(file), {
-                headers: {
-                  'content-type':
-                    mime.lookup(path.basename(file)) || 'text/plain',
-                },
-              });
-            }
-          } catch {}
+          restartApp();
+          return activationResult;
         }
+
+        showNotification(
+          'Error de Activación',
+          activationResult.message || 'Error al activar la clave'
+        );
+        return activationResult;
+      } catch (error) {
+        log.error('Protocol activation error:', error);
+        showNotification(
+          'Error de Activación',
+          'Ocurrió un error al procesar la activación'
+        );
+        return { success: false, message: error.message };
       }
+    },
+  },
+  anime: {
+    handler: async (params: string[]) => {
+      const idAnilist = params.join('/');
+      const mainWindow = getMainWindow();
 
-      const remixHandler = createRequestHandler(build);
-      return await remixHandler(request);
-    } catch (error) {
-      log.error('Protocol handler error:', error);
-      return new Response('Internal Server Error', { status: 500 });
-    }
-  });
-
-  // Setup file protocol handler
-  protocol.handle('file', async (request) => {
-    let filePath = request.url.slice(7); // remove 'file://'
-
-    if (!isValidPath(filePath)) {
-      log.warn('Invalid file path requested:', filePath);
-      return new Response('Invalid path', { status: 403 });
-    }
-
-    try {
-      if (filePath.startsWith('/vendor/')) {
-        filePath = path.join(__dirname, '../../../public', filePath);
+      if (mainWindow) {
+        mainWindow.webContents.send(IPC_CHANNELS.NAVIGATION.NAVIGATE, {
+          path: `/anime/${idAnilist}`,
+        });
       }
+      return null;
+    },
+  },
+};
 
-      return await net.fetch(`file://${filePath}`);
-    } catch (error) {
-      log.error('File protocol error:', error);
-      return new Response('File not found', { status: 404 });
-    }
-  });
-}
+const showNotification = (title: string, body: string) => {
+  new Notification({
+    title,
+    body,
+    icon: path.join(process.env.VITE_PUBLIC ?? '', 'icon.png'),
+  }).show();
+};
 
-export function setupCSP(port, ses) {
-  ses.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': [
-          `default-src 'self'; ` +
-            `script-src 'self' 'unsafe-inline' https://api.iconify.design; ` +
-            `media-src 'self' http://localhost:${port} blob:; ` +
-            `connect-src 'self' http://localhost:${port} https://api.iconify.design; ` +
-            `img-src 'self' data: http: https:; ` +
-            `style-src 'self' 'unsafe-inline';`,
-        ],
-      },
-    });
+const restartApp = () => {
+  app.relaunch();
+  app.exit();
+};
+
+export const handleProtocolLink = async (url: string) => {
+  if (!url) return;
+
+  const urlObject = new URL(url);
+  log.info('Handling protocol link:', {
+    protocol: urlObject.protocol,
+    pathname: urlObject.pathname,
   });
-}
+
+  const protocolPrefix = `${PROTOCOL_NAME}:`;
+  if (!urlObject.protocol.startsWith(protocolPrefix)) return;
+
+  const [, action, ...params] = urlObject.pathname.split('/');
+  const actionHandler = protocolActions[action];
+  if (!actionHandler) {
+    log.warn(`No handler found for action: ${action}`);
+    return;
+  }
+
+  return await actionHandler.handler(params);
+};
+
+export const createProtocolUrl = (action: string, params: string[] = []) => {
+  return `${PROTOCOL_NAME}://${action}/${params.join('/')}`;
+};

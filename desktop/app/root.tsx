@@ -14,6 +14,7 @@ import Fonts from '@components/core/Fonts';
 import HelpButton from '@components/core/HelpButton';
 import InternetVerification from '@components/core/InternetVerification';
 import ErrorBoundary from '@components/core/ErrorBoundary';
+import useProtocolEvents from '@/hooks/useProtocolEvents';
 
 import './globals.css';
 
@@ -22,6 +23,8 @@ Object.assign(console, log.functions);
 export default function App() {
   const location = useLocation();
   const isActivationRoute = location.pathname === '/activation';
+
+  useProtocolEvents();
 
   log.info('Renderer initialized');
   return (
