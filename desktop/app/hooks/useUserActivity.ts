@@ -15,6 +15,7 @@ interface EpisodeHistory {
   episodeImage: string;
   episodeNumber: number;
   episodeTorrentUrl: string;
+  episodeFileName: string;
   pubDate: string;
   progressData: WatchProgress;
 }

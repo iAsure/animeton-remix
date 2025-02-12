@@ -134,6 +134,7 @@ const Player = () => {
       episodeImage: animeData?.image || animeData?.episode?.image || null,
       episodeNumber: animeEpisode || null,
       episodeTorrentUrl: torrentUrl,
+      episodeFileName: animeData?.torrent?.fileName || null,
       pubDate:
         animeData?.torrent?.pubDate || animeData?.torrent?.date || new Date(),
     };
@@ -220,6 +221,7 @@ const Player = () => {
 
   useEffect(() => {
     if (animeData) {
+      console.log('animeData', animeData);
       amplitude.track('Episode Viewed', {
         idAnilist: animeData.idAnilist,
         title: animeTitle,

@@ -1,5 +1,6 @@
 import { prettyBytes } from '@utils/strings';
 import { Button } from '@nextui-org/react';
+import { Icon } from '@iconify/react';
 
 const DownloadCard = ({ downloadData }) => {
   return (
@@ -24,11 +25,11 @@ const DownloadCard = ({ downloadData }) => {
           </div>
           <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500">
             <span className="flex items-center gap-0.5">
-              <span className="material-symbols-rounded text-sm">download</span>
+              <Icon icon="material-symbols:download" className="text-sm" />
               {prettyBytes(downloadData.progress.downloadSpeed)}/s
             </span>
             <span className="flex items-center gap-0.5">
-              <span className="material-symbols-rounded text-sm">upload</span>
+              <Icon icon="material-symbols:upload" className="text-sm" />
               {prettyBytes(downloadData.progress.uploadSpeed)}/s
             </span>
           </div>
@@ -58,7 +59,7 @@ const DownloadCard = ({ downloadData }) => {
             variant="flat"
             className="bg-zinc-800 text-zinc-400 hover:text-white"
           >
-            <span className="material-symbols-rounded text-lg">pause</span>
+            <Icon icon="material-symbols:pause" className="text-lg" />
           </Button>
           <Button
             isIconOnly
@@ -66,7 +67,7 @@ const DownloadCard = ({ downloadData }) => {
             variant="flat"
             className="bg-zinc-800 text-zinc-400 hover:text-red-500"
           >
-            <span className="material-symbols-rounded text-lg">close</span>
+            <Icon icon="material-symbols:close" className="text-lg" />
           </Button>
         </div>
       </div>

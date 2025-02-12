@@ -20,6 +20,7 @@ interface EpisodeHistory {
   episodeImage: string;
   episodeNumber: number;
   episodeTorrentUrl: string;
+  episodeFileName: string;
   pubDate: string;
   progressData: WatchProgress;
 }
@@ -135,6 +136,7 @@ export class HistoryService {
       episodeImage: existingEpisode?.episodeImage ?? episodeInfo.episodeImage,
       episodeNumber: existingEpisode?.episodeNumber ?? episodeInfo.episodeNumber,
       episodeTorrentUrl: existingEpisode?.episodeTorrentUrl ?? episodeInfo.episodeTorrentUrl,
+      episodeFileName: existingEpisode?.episodeFileName ?? episodeInfo.episodeFileName,
       pubDate: existingEpisode?.pubDate ?? episodeInfo.pubDate,
       progressData,
     };
