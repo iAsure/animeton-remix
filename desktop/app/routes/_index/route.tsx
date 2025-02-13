@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useAmplitude } from '@lib/amplitude';
 
-import useAnimesData from '@/hooks/anime/useAnimesData';
-import useUserActivity from '@/hooks/user/useUserActivity';
-import useModernBackground from '@/hooks/canvas/useModernBackground';
+import useAnimesData from '@hooks/anime/useAnimesData';
+import useUserActivity from '@hooks/user/useUserActivity';
+import useModernBackground from '@hooks/canvas/useModernBackground';
 
 import AnimeCarousel from '@components/anime/AnimeCarousel';
 import Spinner from '@components/decoration/Spinner';

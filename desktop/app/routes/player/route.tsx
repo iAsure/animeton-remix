@@ -3,12 +3,12 @@ import { useSearchParams, useLocation, useNavigate } from '@remix-run/react';
 
 import { IPC_CHANNELS } from '@electron/constants/event-channels';
 
-import useTorrentStream from '@/hooks/media/useTorrentStream';
-import useSubtitles from '@/hooks/media/useSubtitles';
-import useApiSubtitles from '@/hooks/media/useApiSubtitles';
-import useChapters from '@/hooks/media/useChapters';
-import useUserActivity from '@/hooks/user/useUserActivity';
-import useCanvasRpcFrame from '@/hooks/canvas/useRpcFrame';
+import useTorrentStream from '@hooks/media/useTorrentStream';
+import useSubtitles from '@hooks/media/useSubtitles';
+import useApiSubtitles from '@hooks/media/useApiSubtitles';
+import useChapters from '@hooks/media/useChapters';
+import useUserActivity from '@hooks/user/useUserActivity';
+import useRpcFrame from '@hooks/canvas/useRpcFrame';
 
 import VideoSpinner from '@components/video/VideoSpinner';
 import VideoControls from '@components/video/VideoControls';
@@ -86,7 +86,7 @@ const Player = () => {
   const animeEpisode =
     animeHistoryData?.episodeNumber || animeData?.torrent?.episode;
 
-  const rpcFrame = useCanvasRpcFrame({ imageUrl: animeImage }) || null;
+  const rpcFrame = useRpcFrame({ imageUrl: animeImage }) || null;
 
   useEffect(() => {
     if (subtitles) {

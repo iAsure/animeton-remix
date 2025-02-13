@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Divider, Textarea } from "@nextui-org/react";
 import { Icon } from "@iconify/react";
 
-import useDiscordTicket from '@/hooks/user/useDiscordTicket';
+import useDiscordTicket from '@hooks/user/useDiscordTicket';
 
 import { ANIMETON_GUILD_ID } from '@constants/discord';
 

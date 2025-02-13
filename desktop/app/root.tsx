@@ -14,7 +14,7 @@ import Fonts from '@components/core/Fonts';
 import HelpButton from '@components/core/HelpButton';
 import InternetVerification from '@components/core/InternetVerification';
 import ErrorBoundary from '@components/core/ErrorBoundary';
-import useProtocolEvents from '@/hooks/system/useProtocolEvents';
+import useProtocolEvents from '@hooks/system/useProtocolEvents';
 
 import './globals.css';
 

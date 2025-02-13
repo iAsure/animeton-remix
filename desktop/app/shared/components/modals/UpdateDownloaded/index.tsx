@@ -8,7 +8,7 @@ import {
   Divider,
 } from '@nextui-org/react';
 import { Icon } from '@iconify/react';
-import useGithubVersion from '@/hooks/system/useGithubVersion';
+import useGithubVersion from '@hooks/system/useGithubVersion';
 
 const UpdateDownloadedModal = ({ onClose }) => {
   const { data: version, isLoading, error } = useGithubVersion('latest');

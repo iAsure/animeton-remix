@@ -12,7 +12,7 @@ import { Icon } from '@iconify/react';
 import { timeAgo } from '@utils/strings';
 import { getNeonColor } from '@utils/colors';
 
-import useExtractColor from '@/hooks/canvas/useExtractColor';
+import useExtractColor from '@hooks/canvas/useExtractColor';
 
 import FlagsList from '@components/decoration/FlagsList';
 

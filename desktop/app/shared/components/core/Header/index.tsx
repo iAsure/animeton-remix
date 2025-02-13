@@ -3,9 +3,9 @@ import { Divider, Button } from '@nextui-org/react';
 import { useNavigate } from '@remix-run/react';
 import { useState } from 'react';
 
-import useHeaderNavigation from '@/hooks/system/useHeaderNavigation';
-import useUpdateDownload from '@/hooks/system/useUpdateDownload';
-import useAnimeSearch from '@/hooks/anime/useAnimeSearch';
+import useHeaderNavigation from '@hooks/system/useHeaderNavigation';
+import useUpdateDownload from '@hooks/system/useUpdateDownload';
+import useAnimeSearch from '@hooks/anime/useAnimeSearch';
 
 import { useModal } from '@context/ModalContext';
 import { useConfig } from '@context/ConfigContext';

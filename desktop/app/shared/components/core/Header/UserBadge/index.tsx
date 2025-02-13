@@ -5,7 +5,7 @@ import { useAmplitude } from '@lib/amplitude';
 
 import { useConfig } from '@context/ConfigContext';
 
-import useDiscordUser from '@/hooks/user/useDiscordUser';
+import useDiscordUser from '@hooks/user/useDiscordUser';
 
 interface UserBadgeProps {
   discordId: string;

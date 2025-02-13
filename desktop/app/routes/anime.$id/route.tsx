@@ -3,10 +3,10 @@ import { LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { useAmplitude } from '@lib/amplitude';
 
-import useExtractColor from '@/hooks/canvas/useExtractColor';
-import useModernBackground from '@/hooks/canvas/useModernBackground';
-import useCanvasRpcFrame from '@/hooks/canvas/useRpcFrame';
-import useAnimeDetails from '@/hooks/anime/useAnimeDetails';
+import useExtractColor from '@hooks/canvas/useExtractColor';
+import useModernBackground from '@hooks/canvas/useModernBackground';
+import useRpcFrame from '@hooks/canvas/useRpcFrame';
+import useAnimeDetails from '@hooks/anime/useAnimeDetails';
 
 import AnimeOverview from '@components/anime/AnimeOverview';
 import AnimeRecommendationsList from '@components/anime/AnimeRecommendationsList';
@@ -52,7 +52,7 @@ const AnimeDetails: React.FC<AnimeDetailsProps> = ({ state }) => {
   const animeImage = anime?.coverImage?.extraLarge || anime?.bannerImage;
   const bannerImage = anime?.bannerImage || anime?.coverImage?.extraLarge;
 
-  const rpcFrame = useCanvasRpcFrame({ imageUrl: animeImage }) || null;
+  const rpcFrame = useRpcFrame({ imageUrl: animeImage }) || null;
 
   const { animeColors, textColor } = useExtractColor(animeImage);
   const { animeColors: bannerColors } = useExtractColor(bannerImage);

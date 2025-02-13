@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useMediaQuery } from "@hooks/useMediaQuery";
 import Image from "next/image";
 
 interface BackgroundVideoProps {

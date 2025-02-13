@@ -4,7 +4,7 @@ import { Divider } from '@nextui-org/react';
 import AnimeCard from '../AnimeSection/anime';
 import AnimeCardSkeleton from '../AnimeSection/skeleton';
 
-import useAnimeRecommendations from '@/hooks/anime/useAnimeRecommendations';
+import useAnimeRecommendations from '@hooks/anime/useAnimeRecommendations';
 
 interface AnimeRecommendationsListProps {
   idAnilist: number | string;

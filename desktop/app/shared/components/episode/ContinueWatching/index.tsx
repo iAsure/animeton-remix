@@ -2,7 +2,7 @@ import { memo, Fragment } from 'react';
 import { Icon } from '@iconify/react';
 import { motion } from 'framer-motion';
 
-import useUserActivity from '@/hooks/user/useUserActivity';
+import useUserActivity from '@hooks/user/useUserActivity';
 
 import { useTorrentPlayer } from '@context/TorrentPlayerContext';
 

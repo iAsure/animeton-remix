@@ -3,9 +3,9 @@ import { Icon } from '@iconify/react';
 import { motion } from 'framer-motion';
 import { useNavigate } from '@remix-run/react';
 
-import useAnimesData from '@/hooks/anime/useAnimesData';
-import useSearchAnimes from '@/hooks/anime/useSearchAnimes';
-import useModernBackground from '@/hooks/canvas/useModernBackground';
+import useAnimesData from '@hooks/anime/useAnimesData';
+import useSearchAnimes from '@hooks/anime/useSearchAnimes';
+import useModernBackground from '@hooks/canvas/useModernBackground';
 
 import AnimeCard from './anime';
 import AnimeCardSkeleton from './skeleton';
