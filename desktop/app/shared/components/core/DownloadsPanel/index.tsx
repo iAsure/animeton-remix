@@ -1,5 +1,5 @@
 import { Divider } from '@nextui-org/react';
-import useDownloads from '@hooks/useDownloads';
+import useDownloads from '@hooks/user/useDownloads';
 import DownloadCard from './DownloadCard';
 
 interface SidePanelProps {

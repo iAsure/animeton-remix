@@ -1,6 +1,6 @@
 import { useEffect, memo } from 'react';
 
-import useRSSData from '@hooks/useRSSData';
+import useRSSData from '@/hooks/anime/useRSSData';
 import { useTorrentPlayer } from '@context/TorrentPlayerContext';
 import { useNotification } from '@context/NotificationContext';
 

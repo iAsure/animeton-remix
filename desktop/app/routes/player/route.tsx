@@ -3,12 +3,12 @@ import { useSearchParams, useLocation, useNavigate } from '@remix-run/react';
 
 import { IPC_CHANNELS } from '@electron/constants/event-channels';
 
-import useTorrentStream from '@hooks/useTorrentStream';
-import useSubtitles from '@hooks/useSubtitles';
-import useApiSubtitles from '@hooks/useApiSubtitles';
-import useChapters from '@hooks/useChapters';
-import useUserActivity from '@hooks/useUserActivity';
-import useCanvasRpcFrame from '@hooks/useCanvasRpcFrame';
+import useTorrentStream from '@/hooks/media/useTorrentStream';
+import useSubtitles from '@/hooks/media/useSubtitles';
+import useApiSubtitles from '@/hooks/media/useApiSubtitles';
+import useChapters from '@/hooks/media/useChapters';
+import useUserActivity from '@/hooks/user/useUserActivity';
+import useCanvasRpcFrame from '@/hooks/canvas/useRpcFrame';
 
 import VideoSpinner from '@components/video/VideoSpinner';
 import VideoControls from '@components/video/VideoControls';

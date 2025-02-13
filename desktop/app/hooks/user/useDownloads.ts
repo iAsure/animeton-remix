@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import useUserActivity from '@hooks/useUserActivity';
+import useUserActivity from '@/hooks/user/useUserActivity';
 
 interface TorrentProgress {
   numPeers: number;

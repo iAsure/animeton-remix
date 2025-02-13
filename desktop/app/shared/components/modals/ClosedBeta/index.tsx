@@ -1,7 +1,7 @@
 import { Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Divider } from "@nextui-org/react";
 import { Icon } from "@iconify/react";
 import { DISCORD_INVITE_CODE } from '@constants/discord';
-import useGithubVersion from '@hooks/useGithubVersion';
+import useGithubVersion from '@/hooks/system/useGithubVersion';
 
 import { version as appVersion } from '../../../../../package.json';
 

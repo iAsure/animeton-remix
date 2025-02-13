@@ -1,13 +1,13 @@
 import { useEffect, useState, useCallback } from 'react';
 import { API_BASE_URL } from '@constants/config';
 
-interface CanvasRpcFrameProps {
+interface RpcFrameProps {
   imageUrl: string;
 }
 
-const useCanvasRpcFrame = ({
+const useRpcFrame = ({
   imageUrl,
-}: CanvasRpcFrameProps): string | null => {
+}: RpcFrameProps): string | null => {
   const [frame, setFrame] = useState<string | null>(null);
 
   const genFrame = useCallback(async () => {
@@ -30,4 +30,4 @@ const useCanvasRpcFrame = ({
   return frame;
 };
 
-export default useCanvasRpcFrame;
+export default useRpcFrame;

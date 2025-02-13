@@ -3,10 +3,10 @@ import { LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { useAmplitude } from '@lib/amplitude';
 
-import useExtractColor from '@hooks/useExtractColor';
-import useModernBackground from '@hooks/useModernBackground';
-import useCanvasRpcFrame from '@hooks/useCanvasRpcFrame';
-import useAnimeDetails from '@hooks/useAnimeDetails';
+import useExtractColor from '@/hooks/canvas/useExtractColor';
+import useModernBackground from '@/hooks/canvas/useModernBackground';
+import useCanvasRpcFrame from '@/hooks/canvas/useRpcFrame';
+import useAnimeDetails from '@/hooks/anime/useAnimeDetails';
 
 import AnimeOverview from '@components/anime/AnimeOverview';
 import AnimeRecommendationsList from '@components/anime/AnimeRecommendationsList';

@@ -3,7 +3,7 @@ import { Divider, Button } from '@nextui-org/react';
 import { Icon } from '@iconify/react';
 import { motion } from 'framer-motion';
 
-import useAnimeEpisodesData from '@hooks/useAnimeEpisodesData';
+import useAnimeEpisodesData from '@/hooks/anime/useAnimeEpisodesData';
 import EpisodesList from './List';
 
 interface AnimeEpisodesListProps {

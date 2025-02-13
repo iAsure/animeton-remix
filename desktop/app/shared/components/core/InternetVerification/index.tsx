@@ -1,6 +1,6 @@
 import { PropsWithChildren, useEffect, useState } from 'react';
 
-import useInternetConnection from '@hooks/useInternetConnection';
+import useInternetConnection from '@/hooks/system/useInternetConnection';
 
 const InternetVerification = ({ children }: PropsWithChildren) => {
   const [isMounted, setIsMounted] = useState(false);

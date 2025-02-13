@@ -3,8 +3,8 @@ import { Icon } from '@iconify/react';
 import { motion } from 'framer-motion';
 import { useNavigate } from '@remix-run/react';
 
-import useRSSData from '@hooks/useRSSData';
-import useUserActivity from '@hooks/useUserActivity';
+import useRSSData from '@/hooks/anime/useRSSData';
+import useUserActivity from '@/hooks/user/useUserActivity';
 
 import { useTorrentPlayer } from '@context/TorrentPlayerContext';
 import { useNotification } from '@context/NotificationContext';

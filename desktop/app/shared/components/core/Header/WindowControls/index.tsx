@@ -1,5 +1,5 @@
 import { Icon } from '@iconify/react';
-import useWindowControls from '@hooks/useWindowControls';
+import useWindowControls from '@/hooks/system/useWindowControls';
 
 const WindowControls = ({ hideMaximize = false }) => {
   const { isMaximized, handleWindowControl } = useWindowControls();
