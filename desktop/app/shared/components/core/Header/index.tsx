@@ -274,7 +274,7 @@ const Header = () => {
                   isIconOnly
                   variant="light"
                   size="sm"
-                  className="text-white bg-zinc-900"
+                  className="text-white bg-zinc-900 webkit-app-region-no-drag"
                   onClick={handleMenuToggle}
                 >
                   <Icon icon="gravity-ui:sliders" width="22" height="22" />
