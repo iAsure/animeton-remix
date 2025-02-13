@@ -63,7 +63,6 @@ async function checkServerHealth() {
         resolve(false);
       });
 
-
       req.on('timeout', () => {
         log.error('Server health check timeout');
         req.destroy();
@@ -480,7 +479,7 @@ async function validateTorrent(torrentUrl) {
 function sendActiveTorrentsUpdate() {
   if (!activeClient) return;
 
-  const activeTorrents = activeClient.torrents.map(torrent => ({
+  const activeTorrents = activeClient.torrents.map((torrent) => ({
     infoHash: torrent.infoHash,
     name: torrent.name,
     created: torrent.created,
@@ -491,73 +490,129 @@ function sendActiveTorrentsUpdate() {
       progress: torrent.progress,
       downloadSpeed: torrent.downloadSpeed,
       uploadSpeed: torrent.uploadSpeed,
-      remaining: torrent.done ? 'Completado' : humanizeDuration(torrent.timeRemaining),
+      remaining: torrent.done
+        ? 'Completado'
+        : humanizeDuration(torrent.timeRemaining),
       isBuffering: torrent.progress < 0.01,
       ready: torrent.progress > 0.01,
-    }
+      isPaused: torrent.paused,
+    },
   }));
 
   process.parentPort?.postMessage({
     type: IPC_CHANNELS.TORRENT.ACTIVE_TORRENTS,
-    data: activeTorrents
+    data: activeTorrents,
   });
 }
 
-// Message handler
 process.parentPort?.on('message', async (message) => {
-  if (message.data?.action === 'add-torrent') {
-    try {
-      const { client, instance } = await initializeWebTorrentClient();
+  log.info('Received message:', message);
+  const eventMessage = message.data;
+  
+  try {
+    switch (eventMessage.type) {
+      case IPC_CHANNELS.TORRENT.ADD:
+        await handleAddTorrent(eventMessage.data);
+        break;
 
-      if (!client || !instance) {
-        throw new Error('Failed to initialize torrent client');
-      }
+      case IPC_CHANNELS.TORRENT.PAUSE:
+        const pauseResult = await handlePauseTorrent(eventMessage?.data.infoHash);
+        sendActiveTorrentsUpdate();
+        break;
 
-      const dupTorrent = client.torrents.find(
-        (torrent) => torrent.infoHash === message.data.torrentHash
-      );
+      case IPC_CHANNELS.TORRENT.REMOVE:
+        const removeResult = await handleRemoveTorrent(eventMessage?.data.infoHash);
+        sendActiveTorrentsUpdate();
+        break;
+      
+      case IPC_CHANNELS.TORRENT.GET_ACTIVE_TORRENTS:
+        sendActiveTorrentsUpdate();
+        break;
 
-      log.info('Torrents', client.torrents.map((t) => ({ created: t.created, infoHash: t.infoHash, name: t.name })));
-      log.info('torrentHashes', client.torrents.map((t) => t.infoHash));
-      log.info('Received torrent hash:', message.data.torrentHash);
-
-      if (dupTorrent) {
-        log.info('Duplicate torrent found, using existing torrent');
-        return handleTorrent(dupTorrent, instance);
-      }
-
-      await validateTorrent(message.data.torrentUrl);
-
-      client.add(message.data.torrentUrl, { announce: ANNOUNCE }, (torrent) => {
-        handleTorrent(torrent, instance).catch((error) => {
-          log.error('Error handling torrent:', error);
-          process.parentPort?.postMessage({
-            type: IPC_CHANNELS.TORRENT.ERROR,
-            data: { error: error.message },
-          });
+      case IPC_CHANNELS.TORRENT.CHECK_SERVER:
+        const serverStatus = await handleCheckServer();
+        process.parentPort?.postMessage({
+          type: IPC_CHANNELS.TORRENT.SERVER_STATUS,
+          data: serverStatus
         });
-      });
-    } catch (error) {
-      log.error('Error initializing WebTorrent:', error);
-      process.parentPort?.postMessage({
-        type: IPC_CHANNELS.TORRENT.ERROR,
-        data: { error: 'Episodio no disponible en este momento' },
-      });
+        break;
+
+      default:
+        log.warn('Unknown message:', message);
     }
-  } else if (message.data?.action === 'check-server') {
-    // Add server health check handler
-    const isHealthy = await checkServerHealth();
+  } catch (error) {
     process.parentPort?.postMessage({
-      type: IPC_CHANNELS.TORRENT.SERVER_STATUS,
-      data: {
-        active: isHealthy,
-        port: torrentServer?.server.address().port,
-      },
+      type: IPC_CHANNELS.TORRENT.ERROR,
+      data: { error: error.message }
     });
-  } else if (message.type === IPC_CHANNELS.TORRENT.GET_ACTIVE_TORRENTS) {
-    sendActiveTorrentsUpdate();
   }
 });
+
+async function handleAddTorrent({ torrentUrl, torrentHash }) {
+  const { client, instance } = await initializeWebTorrentClient();
+
+  const dupTorrent = client.torrents.find(
+    (torrent) => torrent.infoHash === torrentHash
+  );
+
+  if (dupTorrent) {
+    log.info('Duplicate torrent found, using existing torrent');
+    await handleTorrent(dupTorrent, instance);
+    return;
+  }
+
+  await validateTorrent(torrentUrl);
+
+  return new Promise((resolve, reject) => {
+    client.add(torrentUrl, { announce: ANNOUNCE }, async (torrent) => {
+      try {
+        await handleTorrent(torrent, instance);
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+}
+
+async function handleCheckServer() {
+  const isHealthy = await checkServerHealth();
+  return {
+    active: isHealthy,
+    port: torrentServer?.server.address().port,
+  };
+}
+
+async function handlePauseTorrent(infoHash) {
+  const torrent = activeClient?.torrents.find((t) => t.infoHash === infoHash);
+  if (!torrent) throw new Error(`Torrent ${infoHash} not found`);
+
+  log.info(`Torrent ${infoHash.slice(0, 8)} paused status: (${torrent.paused})`);
+
+  torrent.paused ? torrent.resume() : torrent.pause();
+
+  
+  sendActiveTorrentsUpdate();
+  
+  return { 
+    success: true, 
+    isPaused: torrent.paused,
+    infoHash 
+  };
+}
+
+async function handleRemoveTorrent(infoHash) {
+  const torrent = activeClient?.torrents.find((t) => t.infoHash === infoHash);
+  if (!torrent) throw new Error(`Torrent ${infoHash} not found`);
+
+  torrent.destroy();
+  sendActiveTorrentsUpdate();
+  
+  return { 
+    success: true,
+    infoHash 
+  };
+}
 
 process.on('SIGTERM', cleanup);
 process.on('SIGINT', cleanup);

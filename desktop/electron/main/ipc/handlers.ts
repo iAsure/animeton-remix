@@ -33,19 +33,6 @@ export async function setupIpcHandlers(
   const historyService = new HistoryService(mainWindow);
   await historyService.initialize();
 
-  // Register torrent handler
-  ipcMain.on(IPC_CHANNELS.TORRENT.ADD, (_, arg) => {
-    log.debug('Torrent action received:', arg);
-    const { action, torrentUrl, torrentHash } = arg;
-    const message = {
-      action,
-      torrentUrl,
-      torrentHash,
-    };
-    
-    webTorrentProcess.postMessage(message);
-  });
-
   // Handle WebTorrent process messages
   webTorrentProcess.on('message', async (message) => {
     const handler = torrentHandlers[message.type];

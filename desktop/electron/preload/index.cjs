@@ -29,21 +29,12 @@ const createEventHandler = (channel) => ({
   };
 
   const api = {
-    addTorrent: (torrentUrl, torrentHash) => {
-      ipcRenderer.send(IPC_CHANNELS.TORRENT.ADD, {
-        action: torrentUrl === 'destroy' ? 'destroy' : 'add-torrent',
-        torrentUrl,
-        torrentHash,
-      });
-    },
-
-    checkTorrentServer: () => {
-      ipcRenderer.send(IPC_CHANNELS.TORRENT.ADD, {
-        action: 'check-server',
-      });
-    },
-
     torrent: {
+      add: (payload) => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.ADD, payload),
+      checkServer: () => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.CHECK_SERVER),
+      getActiveTorrents: () => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.GET_ACTIVE_TORRENTS),
+      pause: (infoHash) => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.PAUSE, infoHash),
+      remove: (infoHash) => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.REMOVE, infoHash),
       onProgress: createEventHandler(IPC_CHANNELS.TORRENT.PROGRESS),
       onDone: createEventHandler(IPC_CHANNELS.TORRENT.DONE),
       onServerDone: createEventHandler(IPC_CHANNELS.TORRENT.SERVER_DONE),
@@ -56,7 +47,6 @@ const createEventHandler = (channel) => ({
       onServerStatus: createEventHandler(IPC_CHANNELS.TORRENT.SERVER_STATUS),
       onWarning: createEventHandler(IPC_CHANNELS.TORRENT.WARNING),
       onActiveTorrents: createEventHandler(IPC_CHANNELS.TORRENT.ACTIVE_TORRENTS),
-      getActiveTorrents: () => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.GET_ACTIVE_TORRENTS),
     },
 
     subtitles: {

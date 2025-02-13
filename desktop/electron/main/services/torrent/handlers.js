@@ -7,10 +7,35 @@ export function setupTorrentHandlers(
   mainWindow,
   subtitlesService
 ) {
-  ipcMain.handle(IPC_CHANNELS.TORRENT.GET_ACTIVE_TORRENTS, async () => {
-    return new Promise((resolve) => {
-      webTorrentProcess.postMessage({ type: IPC_CHANNELS.TORRENT.GET_ACTIVE_TORRENTS });
+  ipcMain.handle(IPC_CHANNELS.TORRENT.ADD, async (_, payload) => {
+    webTorrentProcess.postMessage({ 
+      type: IPC_CHANNELS.TORRENT.ADD, 
+      data: payload 
+    });
+    
+    return new Promise((resolve, reject) => {
+      const handleResponse = (message) => {
+        const { type, data, error } = message;
+        
+        if (type === IPC_CHANNELS.TORRENT.SERVER_DONE) {
+          webTorrentProcess.off('message', handleResponse);
+          resolve(data);
+        } else if (type === IPC_CHANNELS.TORRENT.ERROR && error) {
+          webTorrentProcess.off('message', handleResponse);
+          reject(new Error(error));
+        }
+      };
       
+      webTorrentProcess.on('message', handleResponse);
+    });
+  });
+
+  ipcMain.handle(IPC_CHANNELS.TORRENT.GET_ACTIVE_TORRENTS, async () => {
+    webTorrentProcess.postMessage({ 
+      type: IPC_CHANNELS.TORRENT.GET_ACTIVE_TORRENTS 
+    });
+    
+    return new Promise((resolve) => {
       const handleResponse = (message) => {
         if (message.type === IPC_CHANNELS.TORRENT.ACTIVE_TORRENTS) {
           webTorrentProcess.off('message', handleResponse);
@@ -22,50 +47,82 @@ export function setupTorrentHandlers(
     });
   });
 
-  return {
-    [IPC_CHANNELS.TORRENT.PROGRESS]: (data) => {
-      mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.PROGRESS, data);
-    },
-
-    [IPC_CHANNELS.TORRENT.DOWNLOAD_RANGES]: (data) => {
-      if (!data.ranges) return;
+  ipcMain.handle(IPC_CHANNELS.TORRENT.PAUSE, async (_, infoHash) => {
+    webTorrentProcess.postMessage({ 
+      type: IPC_CHANNELS.TORRENT.PAUSE,
+      data: { infoHash }
+    });
+    
+    return new Promise((resolve) => {
+      const handleResponse = (message) => {
+        if (message.type === IPC_CHANNELS.TORRENT.ACTIVE_TORRENTS) {
+          webTorrentProcess.off('message', handleResponse);
+          const torrent = message.data.find(t => t.infoHash === infoHash);
+          resolve({
+            success: true,
+            isPaused: torrent?.progress.isPaused || false
+          });
+        }
+      };
       
-      mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.DOWNLOAD_RANGES, data);
-    },
+      webTorrentProcess.on('message', handleResponse);
+    });
+  });
 
-    [IPC_CHANNELS.TORRENT.DONE]: () => {
-      mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.DONE);
-    },
+  ipcMain.handle(IPC_CHANNELS.TORRENT.REMOVE, async (_, infoHash) => {
+    webTorrentProcess.postMessage({ 
+      type: IPC_CHANNELS.TORRENT.REMOVE,
+      data: { infoHash }
+    });
+    
+    return new Promise((resolve) => {
+      const handleResponse = (message) => {
+        if (message.type === IPC_CHANNELS.TORRENT.ACTIVE_TORRENTS) {
+          webTorrentProcess.off('message', handleResponse);
+          resolve({ success: true });
+        }
+      };
+      
+      webTorrentProcess.on('message', handleResponse);
+    });
+  });
 
-    [IPC_CHANNELS.TORRENT.SERVER_DONE]: (data) => {
-      mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.SERVER_DONE, data);
-    },
+  ipcMain.handle(IPC_CHANNELS.TORRENT.CHECK_SERVER, async () => {
+    webTorrentProcess.postMessage({ 
+      type: IPC_CHANNELS.TORRENT.CHECK_SERVER 
+    });
+    
+    return new Promise((resolve) => {
+      const handleResponse = (message) => {
+        if (message.type === IPC_CHANNELS.TORRENT.SERVER_STATUS) {
+          webTorrentProcess.off('message', handleResponse);
+          resolve(message.data);
+        }
+      };
+      
+      webTorrentProcess.on('message', handleResponse);
+    });
+  });
 
-    [IPC_CHANNELS.TORRENT.ERROR]: (error) => {
-      log.error('Torrent error:', error);
-      mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.ERROR, error);
-    },
+  const forwardToRenderer = (type) => (data) => {
+    if (mainWindow?.webContents) {
+      mainWindow.webContents.send(type, data);
+    }
+  };
 
-    [IPC_CHANNELS.TORRENT.SERVER_STATUS]: (data) => {
-      mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.SERVER_STATUS, data);
-    },
-
-    // [IPC_CHANNELS.TORRENT.WARNING]: (data) => {
-    //   mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.WARNING, data);
-    // },
-
+  return {
+    [IPC_CHANNELS.TORRENT.PROGRESS]: forwardToRenderer(IPC_CHANNELS.TORRENT.PROGRESS),
+    [IPC_CHANNELS.TORRENT.DOWNLOAD_RANGES]: forwardToRenderer(IPC_CHANNELS.TORRENT.DOWNLOAD_RANGES),
+    [IPC_CHANNELS.TORRENT.DONE]: forwardToRenderer(IPC_CHANNELS.TORRENT.DONE),
+    [IPC_CHANNELS.TORRENT.ERROR]: forwardToRenderer(IPC_CHANNELS.TORRENT.ERROR),
+    [IPC_CHANNELS.TORRENT.SERVER_STATUS]: forwardToRenderer(IPC_CHANNELS.TORRENT.SERVER_STATUS),
+    [IPC_CHANNELS.TORRENT.ACTIVE_TORRENTS]: forwardToRenderer(IPC_CHANNELS.TORRENT.ACTIVE_TORRENTS),
+    [IPC_CHANNELS.TORRENT.SERVER_DONE]: forwardToRenderer(IPC_CHANNELS.TORRENT.SERVER_DONE),
     [IPC_CHANNELS.TORRENT.MKV_PROCESS]: async (data) => {
-      log.info('Processing MKV file:', data.filePath);
       mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.MKV_PROCESS, data);
-
-      // Process subtitles if available
-      if (subtitlesService) {
+      if (subtitlesService && data.status === 'ready_for_subtitles') {
         await subtitlesService.processFile(data.filePath);
       }
-    },
-
-    [IPC_CHANNELS.TORRENT.ACTIVE_TORRENTS]: (data) => {
-      mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.ACTIVE_TORRENTS, data);
-    },
+    }
   };
 }

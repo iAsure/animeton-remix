@@ -221,7 +221,6 @@ const Player = () => {
 
   useEffect(() => {
     if (animeData) {
-      console.log('animeData', animeData);
       amplitude.track('Episode Viewed', {
         idAnilist: animeData.idAnilist,
         title: animeTitle,

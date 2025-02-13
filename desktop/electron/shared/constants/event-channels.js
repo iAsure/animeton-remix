@@ -1,6 +1,7 @@
 export const IPC_CHANNELS = {
   TORRENT: {
-    ADD: 'webtorrent-action',
+    ADD: 'torrent:add',
+    CHECK_SERVER: 'torrent:check-server',
     PROGRESS: 'torrent-progress',
     DONE: 'torrent-done',
     SERVER_DONE: 'torrent-server-done',
@@ -13,6 +14,8 @@ export const IPC_CHANNELS = {
     WARNING: 'torrent-warning',
     ACTIVE_TORRENTS: 'torrent:active-torrents',
     GET_ACTIVE_TORRENTS: 'torrent:get-active-torrents',
+    PAUSE: 'torrent:pause',
+    REMOVE: 'torrent:remove',
   },
   SUBTITLES: {
     EXTRACT: 'extract-subtitles',

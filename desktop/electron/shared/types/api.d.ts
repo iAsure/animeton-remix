@@ -8,6 +8,9 @@ export interface TorrentProgress {
   downloadSpeed: number;
   uploadSpeed: number;
   remaining: string;
+  isBuffering: boolean;
+  ready: boolean;
+  isPaused: boolean;
 }
 
 export interface TorrentServerDone {
@@ -36,6 +39,11 @@ export interface TorrentRangeData {
 }
 
 export interface TorrentApi {
+  add: (payload: { torrentUrl: string, torrentHash: string }) => Promise<void>;
+  checkServer: () => Promise<{ active: boolean; port?: number }>;
+  getActiveTorrents: () => Promise<ActiveTorrent[]>;
+  pause: (infoHash: string) => Promise<{ success: boolean; isPaused: boolean }>;
+  remove: (infoHash: string) => Promise<{ success: boolean }>;
   onProgress: EventHandler<TorrentProgress>;
   onDone: EventHandler<void>;
   onServerDone: EventHandler<TorrentServerDone>;
@@ -46,7 +54,6 @@ export interface TorrentApi {
   onServerStatus: EventHandler<{ active: boolean; port?: number }>;
   onWarning: EventHandler<{ warning: string }>;
   onActiveTorrents: EventHandler<ActiveTorrent[]>;
-  getActiveTorrents: () => Promise<ActiveTorrent[]>;
 }
 
 export interface SubtitleCue {
@@ -232,8 +239,6 @@ export interface NavigationApi {
 }
 
 export interface Api {
-  addTorrent: (torrentUrl: string, torrentHash: string) => void;
-  checkTorrentServer: () => void;
   torrent: TorrentApi;
   subtitles: SubtitlesApi;
   shell: ShellApi;

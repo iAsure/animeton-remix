@@ -1,8 +1,34 @@
 import { prettyBytes } from '@utils/strings';
 import { Button } from '@nextui-org/react';
 import { Icon } from '@iconify/react';
+import { useEffect, useState } from 'react';
 
 const DownloadCard = ({ downloadData }) => {
+  const [isPaused, setIsPaused] = useState(downloadData.progress.isPaused);
+
+  useEffect(() => {
+    setIsPaused(downloadData.progress.isPaused);
+  }, [downloadData.progress.isPaused]);
+
+  const handlePauseResume = async () => {
+    try {
+      console.log('Sending pause on: ', downloadData.torrentHash);
+
+      const response = await window.api.torrent.pause(downloadData.torrentHash);
+      setIsPaused(response.isPaused);
+    } catch (error) {
+      console.error('Error al cambiar estado del torrent:', error);
+    }
+  };
+
+  const handleRemove = async () => {
+    try {
+      await window.api.torrent.remove(downloadData.torrentHash);
+    } catch (error) {
+      console.error('Error al eliminar torrent:', error);
+    }
+  };
+
   return (
     <div
       key={downloadData.episodeId}
@@ -58,16 +84,25 @@ const DownloadCard = ({ downloadData }) => {
             size="sm"
             variant="flat"
             className="bg-zinc-800 text-zinc-400 hover:text-white"
+            onClick={handlePauseResume}
           >
-            <Icon icon="material-symbols:pause" className="text-lg" />
+            <Icon
+              icon={
+                isPaused
+                  ? 'material-symbols:play-arrow'
+                  : 'material-symbols:pause'
+              }
+              className="text-lg"
+            />
           </Button>
           <Button
             isIconOnly
             size="sm"
             variant="flat"
             className="bg-zinc-800 text-zinc-400 hover:text-red-500"
+            onClick={handleRemove}
           >
-            <Icon icon="material-symbols:close" className="text-lg" />
+            <Icon icon="material-symbols:delete" className="text-lg" />
           </Button>
         </div>
       </div>

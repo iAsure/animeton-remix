@@ -56,7 +56,7 @@ const useTorrentStream = (torrentUrl: string, torrentHash: string) => {
       setState(prev => ({ ...prev, error: null, isBuffering: true }));
       
       if (retryCount === 0) {
-        window.api.addTorrent(torrentUrl, torrentHash);
+        window.api.torrent.add({ torrentUrl, torrentHash });
       }
     } catch (error) {
       if (!isMounted.current) return;
@@ -80,7 +80,7 @@ const useTorrentStream = (torrentUrl: string, torrentHash: string) => {
 
   const checkServerStatus = useCallback(async () => {
     if (!torrentUrl) return;
-    window.api.checkTorrentServer();
+    window.api.torrent.checkServer();
   }, [torrentUrl]);
 
   useEffect(() => {
@@ -179,7 +179,7 @@ const useTorrentStream = (torrentUrl: string, torrentHash: string) => {
       
       // Only destroy if we're unmounting
       if (!isMounted.current) {
-        window.api.addTorrent('destroy', torrentHash);
+        // window.api.torrent.remove(torrentHash);
       }
       setState(INITIAL_STATE);
       clearInterval(statusCheckInterval);
