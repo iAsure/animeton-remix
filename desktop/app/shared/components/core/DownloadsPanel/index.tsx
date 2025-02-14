@@ -8,7 +8,7 @@ interface SidePanelProps {
 }
 
 const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
-  const { downloads, hasActiveDownloads } = useDownloads();
+  const { visualDownloads, hasActiveDownloads } = useDownloads();
 
   return (
     <>
@@ -28,11 +28,11 @@ const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
       >
         <div className="p-6">
           <h2 className="text-xl font-bold text-white mb-4">
-            Descargas {hasActiveDownloads ? `(${downloads.length})` : ''}
+            Descargas {hasActiveDownloads ? `(${visualDownloads.length})` : ''}
           </h2>
           <Divider />
           <div className="mt-4 space-y-4">
-            {downloads.map((download) => (
+            {visualDownloads.map((download) => (
               <DownloadCard key={download.episodeId} downloadData={download} />
             ))}
 

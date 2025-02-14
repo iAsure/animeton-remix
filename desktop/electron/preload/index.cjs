@@ -33,7 +33,7 @@ const createEventHandler = (channel) => ({
       add: (payload) => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.ADD, payload),
       checkServer: () => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.CHECK_SERVER),
       getActiveTorrents: () => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.GET_ACTIVE_TORRENTS),
-      pause: (infoHash) => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.PAUSE, infoHash),
+      pause: (payload) => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.PAUSE, payload),
       remove: (infoHash) => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.REMOVE, infoHash),
       onProgress: createEventHandler(IPC_CHANNELS.TORRENT.PROGRESS),
       onDone: createEventHandler(IPC_CHANNELS.TORRENT.DONE),

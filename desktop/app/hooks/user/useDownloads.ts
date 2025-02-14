@@ -33,23 +33,22 @@ interface Download {
     episodeTorrentUrl: string;
     pubDate: string;
   };
+  status: 'downloading' | 'paused' | 'completed';
 }
 
 const useDownloads = () => {
   const [downloads, setDownloads] = useState<Download[]>([]);
+  const [visualDownloads, setVisualDownloads] = useState<Download[]>([]);
   const { history } = useUserActivity();
 
   const updateDownloads = useCallback((activeTorrents: ActiveTorrent[]) => {
-    if (!history) {
-      return;
-    }
+    if (!history) return;
 
     const newDownloads = Object.entries(history.episodes)
       .filter(([episodeId, _]) => {
         const activeTorrent = activeTorrents.find(
           torrent => torrent.infoHash.toLowerCase() === episodeId.toLowerCase()
         );
-
         return activeTorrent !== undefined;
       })
       .map(([episodeId, episode]) => {
@@ -79,13 +78,44 @@ const useDownloads = () => {
             episodeNumber: episode.episodeNumber,
             episodeTorrentUrl: episode.episodeTorrentUrl,
             pubDate: episode.pubDate,
-          }
+          },
+          status: 'downloading'
         };
 
         return download;
       });
 
     setDownloads(newDownloads);
+    
+    setVisualDownloads(prevVisual => {
+      const updatedVisual = [...prevVisual];
+      
+      newDownloads.forEach(download => {
+        const existingIndex = updatedVisual.findIndex(d => d.episodeId === download.episodeId);
+        if (existingIndex >= 0) {
+          updatedVisual[existingIndex] = {
+            ...download,
+            status: 'downloading'
+          };
+        } else {
+          updatedVisual.push(download);
+        }
+      });
+
+      prevVisual.forEach(visual => {
+        if (!newDownloads.find(d => d.episodeId === visual.episodeId)) {
+          const existingIndex = updatedVisual.findIndex(d => d.episodeId === visual.episodeId);
+          if (existingIndex >= 0) {
+            updatedVisual[existingIndex] = {
+              ...visual,
+              status: 'paused'
+            };
+          }
+        }
+      });
+
+      return updatedVisual;
+    });
   }, [history]);
 
   useEffect(() => {
@@ -113,10 +143,12 @@ const useDownloads = () => {
 
   return {
     downloads,
+    visualDownloads,
     hasActiveDownloads: downloads.length > 0,
+    hasVisualDownloads: visualDownloads.length > 0,
     getDownloadByEpisodeId: useCallback((episodeId: string) => {
-      return downloads.find(d => d.episodeId === episodeId);
-    }, [downloads])
+      return visualDownloads.find(d => d.episodeId === episodeId);
+    }, [visualDownloads])
   };
 };
 

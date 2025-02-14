@@ -344,7 +344,10 @@ async function handleTorrent(torrent, instance) {
 function sendProgressUpdate(torrent) {
   if (torrent.infoHash !== activeTorrentInfoHash) return;
 
-  const file = torrent.files[0];
+  const file = torrent?.files[0];
+
+  if (!file) return;
+
   const startPiece = file._startPiece;
   const endPiece = file._endPiece;
   const numPieces = endPiece - startPiece + 1;
@@ -472,7 +475,7 @@ async function validateTorrent(torrentUrl) {
       throw new Error(`Error ${response.status}: ${response.statusText}`);
     }
   } catch (error) {
-    throw new Error(error.message);
+    throw new Error('No se pudo acceder al episodio, verifica tu conexión');
   }
 }
 
@@ -508,7 +511,7 @@ function sendActiveTorrentsUpdate() {
 process.parentPort?.on('message', async (message) => {
   log.info('Received message:', message);
   const eventMessage = message.data;
-  
+
   try {
     switch (eventMessage.type) {
       case IPC_CHANNELS.TORRENT.ADD:
@@ -516,15 +519,21 @@ process.parentPort?.on('message', async (message) => {
         break;
 
       case IPC_CHANNELS.TORRENT.PAUSE:
-        const pauseResult = await handlePauseTorrent(eventMessage?.data.infoHash);
+        const pauseResult = await handlePauseTorrent(eventMessage?.data.payload);
+        process.parentPort?.postMessage({
+          type: IPC_CHANNELS.TORRENT.PAUSE,
+          data: pauseResult
+        });
         sendActiveTorrentsUpdate();
         break;
 
       case IPC_CHANNELS.TORRENT.REMOVE:
-        const removeResult = await handleRemoveTorrent(eventMessage?.data.infoHash);
+        const removeResult = await handleRemoveTorrent(
+          eventMessage?.data.infoHash
+        );
         sendActiveTorrentsUpdate();
         break;
-      
+
       case IPC_CHANNELS.TORRENT.GET_ACTIVE_TORRENTS:
         sendActiveTorrentsUpdate();
         break;
@@ -533,7 +542,7 @@ process.parentPort?.on('message', async (message) => {
         const serverStatus = await handleCheckServer();
         process.parentPort?.postMessage({
           type: IPC_CHANNELS.TORRENT.SERVER_STATUS,
-          data: serverStatus
+          data: serverStatus,
         });
         break;
 
@@ -543,36 +552,41 @@ process.parentPort?.on('message', async (message) => {
   } catch (error) {
     process.parentPort?.postMessage({
       type: IPC_CHANNELS.TORRENT.ERROR,
-      data: { error: error.message }
+      data: { error: error.message },
     });
   }
 });
 
 async function handleAddTorrent({ torrentUrl, torrentHash }) {
-  const { client, instance } = await initializeWebTorrentClient();
+  try {
+    const { client, instance } = await initializeWebTorrentClient();
 
-  const dupTorrent = client.torrents.find(
-    (torrent) => torrent.infoHash === torrentHash
-  );
+    const dupTorrent = client.torrents.find(
+      (torrent) => torrent.infoHash === torrentHash
+    );
 
-  if (dupTorrent) {
-    log.info('Duplicate torrent found, using existing torrent');
-    await handleTorrent(dupTorrent, instance);
-    return;
-  }
+    if (dupTorrent) {
+      log.info('Duplicate torrent found, using existing torrent');
+      await handleTorrent(dupTorrent, instance);
+      return;
+    }
 
-  await validateTorrent(torrentUrl);
+    await validateTorrent(torrentUrl);
 
-  return new Promise((resolve, reject) => {
-    client.add(torrentUrl, { announce: ANNOUNCE }, async (torrent) => {
-      try {
-        await handleTorrent(torrent, instance);
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
+    client.add(torrentUrl, { announce: ANNOUNCE }, (torrent) => {
+      handleTorrent(torrent, instance).catch((error) => {
+        log.error('Error handling torrent:', error);
+      });
     });
-  });
+  } catch (error) {
+    log.error('Error adding torrent:', error);
+    process.parentPort?.postMessage({
+      type: IPC_CHANNELS.TORRENT.ERROR,
+      data: {
+        error: error?.message || 'Episodio no disponible en este momento',
+      },
+    });
+  }
 }
 
 async function handleCheckServer() {
@@ -583,21 +597,27 @@ async function handleCheckServer() {
   };
 }
 
-async function handlePauseTorrent(infoHash) {
+async function handlePauseTorrent({ infoHash, torrentUrl }) {
   const torrent = activeClient?.torrents.find((t) => t.infoHash === infoHash);
-  if (!torrent) throw new Error(`Torrent ${infoHash} not found`);
+  if (!torrent) {
+    await handleAddTorrent({ torrentUrl, torrentHash: infoHash });
+    sendActiveTorrentsUpdate();
+    return {
+      success: true,
+      isPaused: false,
+      infoHash,
+    };
+  }
 
-  log.info(`Torrent ${infoHash.slice(0, 8)} paused status: (${torrent.paused})`);
+  torrent.destroy();
+  activeTorrentInfoHash = null;
 
-  torrent.paused ? torrent.resume() : torrent.pause();
-
-  
   sendActiveTorrentsUpdate();
-  
-  return { 
-    success: true, 
-    isPaused: torrent.paused,
-    infoHash 
+
+  return {
+    success: true,
+    isPaused: true,
+    infoHash,
   };
 }
 
@@ -607,10 +627,10 @@ async function handleRemoveTorrent(infoHash) {
 
   torrent.destroy();
   sendActiveTorrentsUpdate();
-  
-  return { 
+
+  return {
     success: true,
-    infoHash 
+    infoHash,
   };
 }
 

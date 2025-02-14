@@ -39,10 +39,13 @@ export interface TorrentRangeData {
 }
 
 export interface TorrentApi {
-  add: (payload: { torrentUrl: string, torrentHash: string }) => Promise<void>;
+  add: (payload: { torrentUrl: string; torrentHash: string }) => Promise<void>;
   checkServer: () => Promise<{ active: boolean; port?: number }>;
   getActiveTorrents: () => Promise<ActiveTorrent[]>;
-  pause: (infoHash: string) => Promise<{ success: boolean; isPaused: boolean }>;
+  pause: (payload: {
+    infoHash: string;
+    torrentUrl: string;
+  }) => Promise<{ success: boolean; isPaused: boolean }>;
   remove: (infoHash: string) => Promise<{ success: boolean }>;
   onProgress: EventHandler<TorrentProgress>;
   onDone: EventHandler<void>;
@@ -177,14 +180,14 @@ export interface WatchHistory {
   lastUpdated: number;
   episodes: {
     [id: string]: EpisodeHistory;
-  }
+  };
 }
 
 export interface HistoryApi {
   getProgress: (episodeId: string) => Promise<EpisodeHistory | undefined>;
   updateProgress: (
-    episodeId: string, 
-    progress: number, 
+    episodeId: string,
+    progress: number,
     duration: number,
     episodeInfo: Omit<EpisodeHistory, 'progressData'>
   ) => Promise<void>;

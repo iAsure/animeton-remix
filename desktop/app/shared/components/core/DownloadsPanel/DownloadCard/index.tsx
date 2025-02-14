@@ -14,7 +14,11 @@ const DownloadCard = ({ downloadData }) => {
     try {
       console.log('Sending pause on: ', downloadData.torrentHash);
 
-      const response = await window.api.torrent.pause(downloadData.torrentHash);
+      const response = await window.api.torrent.pause({
+        infoHash: downloadData.torrentHash,
+        torrentUrl: downloadData.episodeInfo.episodeTorrentUrl,
+      });
+      console.log('Pause response: ', response);
       setIsPaused(response.isPaused);
     } catch (error) {
       console.error('Error al cambiar estado del torrent:', error);

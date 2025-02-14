@@ -47,21 +47,17 @@ export function setupTorrentHandlers(
     });
   });
 
-  ipcMain.handle(IPC_CHANNELS.TORRENT.PAUSE, async (_, infoHash) => {
+  ipcMain.handle(IPC_CHANNELS.TORRENT.PAUSE, async (_, payload) => {
     webTorrentProcess.postMessage({ 
       type: IPC_CHANNELS.TORRENT.PAUSE,
-      data: { infoHash }
+      data: { payload }
     });
     
     return new Promise((resolve) => {
       const handleResponse = (message) => {
-        if (message.type === IPC_CHANNELS.TORRENT.ACTIVE_TORRENTS) {
+        if (message.type === IPC_CHANNELS.TORRENT.PAUSE) {
           webTorrentProcess.off('message', handleResponse);
-          const torrent = message.data.find(t => t.infoHash === infoHash);
-          resolve({
-            success: true,
-            isPaused: torrent?.progress.isPaused || false
-          });
+          resolve(message.data);
         }
       };
       
