@@ -106,7 +106,7 @@ export function setupTorrentHandlers(
     }
   };
 
-  return {
+  const torrentHandlers = {
     [IPC_CHANNELS.TORRENT.PROGRESS]: forwardToRenderer(IPC_CHANNELS.TORRENT.PROGRESS),
     [IPC_CHANNELS.TORRENT.DOWNLOAD_RANGES]: forwardToRenderer(IPC_CHANNELS.TORRENT.DOWNLOAD_RANGES),
     [IPC_CHANNELS.TORRENT.DONE]: forwardToRenderer(IPC_CHANNELS.TORRENT.DONE),
@@ -114,6 +114,7 @@ export function setupTorrentHandlers(
     [IPC_CHANNELS.TORRENT.SERVER_STATUS]: forwardToRenderer(IPC_CHANNELS.TORRENT.SERVER_STATUS),
     [IPC_CHANNELS.TORRENT.ACTIVE_TORRENTS]: forwardToRenderer(IPC_CHANNELS.TORRENT.ACTIVE_TORRENTS),
     [IPC_CHANNELS.TORRENT.SERVER_DONE]: forwardToRenderer(IPC_CHANNELS.TORRENT.SERVER_DONE),
+    [IPC_CHANNELS.TORRENT.PAUSE]: forwardToRenderer(IPC_CHANNELS.TORRENT.PAUSE),
     [IPC_CHANNELS.TORRENT.MKV_PROCESS]: async (data) => {
       mainWindow?.webContents.send(IPC_CHANNELS.TORRENT.MKV_PROCESS, data);
       if (subtitlesService && data.status === 'ready_for_subtitles') {
@@ -121,4 +122,6 @@ export function setupTorrentHandlers(
       }
     }
   };
+
+  return torrentHandlers;
 }

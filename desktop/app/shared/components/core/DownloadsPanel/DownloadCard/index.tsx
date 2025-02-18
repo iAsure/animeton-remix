@@ -4,24 +4,26 @@ import { Icon } from '@iconify/react';
 import { useEffect, useState } from 'react';
 
 const DownloadCard = ({ downloadData }) => {
-  const [isPaused, setIsPaused] = useState(downloadData.progress.isPaused);
+  const isPaused = downloadData.status === 'paused';
+  const [localIsPaused, setLocalIsPaused] = useState(downloadData.progress.isPaused);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    setIsPaused(downloadData.progress.isPaused);
+    setLocalIsPaused(downloadData.progress.isPaused);
   }, [downloadData.progress.isPaused]);
 
   const handlePauseResume = async () => {
     try {
-      console.log('Sending pause on: ', downloadData.torrentHash);
-
+      setIsProcessing(true);
       const response = await window.api.torrent.pause({
         infoHash: downloadData.torrentHash,
         torrentUrl: downloadData.episodeInfo.episodeTorrentUrl,
       });
-      console.log('Pause response: ', response);
-      setIsPaused(response.isPaused);
+      setLocalIsPaused(response.isPaused);
     } catch (error) {
       console.error('Error al cambiar estado del torrent:', error);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -53,16 +55,18 @@ const DownloadCard = ({ downloadData }) => {
           <div className="text-xs text-zinc-400">
             Episodio {downloadData.episodeInfo.episodeNumber}
           </div>
-          <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500">
-            <span className="flex items-center gap-0.5">
-              <Icon icon="material-symbols:download" className="text-sm" />
-              {prettyBytes(downloadData.progress.downloadSpeed)}/s
-            </span>
-            <span className="flex items-center gap-0.5">
-              <Icon icon="material-symbols:upload" className="text-sm" />
-              {prettyBytes(downloadData.progress.uploadSpeed)}/s
-            </span>
-          </div>
+          {!isPaused && (
+            <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500">
+              <span className="flex items-center gap-0.5">
+                <Icon icon="material-symbols:download" className="text-sm" />
+                {prettyBytes(downloadData.progress.downloadSpeed)}/s
+              </span>
+              <span className="flex items-center gap-0.5">
+                <Icon icon="material-symbols:upload" className="text-sm" />
+                {prettyBytes(downloadData.progress.uploadSpeed)}/s
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -70,15 +74,19 @@ const DownloadCard = ({ downloadData }) => {
         <div className="flex-1">
           <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
             <div
-              className="h-full bg-[#ff5680] transition-all duration-300"
+              className={`h-full transition-all duration-300 ${isPaused ? 'bg-zinc-500' : 'bg-[#ff5680]'}`}
               style={{
-                width: `${Math.round(downloadData.progress.progress * 100)}%`,
+                width: `${Math.round(downloadData.progress.progress * 100)}%`
               }}
             />
           </div>
           <div className="mt-1 text-xs text-zinc-500 flex justify-between">
-            <span>{Math.round(downloadData.progress.progress * 100)}%</span>
-            <span>{downloadData.progress.remaining}</span>
+            <span className={isPaused ? 'text-zinc-400' : 'text-zinc-500'}>
+              {Math.round(downloadData.progress.progress * 100)}%
+            </span>
+            <span className={isPaused ? 'text-zinc-400' : 'text-zinc-500'}>
+              {isPaused ? 'Pausado' : downloadData.progress.remaining}
+            </span>
           </div>
         </div>
 
@@ -87,16 +95,19 @@ const DownloadCard = ({ downloadData }) => {
             isIconOnly
             size="sm"
             variant="flat"
-            className="bg-zinc-800 text-zinc-400 hover:text-white"
+            disabled={isProcessing}
+            className="bg-zinc-800 text-zinc-400 hover:text-white disabled:opacity-50 disabled:cursor-wait"
             onClick={handlePauseResume}
           >
             <Icon
               icon={
-                isPaused
-                  ? 'material-symbols:play-arrow'
-                  : 'material-symbols:pause'
+                isProcessing 
+                  ? 'mdi:loading' 
+                  : localIsPaused
+                    ? 'material-symbols:play-arrow'
+                    : 'material-symbols:pause'
               }
-              className="text-lg"
+              className={`text-lg ${isProcessing ? 'animate-spin' : ''}`}
             />
           </Button>
           <Button
