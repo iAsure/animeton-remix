@@ -31,7 +31,11 @@ export class ConfigService {
       },
       preferences: {
         theme: 'dark',
-        language: 'es-la'
+        language: 'es-la',
+        speedLimits: {
+          download: 5,
+          upload: 5
+        }
       }
     };
   }
@@ -96,6 +100,12 @@ export class ConfigService {
         merged[key] = this.deepMergeDefaults(merged[key], defaultConfig[key]);
       }
     }
+
+    // Aseguramos que los límites de velocidad sean enteros
+    if (merged?.preferences?.speedLimits) {
+      merged.preferences.speedLimits.download = Math.round(merged.preferences.speedLimits.download || 5);
+      merged.preferences.speedLimits.upload = Math.round(merged.preferences.speedLimits.upload || 5);
+    }
     
     return merged;
   }
@@ -109,7 +119,7 @@ export class ConfigService {
       // Merge user config with defaults, ensuring new properties are added
       this.config = this.deepMergeDefaults(userConfig, defaultConfig);
       
-      // Save if new defaults were added
+      // Save if new defaults were added or if values needed to be fixed
       if (JSON.stringify(userConfig) !== JSON.stringify(this.config)) {
         await this.saveConfig();
       }
@@ -139,8 +149,18 @@ export class ConfigService {
       if (!(k in obj)) obj[k] = {};
       return obj[k];
     }, this.config);
+
+    // Si estamos actualizando los límites de velocidad, aseguramos que sean enteros
+    if (key === 'preferences.speedLimits' && typeof value === 'object') {
+      const speedLimits = value as { download?: number; upload?: number };
+      target[lastKey] = {
+        download: Math.round(speedLimits.download || 5),
+        upload: Math.round(speedLimits.upload || 5)
+      };
+    } else {
+      target[lastKey] = value;
+    }
     
-    target[lastKey] = value;
     await this.saveConfig();
   }
 

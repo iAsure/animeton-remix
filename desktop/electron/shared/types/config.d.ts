@@ -13,6 +13,10 @@ export interface UserConfig {
     preferences: {
       theme?: 'dark' | 'light';
       language?: string;
+      speedLimits: {
+        download: number;
+        upload: number;
+      };
       [key: string]: any;
     };
     [key: string]: any;

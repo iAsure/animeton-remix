@@ -35,6 +35,7 @@ const createEventHandler = (channel) => ({
       getActiveTorrents: () => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.GET_ACTIVE_TORRENTS),
       pause: (payload) => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.PAUSE, payload),
       remove: (infoHash) => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.REMOVE, infoHash),
+      setSpeedLimits: (limits) => ipcRenderer.invoke(IPC_CHANNELS.TORRENT.SET_SPEED_LIMITS, limits),
       onProgress: createEventHandler(IPC_CHANNELS.TORRENT.PROGRESS),
       onDone: createEventHandler(IPC_CHANNELS.TORRENT.DONE),
       onServerDone: createEventHandler(IPC_CHANNELS.TORRENT.SERVER_DONE),

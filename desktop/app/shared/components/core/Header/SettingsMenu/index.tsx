@@ -1,8 +1,9 @@
 import { Icon } from '@iconify/react';
-import { Switch } from '@nextui-org/react';
+import { Switch, Input } from '@nextui-org/react';
 import { useConfig } from '@context/ConfigContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAmplitude } from '@lib/amplitude';
+import { useDebouncedCallback } from 'use-debounce';
 
 interface SettingsMenuProps {
   onClose: () => void;
@@ -15,6 +16,8 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
   const { config, setConfig } = useConfig();
   const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
   const [isOnDev, setIsOnDev] = useState(false);
+  const [downloadLimit, setDownloadLimit] = useState(config?.preferences?.speedLimits?.download?.toString() || '5');
+  const [uploadLimit, setUploadLimit] = useState(config?.preferences?.speedLimits?.upload?.toString() || '5');
 
   const handleMenuInteraction = useCallback(
     (type: string, value: string) => {
@@ -51,6 +54,13 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
     checkDevTools();
   }, []);
 
+  useEffect(() => {
+    if (config?.preferences?.speedLimits) {
+      setDownloadLimit(config.preferences.speedLimits.download.toString());
+      setUploadLimit(config.preferences.speedLimits.upload.toString());
+    }
+  }, [config?.preferences?.speedLimits]);
+
   const handleToggleDevTools = async () => {
     await window.api.shell.toggleDevTools();
     setIsDevToolsOpen(!isDevToolsOpen);
@@ -77,6 +87,41 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
     },
     [setConfig]
   );
+
+  const handleSpeedLimitsChange = useDebouncedCallback(async (download: string, upload: string) => {
+    try {
+      const downloadNum = Math.round(parseFloat(download));
+      const uploadNum = Math.round(parseFloat(upload));
+
+      if (isNaN(downloadNum) || isNaN(uploadNum)) return;
+
+      await setConfig('preferences.speedLimits', {
+        download: downloadNum,
+        upload: uploadNum,
+      });
+
+      await window.api.torrent.setSpeedLimits({
+        downloadLimit: downloadNum,
+        uploadLimit: uploadNum,
+      });
+
+      handleMenuInteraction('speedLimits', `download: ${downloadNum}MB/s, upload: ${uploadNum}MB/s`);
+    } catch (error) {
+      console.error('Error setting speed limits:', error);
+    }
+  }, 500);
+
+  const handleDownloadLimitChange = (value: string) => {
+    const intValue = value.split('.')[0];
+    setDownloadLimit(intValue);
+    handleSpeedLimitsChange(intValue, uploadLimit);
+  };
+
+  const handleUploadLimitChange = (value: string) => {
+    const intValue = value.split('.')[0];
+    setUploadLimit(intValue);
+    handleSpeedLimitsChange(downloadLimit, intValue);
+  };
 
   const handleOpenPath = useCallback((path: string) => {
     window.api.shell.openPath(path);
@@ -116,6 +161,55 @@ const SettingsMenu = ({ onClose }: SettingsMenuProps) => {
             size="sm"
             isSelected={config?.features?.subtitlesStatus}
             onValueChange={handleSubtitlesStatusChange}
+          />
+        </div>
+      </div>
+
+      <div className="my-2 border-t border-zinc-800" />
+
+      {/* Speed Limits Section */}
+      <div className="px-4 py-2">
+        <div className="flex items-center gap-2 mb-2">
+          <Icon
+            icon="gravity-ui:cloud-nut-hex"
+            className="text-zinc-400"
+            width="16"
+            height="16"
+          />
+          <h3 className="text-zinc-400 text-xs font-medium">LÍMITES DE VELOCIDAD</h3>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <span className="text-zinc-200 text-sm">Descarga (MB/s)</span>
+          <Input
+            type="number"
+            value={downloadLimit}
+            onValueChange={handleDownloadLimitChange}
+            size="sm"
+            min={0}
+            step={1}
+            className="w-24"
+            classNames={{
+              input: "text-right",
+              inputWrapper: "bg-zinc-800 border-zinc-700"
+            }}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-zinc-200 text-sm">Subida (MB/s)</span>
+          <Input
+            type="number"
+            value={uploadLimit}
+            onValueChange={handleUploadLimitChange}
+            size="sm"
+            min={0}
+            step={1}
+            className="w-24"
+            classNames={{
+              input: "text-right",
+              inputWrapper: "bg-zinc-800 border-zinc-700"
+            }}
           />
         </div>
       </div>

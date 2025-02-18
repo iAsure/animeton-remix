@@ -16,6 +16,7 @@ export const IPC_CHANNELS = {
     GET_ACTIVE_TORRENTS: 'torrent:get-active-torrents',
     PAUSE: 'torrent:pause',
     REMOVE: 'torrent:remove',
+    SET_SPEED_LIMITS: 'torrent:set-speed-limits',
   },
   SUBTITLES: {
     EXTRACT: 'extract-subtitles',

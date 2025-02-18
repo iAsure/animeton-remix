@@ -100,6 +100,27 @@ export function setupTorrentHandlers(
     });
   });
 
+  ipcMain.handle(IPC_CHANNELS.TORRENT.SET_SPEED_LIMITS, async (_, limits) => {
+    webTorrentProcess.postMessage({ 
+      type: IPC_CHANNELS.TORRENT.SET_SPEED_LIMITS, 
+      data: limits 
+    });
+    
+    return new Promise((resolve, reject) => {
+      const handleResponse = (message) => {
+        if (message.type === IPC_CHANNELS.TORRENT.ERROR) {
+          webTorrentProcess.off('message', handleResponse);
+          reject(new Error(message.data.error));
+        } else {
+          webTorrentProcess.off('message', handleResponse);
+          resolve();
+        }
+      };
+      
+      webTorrentProcess.on('message', handleResponse);
+    });
+  });
+
   const forwardToRenderer = (type) => (data) => {
     if (mainWindow?.webContents) {
       mainWindow.webContents.send(type, data);

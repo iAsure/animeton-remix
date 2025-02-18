@@ -47,6 +47,7 @@ export interface TorrentApi {
     torrentUrl: string;
   }) => Promise<{ success: boolean; isPaused: boolean }>;
   remove: (infoHash: string) => Promise<{ success: boolean }>;
+  setSpeedLimits: (limits: { downloadLimit: number; uploadLimit: number }) => Promise<void>;
   onProgress: EventHandler<TorrentProgress>;
   onDone: EventHandler<void>;
   onServerDone: EventHandler<TorrentServerDone>;

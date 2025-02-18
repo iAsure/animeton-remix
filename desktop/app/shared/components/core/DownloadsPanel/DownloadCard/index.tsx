@@ -7,22 +7,35 @@ const DownloadCard = ({ downloadData }) => {
   const isPaused = downloadData.status === 'paused';
   const [localIsPaused, setLocalIsPaused] = useState(downloadData.progress.isPaused);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [hasProgressAfterResume, setHasProgressAfterResume] = useState(true);
 
   useEffect(() => {
     setLocalIsPaused(downloadData.progress.isPaused);
   }, [downloadData.progress.isPaused]);
 
+  useEffect(() => {
+    if (!localIsPaused && !hasProgressAfterResume && downloadData.progress.downloadSpeed > 0) {
+      setHasProgressAfterResume(true);
+      setIsProcessing(false);
+    }
+  }, [localIsPaused, hasProgressAfterResume, downloadData.progress.downloadSpeed]);
+
   const handlePauseResume = async () => {
     try {
       setIsProcessing(true);
+      if (localIsPaused) {
+        setHasProgressAfterResume(false);
+      }
       const response = await window.api.torrent.pause({
         infoHash: downloadData.torrentHash,
         torrentUrl: downloadData.episodeInfo.episodeTorrentUrl,
       });
       setLocalIsPaused(response.isPaused);
+      if (response.isPaused) {
+        setIsProcessing(false);
+      }
     } catch (error) {
       console.error('Error al cambiar estado del torrent:', error);
-    } finally {
       setIsProcessing(false);
     }
   };

@@ -203,6 +203,31 @@ async function createTorrentServer(client) {
   }
 }
 
+async function readConfigFile() {
+  try {
+    const configPath = path.join(process.env.APPDATA, 'anitorrent', 'config.json');
+    const configData = await fs.promises.readFile(configPath, 'utf-8');
+    const config = JSON.parse(configData);
+
+    if (config?.preferences?.speedLimits) {
+      config.preferences.speedLimits.download = Math.round(config.preferences.speedLimits.download || 5);
+      config.preferences.speedLimits.upload = Math.round(config.preferences.speedLimits.upload || 5);
+    }
+
+    return config;
+  } catch (error) {
+    log.error('Error reading config file:', error);
+    return {
+      preferences: {
+        speedLimits: {
+          download: 5,
+          upload: 5
+        }
+      }
+    };
+  }
+}
+
 async function initializeWebTorrentClient() {
   if (isInitializing) {
     log.info('Client initialization already in progress, waiting...');
@@ -223,14 +248,20 @@ async function initializeWebTorrentClient() {
       await cleanup();
 
       const { default: WebTorrent } = await import('webtorrent');
+      const config = await readConfigFile();
+      const downloadLimit = config?.preferences?.speedLimits?.download || 5;
+      const uploadLimit = config?.preferences?.speedLimits?.upload || 5;
+
       activeClient = new WebTorrent({
-        downloadLimit: 5 * 1048576 || 0,
-        uploadLimit: 5 * 1572864 || 0,
+        downloadLimit: downloadLimit * 1048576,
+        uploadLimit: uploadLimit * 1572864,
         torrentPort: 0,
         maxConns: 100,
         dht: true,
         natUpnp: true,
       });
+
+      log.info('WebTorrent client initialized with speed limits:', { downloadLimit, uploadLimit });
     }
 
     const instance = await createTorrentServer(activeClient);
@@ -509,7 +540,6 @@ function sendActiveTorrentsUpdate() {
 }
 
 process.parentPort?.on('message', async (message) => {
-  log.info('Received message:', message);
   const eventMessage = message.data;
 
   try {
@@ -544,6 +574,10 @@ process.parentPort?.on('message', async (message) => {
           type: IPC_CHANNELS.TORRENT.SERVER_STATUS,
           data: serverStatus,
         });
+        break;
+
+      case IPC_CHANNELS.TORRENT.SET_SPEED_LIMITS:
+        await handleSetSpeedLimits(eventMessage.data);
         break;
 
       default:
@@ -632,6 +666,23 @@ async function handleRemoveTorrent(infoHash) {
     success: true,
     infoHash,
   };
+}
+
+async function handleSetSpeedLimits({ downloadLimit, uploadLimit }) {
+  if (!activeClient) {
+    throw new Error('No hay cliente activo');
+  }
+
+  const downloadNum = Math.round(downloadLimit);
+  const uploadNum = Math.round(uploadLimit);
+
+  const downloadBytes = downloadNum * 1048576;
+  const uploadBytes = uploadNum * 1572864;
+
+  activeClient.throttleDownload(downloadBytes);
+  activeClient.throttleUpload(uploadBytes);
+
+  log.info('Speed limits updated:', { downloadLimit: downloadNum, uploadLimit: uploadNum });
 }
 
 process.on('SIGTERM', cleanup);
