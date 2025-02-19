@@ -54,7 +54,7 @@ export class TrayManager {
           this.trayWindow?.hide();
           break;
         case 'quit':
-          app.quit();
+          app.exit();
           break;
       }
     };
@@ -96,14 +96,14 @@ export class TrayManager {
       frame: false,
       fullscreenable: false,
       resizable: false,
-      transparent: true,
       skipTaskbar: true,
       alwaysOnTop: true,
       type: 'toolbar',
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: false
-      }
+      },
+      roundedCorners: true
     });
 
     const content = `
@@ -116,8 +116,6 @@ export class TrayManager {
             background: #0D0D0D;
             color: white;
             font-family: system-ui;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
             overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
