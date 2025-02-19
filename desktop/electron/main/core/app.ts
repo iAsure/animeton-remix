@@ -1,10 +1,11 @@
-import { app, BrowserWindow, UtilityProcess, utilityProcess } from 'electron';
+import { app, BrowserWindow, UtilityProcess, utilityProcess, nativeImage, screen, ipcMain } from 'electron';
 import log from 'electron-log';
 import { fileURLToPath } from 'node:url';
 import path from 'path';
 import { Worker } from 'worker_threads';
 
 import { APP_ID } from '../../shared/constants/config.js';
+import { IPC_CHANNELS } from '../../shared/constants/event-channels.js';
 import { AppConfig } from '../../shared/types/config.js';
 
 import { ConfigService } from '../services/config/service.js';
@@ -14,6 +15,7 @@ import { cleanupTorrentFiles } from '../services/torrent/autoclean.js';
 import { createActivationWindow, validateActivationKey } from './activation-window.js';
 import { DiscordRPC } from './discord.js';
 import { handleProtocolLink } from './protocol.js';
+import { TrayManager } from './tray-window.js';
 
 import { setupRemix } from './remix.js';
 import { setupShortcuts, unregisterShortcuts } from './shortcuts.js';
@@ -22,6 +24,9 @@ import { setupIpcHandlers } from '../ipc/handlers.js';
 
 let webTorrentProcess: UtilityProcess | null = null;
 let subtitlesWorker: Worker | null = null;
+let mainWindow: BrowserWindow | null = null;
+let trayManager: TrayManager | null = null;
+let forceQuit = false;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function initializeViteServer() {
@@ -98,12 +103,24 @@ export async function initializeApp() {
     const keyExists = config?.user?.activationKey && config?.user?.discordId;
     const appIsActivated = isValid || keyExists;
 
-    let mainWindow;
     if (!appIsActivated && !process.env.DEV) {
       mainWindow = await createActivationWindow();
     } else {
       mainWindow = await setupWindow();
     }
+
+    await setupIpcHandlers(webTorrentProcess, subtitlesWorker, mainWindow);
+    setupShortcuts(mainWindow);
+
+    trayManager = new TrayManager(mainWindow);
+
+    mainWindow.on('close', (event) => {
+      if (!forceQuit) {
+        event.preventDefault();
+        mainWindow?.hide();
+        return false;
+      }
+    });
 
     const deepLinkingUrl = process.argv[process.argv.length - 1];
     if (deepLinkingUrl.startsWith('anitorrent://')) {
@@ -115,10 +132,16 @@ export async function initializeApp() {
 
     const discordRPC = new DiscordRPC(mainWindow);
 
-    await setupIpcHandlers(webTorrentProcess, subtitlesWorker, mainWindow);
-    setupShortcuts(mainWindow);
+    webTorrentProcess.on('message', (message) => {
+      if (message.type === IPC_CHANNELS.TORRENT.ACTIVE_TORRENTS) {
+        trayManager?.updateTorrentData(message.data);
+      }
+    });
 
-    // Cleanup
+    webTorrentProcess.postMessage({
+      type: IPC_CHANNELS.TORRENT.GET_ACTIVE_TORRENTS
+    });
+
     app.on('before-quit', async (event) => {
       event.preventDefault();
       log.info('Cleaning up workers...');
@@ -129,6 +152,10 @@ export async function initializeApp() {
         await uploadLogFile(mainWindow);
         if (subtitlesWorker) await subtitlesWorker.terminate();
         if (webTorrentProcess) webTorrentProcess.kill();
+        if (trayManager) {
+          trayManager.cleanup();
+          trayManager = null;
+        }
         app.exit();
       } catch (error) {
         log.error('Error during cleanup:', error);
