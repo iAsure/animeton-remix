@@ -1,14 +1,50 @@
 import { Divider } from '@nextui-org/react';
 import useDownloads from '@hooks/user/useDownloads';
-import DownloadCard from './DownloadCard';
+import AnimeDownloadCard from './AnimeDownloadCard';
+import { Icon } from '@iconify/react';
 
 interface SidePanelProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+interface AnimeGroup {
+  animeId: number;
+  animeName: string;
+  animeImage: string;
+  episodes: any[];
+}
+
+const groupDownloadsByAnime = (downloads: any[]): AnimeGroup[] => {
+  const groups = downloads.reduce((acc, download) => {
+    const animeId = download.episodeInfo.animeIdAnilist;
+    if (!acc[animeId]) {
+      acc[animeId] = {
+        animeId,
+        animeName: download.episodeInfo.animeName,
+        animeImage: download.episodeInfo.animeImage,
+        episodes: []
+      };
+    }
+    acc[animeId].episodes.push(download);
+    return acc;
+  }, {} as Record<number, AnimeGroup>);
+
+  return Object.values(groups);
+};
+
 const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
-  const { visualDownloads, hasActiveDownloads } = useDownloads();
+  const { visualDownloads, hasVisualDownloads } = useDownloads();
+  const animeGroups = groupDownloadsByAnime(visualDownloads);
+
+  if (!hasVisualDownloads) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-sm">
+        <Icon icon="material-symbols:download-done" className="text-4xl mb-2" />
+        <span>No hay descargas activas</span>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -28,19 +64,13 @@ const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
       >
         <div className="p-6">
           <h2 className="text-xl font-bold text-white mb-4">
-            Descargas {hasActiveDownloads ? `(${visualDownloads.length})` : ''}
+            Descargas {hasVisualDownloads ? `(${visualDownloads.length})` : ''}
           </h2>
           <Divider />
           <div className="mt-4 space-y-4">
-            {visualDownloads.map((download) => (
-              <DownloadCard key={download.episodeId} downloadData={download} />
+            {animeGroups.map(group => (
+              <AnimeDownloadCard key={group.animeId} animeGroup={group} />
             ))}
-
-            {!hasActiveDownloads && (
-              <div className="text-zinc-500 text-center">
-                No hay descargas activas
-              </div>
-            )}
           </div>
         </div>
       </div>
