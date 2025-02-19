@@ -93,7 +93,7 @@ export class TrayManager {
       width: 300,
       height: 90,
       show: false,
-      frame: true,
+      frame: false,
       fullscreenable: false,
       resizable: false,
       transparent: true,
@@ -121,6 +121,7 @@ export class TrayManager {
             overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-app-region: no-drag;
           }
           #content {
             display: flex;
@@ -129,19 +130,25 @@ export class TrayManager {
           }
           .menu-item {
             padding: 6px 8px;
-            cursor: pointer;
+            cursor: default;
             border-radius: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             font-size: 0.9em;
-            transition: background 0.15s ease;
+            transition: all 0.2s ease;
+            will-change: background;
+            -webkit-font-smoothing: antialiased;
+          }
+          .menu-item:not(.disabled) {
+            cursor: pointer;
           }
           .menu-item:not(.disabled):hover {
             background: rgba(255, 255, 255, 0.05);
           }
           .menu-item:not(.disabled):active {
             background: rgba(255, 255, 255, 0.08);
+            transform: scale(0.99);
           }
           .menu-item.disabled {
             cursor: default;
@@ -207,10 +214,14 @@ export class TrayManager {
         <div id="content"></div>
         <script>
           const { ipcRenderer } = require('electron');
+          let lastContent = '';
           
           ipcRenderer.on('update-content', (_, data) => {
-            const content = document.getElementById('content');
-            content.innerHTML = data;
+            if (lastContent !== data) {
+              const content = document.getElementById('content');
+              content.innerHTML = data;
+              lastContent = data;
+            }
           });
 
           function sendAction(action) {
@@ -256,7 +267,11 @@ export class TrayManager {
     if (this.updateInterval) {
       clearInterval(this.updateInterval);
     }
-    this.updateInterval = setInterval(() => this.updateTrayContent(), 1000);
+    this.updateInterval = setInterval(() => {
+      if (this.activeTorrents.length > 0) {
+        this.updateTrayContent();
+      }
+    }, 1000);
   }
 
   private showTrayWindow() {
@@ -294,7 +309,7 @@ export class TrayManager {
   }
 
   private updateTrayContent() {
-    if (!this.trayWindow) return;
+    if (!this.trayWindow?.isVisible()) return;
 
     const formatSpeed = (speed: number) => {
       const mbps = speed / 1024 / 1024;
