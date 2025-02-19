@@ -91,9 +91,9 @@ export class TrayManager {
   private createTrayWindow() {
     this.trayWindow = new BrowserWindow({
       width: 300,
-      height: 150,
+      height: 90,
       show: false,
-      frame: false,
+      frame: true,
       fullscreenable: false,
       resizable: false,
       transparent: true,
@@ -121,12 +121,11 @@ export class TrayManager {
             overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
-            height: 100vh;
           }
           #content {
             display: flex;
             flex-direction: column;
-            height: 100%;
+            padding-bottom: 4px;
           }
           .menu-item {
             padding: 6px 8px;
@@ -197,7 +196,7 @@ export class TrayManager {
             color: #4ade80;
           }
           .upload-speed {
-            color: #f87171;
+            color: #71b0f8;
           }
           ::-webkit-scrollbar {
             display: none;
@@ -212,17 +211,12 @@ export class TrayManager {
           ipcRenderer.on('update-content', (_, data) => {
             const content = document.getElementById('content');
             content.innerHTML = data;
-            
-            // Ajustar altura de la ventana basada en el contenido real
-            const height = content.getBoundingClientRect().height + 8;
-            ipcRenderer.send('resize-tray-window', height);
           });
 
           function sendAction(action) {
             ipcRenderer.send('tray-action', action);
           }
 
-          // Delegación de eventos para los clicks
           document.addEventListener('click', (e) => {
             const menuItem = e.target.closest('.menu-item');
             if (menuItem && !menuItem.classList.contains('disabled')) {
@@ -246,13 +240,6 @@ export class TrayManager {
 
     ipcMain.on('tray-action', this.trayActionHandler);
     ipcMain.on('hide-tray-window', this.hideWindowHandler);
-    ipcMain.on('resize-tray-window', (_, height) => {
-      if (this.trayWindow && this.trayWindow.isVisible()) {
-        const finalHeight = Math.min(400, Math.max(150, height));
-        this.trayWindow.setSize(300, finalHeight);
-        this.showTrayWindow();
-      }
-    });
 
     this.tray.on('right-click', () => this.showTrayWindow());
     this.tray.on('click', () => {
@@ -279,21 +266,21 @@ export class TrayManager {
     const display = screen.getDisplayNearestPoint({ x: trayBounds.x, y: trayBounds.y });
     const workArea = display.workArea;
 
-    this.trayWindow.setSize(300, 50);
-    const windowBounds = this.trayWindow.getBounds();
+    const WINDOW_WIDTH = 300;
+    const BASE_HEIGHT = 83;
+    const STATUS_HEIGHT = 60;
+    const WINDOW_HEIGHT = this.activeTorrents.length > 0 ? BASE_HEIGHT + STATUS_HEIGHT : BASE_HEIGHT;
+    
+    this.trayWindow.setSize(WINDOW_WIDTH, WINDOW_HEIGHT, true);
 
-    let x = Math.floor(trayBounds.x - (windowBounds.width / 2) + (trayBounds.width / 2));
-    let y = Math.floor(trayBounds.y - windowBounds.height);
+    let x = Math.floor(trayBounds.x - (WINDOW_WIDTH / 2) + (trayBounds.width / 2));
+    let y = workArea.y + workArea.height - WINDOW_HEIGHT - trayBounds.height - 12;
 
-    if (x + windowBounds.width > workArea.x + workArea.width) {
-      x = workArea.x + workArea.width - windowBounds.width;
+    if (x + WINDOW_WIDTH > workArea.x + workArea.width) {
+      x = workArea.x + workArea.width - WINDOW_WIDTH;
     }
     if (x < workArea.x) {
       x = workArea.x;
-    }
-
-    if (y < workArea.y) {
-      y = trayBounds.y + trayBounds.height;
     }
 
     this.trayWindow.setAlwaysOnTop(true, 'pop-up-menu');
