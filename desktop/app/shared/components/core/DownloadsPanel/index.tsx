@@ -37,15 +37,6 @@ const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
   const { visualDownloads, hasVisualDownloads } = useDownloads();
   const animeGroups = groupDownloadsByAnime(visualDownloads);
 
-  if (!hasVisualDownloads) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-sm">
-        <Icon icon="material-symbols:download-done" className="text-4xl mb-2" />
-        <span>No hay descargas activas</span>
-      </div>
-    );
-  }
-
   return (
     <>
       {/* Overlay */}
@@ -62,16 +53,23 @@ const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="p-6">
+        <div className="p-6 h-full">
           <h2 className="text-xl font-bold text-white mb-4">
             Descargas {hasVisualDownloads ? `(${visualDownloads.length})` : ''}
           </h2>
           <Divider />
-          <div className="mt-4 space-y-4">
-            {animeGroups.map(group => (
-              <AnimeDownloadCard key={group.animeId} animeGroup={group} />
-            ))}
-          </div>
+          {!hasVisualDownloads ? (
+            <div className="flex flex-col items-center justify-center h-[calc(100%-6rem)] text-zinc-500 text-sm">
+              <Icon icon="material-symbols:download-done" className="text-4xl mb-2" />
+              <span>No hay descargas activas</span>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-4">
+              {animeGroups.map(group => (
+                <AnimeDownloadCard key={group.animeId} animeGroup={group} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </>
