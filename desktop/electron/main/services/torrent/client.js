@@ -335,9 +335,7 @@ async function handleTorrent(torrent, instance) {
     data: { url, filePath, infoHash: torrent.infoHash },
   });
 
-  if (torrent.progress === 1) {
-    sendProgressUpdate(torrent);
-  }
+  sendProgressUpdate(torrent);
 
   if (progressInterval) {
     clearInterval(progressInterval);
@@ -355,6 +353,7 @@ async function handleTorrent(torrent, instance) {
 
     if (torrent.infoHash === activeTorrentInfoHash) {
       process.parentPort?.postMessage({ type: IPC_CHANNELS.TORRENT.DONE });
+      sendProgressUpdate(torrent);
     }
 
     if (filePath.toLowerCase().endsWith('.mkv')) {

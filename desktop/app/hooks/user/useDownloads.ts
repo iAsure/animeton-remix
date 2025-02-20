@@ -11,6 +11,7 @@ interface TorrentProgress {
   remaining: string;
   isBuffering: boolean;
   ready: boolean;
+  completed: boolean;
 }
 
 interface ActiveTorrent {
@@ -69,6 +70,7 @@ const useDownloads = () => {
             remaining: '',
             isBuffering: false,
             ready: false,
+            completed: false,
           },
           episodeInfo: {
             animeName: episode.animeName,

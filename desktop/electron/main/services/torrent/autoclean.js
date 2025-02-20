@@ -4,6 +4,7 @@ import { promises as fs } from 'fs';
 import log from 'electron-log';
 import { app } from 'electron';
 import levenshtein from 'fast-levenshtein';
+import { IPC_CHANNELS } from '../../../shared/constants/event-channels.js';
 
 function normalizeFileName(fileName) {
   return fileName
@@ -31,23 +32,29 @@ async function cleanupTorrentFiles() {
     const mkvFiles = files.filter((file) => file?.endsWith('.mkv'));
     log.info('mkvFiles', mkvFiles);
 
-    const historyFileNames = Object.values(history.episodes)
-      .map((episode) => episode?.episodeFileName)
+    const historyEpisodes = Object.entries(history.episodes)
+      .filter(([_, episode]) => episode?.episodeFileName && !episode.progressData.completed)
+      .map(([infoHash, episode]) => ({
+        fileName: episode.episodeFileName,
+        torrentUrl: episode.episodeTorrentUrl,
+        infoHash
+      }))
       .filter(Boolean);
-    log.info('historyFileNames', historyFileNames);
+    log.info('historyEpisodes', historyEpisodes);
 
     const SIMILARITY_THRESHOLD = 3;
+    const torrentsToAdd = [];
+
     const filesToKeep = mkvFiles.filter((mkvFile) => {
       if (!mkvFile) return false;
 
       const normalizedMkvFile = normalizeFileName(String(mkvFile));
 
-      const distances = historyFileNames
-        .filter((historyFile) => typeof historyFile === 'string')
-        .map((historyFile) => {
-          const normalizedHistoryFile = normalizeFileName(String(historyFile));
+      const distances = historyEpisodes
+        .map((episode) => {
+          const normalizedHistoryFile = normalizeFileName(String(episode.fileName));
           return {
-            historyFile,
+            episode,
             normalizedHistoryFile,
             distance: levenshtein.get(normalizedMkvFile, normalizedHistoryFile),
           };
@@ -65,7 +72,15 @@ async function cleanupTorrentFiles() {
         mostSimilar,
       });
 
-      return mostSimilar.distance <= SIMILARITY_THRESHOLD;
+      if (mostSimilar.distance <= SIMILARITY_THRESHOLD) {
+        torrentsToAdd.push({
+          torrentUrl: mostSimilar.episode.torrentUrl,
+          torrentHash: mostSimilar.episode.infoHash
+        });
+        return true;
+      }
+
+      return false;
     });
 
     log.info('filesToKeep', filesToKeep);
@@ -86,8 +101,11 @@ async function cleanupTorrentFiles() {
 
     await Promise.all(deletions);
     log.info(`Cleaned up ${deletions.length} temporary MKV files`);
+
+    return torrentsToAdd;
   } catch (error) {
     log.warn('Failed to cleanup temporary files:', error);
+    return [];
   }
 }
 

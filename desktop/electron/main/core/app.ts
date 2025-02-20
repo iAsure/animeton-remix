@@ -82,7 +82,7 @@ export async function initializeApp() {
     log.info(`Starting app with build ID: ${APP_ID}`);
     app.setAppUserModelId(APP_ID);
 
-    await cleanupTorrentFiles();
+    const torrentsToAdd = await cleanupTorrentFiles();
     await setupRemix(build, viteDevServer);
 
     webTorrentProcess = utilityProcess.fork(
@@ -141,6 +141,17 @@ export async function initializeApp() {
     webTorrentProcess.postMessage({
       type: IPC_CHANNELS.TORRENT.GET_ACTIVE_TORRENTS
     });
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    for (const torrent of torrentsToAdd) {
+      log.info('Adding torrent:', torrent);
+      webTorrentProcess.postMessage({
+        type: IPC_CHANNELS.TORRENT.ADD,
+        data: torrent
+      });
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
 
     app.on('before-quit', async (event) => {
       event.preventDefault();
