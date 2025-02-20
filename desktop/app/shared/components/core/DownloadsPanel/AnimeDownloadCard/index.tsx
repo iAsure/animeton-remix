@@ -2,6 +2,7 @@ import { prettyBytes } from '@utils/strings';
 import { Button } from '@nextui-org/react';
 import { Icon } from '@iconify/react';
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import EpisodesList from './EpisodesList';
 
 interface AnimeGroup {
@@ -35,106 +36,129 @@ interface AnimeDownloadCardProps {
 }
 
 const calculateGroupProgress = (episodes: AnimeGroup['episodes']) => {
-  const totalProgress = episodes.reduce((acc, episode) => acc + episode.progress.progress, 0);
+  const totalProgress = episodes.reduce(
+    (acc, episode) => acc + episode.progress.progress,
+    0
+  );
   return totalProgress / episodes.length;
 };
 
 const calculateGroupSpeeds = (episodes: AnimeGroup['episodes']) => {
-  return episodes.reduce((acc, episode) => ({
-    downloadSpeed: acc.downloadSpeed + episode.progress.downloadSpeed,
-    uploadSpeed: acc.uploadSpeed + episode.progress.uploadSpeed
-  }), { downloadSpeed: 0, uploadSpeed: 0 });
+  return episodes.reduce(
+    (acc, episode) => ({
+      downloadSpeed: acc.downloadSpeed + episode.progress.downloadSpeed,
+      uploadSpeed: acc.uploadSpeed + episode.progress.uploadSpeed,
+    }),
+    { downloadSpeed: 0, uploadSpeed: 0 }
+  );
 };
 
 const AnimeDownloadCard = ({ animeGroup }: AnimeDownloadCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const totalProgress = calculateGroupProgress(animeGroup.episodes);
   const { downloadSpeed, uploadSpeed } = calculateGroupSpeeds(animeGroup.episodes);
-  const isPaused = animeGroup.episodes.every(ep => ep.progress.isPaused);
+  const isPaused = animeGroup.episodes.every((ep) => ep.progress.isPaused);
 
   return (
-    <div className="text-white bg-zinc-900 rounded-md hover:bg-zinc-800/50 transition-colors">
-      <div className="p-3">
-        <div className="flex items-center gap-3">
+    <div className="text-white bg-zinc-900 rounded-md hover:bg-zinc-800/50 transition-colors relative overflow-hidden">
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-zinc-800">
+        <div
+          className={`h-full transition-all duration-300 ${
+            isPaused ? 'bg-zinc-500' : 'bg-[#ff5680]'
+          }`}
+          style={{
+            width: `${Math.round(totalProgress * 100)}%`,
+          }}
+        />
+      </div>
+
+      <div className="p-2">
+        <div className="flex items-center gap-2">
           <img
             src={animeGroup.animeImage}
             alt={animeGroup.animeName}
-            width={64}
-            height={64}
+            width={50}
+            height={50}
             className="aspect-square object-cover rounded-md"
           />
+
           <div className="flex flex-col gap-0.5 w-full min-w-0">
-            <div className="font-medium text-sm min-w-0">
+            <div className="font-medium min-w-0" style={{ fontSize: '13px' }}>
               <span className="block truncate">{animeGroup.animeName}</span>
             </div>
             <div className="text-xs text-zinc-400">
-              {animeGroup.episodes.length} {animeGroup.episodes.length === 1 ? 'episodio' : 'episodios'}
+              {animeGroup.episodes.length}{' '}
+              {animeGroup.episodes.length === 1 ? 'episodio' : 'episodios'}
             </div>
+
             {!isPaused && (
-              <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500">
-                <span className="flex items-center gap-0.5">
-                  <Icon icon="material-symbols:download" className="text-sm" />
-                  {prettyBytes(downloadSpeed)}/s
-                </span>
-                <span className="flex items-center gap-0.5">
-                  <Icon icon="material-symbols:upload" className="text-sm" />
-                  {prettyBytes(uploadSpeed)}/s
-                </span>
+              <div className="flex items-center gap-1 mt-1 text-xs text-zinc-500">
+                <div className="flex items-center min-w-[80px]">
+                  <span className="w-4 flex justify-center">
+                    <Icon icon="material-symbols:download" className="text-sm" />
+                  </span>
+                  <span className="ml-1">
+                    {prettyBytes(Math.min(downloadSpeed, 999999))}/s
+                  </span>
+                </div>
+                <div className="flex items-center min-w-[80px]">
+                  <span className="w-4 flex justify-center">
+                    <Icon icon="material-symbols:upload" className="text-sm" />
+                  </span>
+                  <span className="ml-1">
+                    {prettyBytes(Math.min(uploadSpeed, 999999))}/s
+                  </span>
+                </div>
               </div>
             )}
           </div>
-        </div>
 
-        <div className="mt-3">
-          <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-            <div
-              className={`h-full transition-all duration-300 ${isPaused ? 'bg-zinc-500' : 'bg-[#ff5680]'}`}
-              style={{
-                width: `${Math.round(totalProgress * 100)}%`
-              }}
-            />
-          </div>
-          <div className="mt-1 text-xs text-zinc-500 flex justify-between">
-            <span className={isPaused ? 'text-zinc-400' : 'text-zinc-500'}>
-              {Math.round(totalProgress * 100)}%
-            </span>
-            <span className={isPaused ? 'text-zinc-400' : 'text-zinc-500'}>
-              {isPaused ? 'Pausado' : ''}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex justify-center mt-2">
-          <Button
-            size="sm"
-            variant="light"
-            className="w-full h-4 px-0 text-zinc-400 hover:text-white"
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              viewBox="0 0 44 8"
-              className="w-full h-4"
+          <div className="flex items-center justify-center">
+            <button
+              className="flex items-center justify-center h-14 w-6 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-md transition-colors"
+              onClick={() => setIsExpanded(!isExpanded)}
             >
-              <path 
-                fill="currentColor" 
-                d={isExpanded 
-                  ? "M22 2L40 6L44 5L22 0L0 5L4 6L22 2Z"
-                  : "M22 4L40 0L44 1L22 6L0 1L4 0L22 4Z"
-                }
+              <Icon
+                icon="material-symbols:chevron-right"
+                width={22}
+                height={22}
+                className={`transition-transform ${isExpanded ? 'rotate-90' : ''}`}
               />
-            </svg>
-          </Button>
+            </button>
+          </div>
         </div>
       </div>
 
-      {isExpanded && (
-        <div className="border-t border-zinc-800 p-3">
-          <EpisodesList episodes={animeGroup.episodes} />
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        {isExpanded && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ 
+              duration: 0.2,
+              ease: "easeInOut",
+              exit: { duration: 0.15, delay: 0.1 }
+            }}
+          >
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ 
+                duration: 0.1,
+                delay: 0.1,
+                exit: { duration: 0.1, delay: 0 }
+              }}
+              className="border-t border-zinc-800 bg-zinc-950/40 px-3 py-2"
+            >
+              <EpisodesList episodes={animeGroup.episodes} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
-export default AnimeDownloadCard; 
+export default AnimeDownloadCard;
