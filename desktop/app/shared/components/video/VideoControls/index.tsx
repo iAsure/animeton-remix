@@ -127,13 +127,16 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
 
       if (
         e.target === document.body && 
-        ['Space', 'ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(e.code)
+        ['KeyF', 'Space', 'ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(e.code)
       ) {
         e.preventDefault();
       }
 
       if (e.target === document.body) {
         switch (e.code) {
+          case 'KeyF':
+            handleFullScreen();
+            break;
           case 'Space':
             handlePlayPause();
             break;

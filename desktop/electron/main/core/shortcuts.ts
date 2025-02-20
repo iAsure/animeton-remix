@@ -3,7 +3,6 @@ import log from 'electron-log';
 
 export function setupShortcuts(mainWindow: BrowserWindow) {
   try {
-    // Fullscreen shortcuts
     globalShortcut.register('F11', () => {
       mainWindow.setFullScreen(!mainWindow.isFullScreen());
     });

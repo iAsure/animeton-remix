@@ -1,4 +1,4 @@
-import { app, BrowserWindow, UtilityProcess, utilityProcess, nativeImage, screen, ipcMain } from 'electron';
+import { app, BrowserWindow, UtilityProcess, utilityProcess } from 'electron';
 import log from 'electron-log';
 import { fileURLToPath } from 'node:url';
 import path from 'path';
