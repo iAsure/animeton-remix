@@ -262,6 +262,10 @@ async function initializeWebTorrentClient() {
       });
 
       log.info('WebTorrent client initialized with speed limits:', { downloadLimit, uploadLimit });
+
+      setInterval(() => {
+        sendActiveTorrentsUpdate();
+      }, 750);
     }
 
     const instance = await createTorrentServer(activeClient);
@@ -344,7 +348,6 @@ async function handleTorrent(torrent, instance) {
   progressInterval = setInterval(() => {
     if (torrent.infoHash === activeTorrentInfoHash) {
       sendProgressUpdate(torrent);
-      sendActiveTorrentsUpdate();
     }
   }, 500);
 
@@ -553,14 +556,12 @@ process.parentPort?.on('message', async (message) => {
           type: IPC_CHANNELS.TORRENT.PAUSE,
           data: pauseResult
         });
-        sendActiveTorrentsUpdate();
         break;
 
       case IPC_CHANNELS.TORRENT.REMOVE:
         const removeResult = await handleRemoveTorrent(
           eventMessage?.data.infoHash
         );
-        sendActiveTorrentsUpdate();
         break;
 
       case IPC_CHANNELS.TORRENT.GET_ACTIVE_TORRENTS:

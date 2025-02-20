@@ -43,18 +43,18 @@ const useDownloads = () => {
   const { history } = useUserActivity();
 
   const updateDownloads = useCallback((activeTorrents: ActiveTorrent[]) => {
-    if (!history) return;
+    if (!history || !activeTorrents) return;
 
     const newDownloads = Object.entries(history.episodes)
       .filter(([episodeId, _]) => {
-        const activeTorrent = activeTorrents.find(
-          torrent => torrent.infoHash.toLowerCase() === episodeId.toLowerCase()
+        const activeTorrent = activeTorrents?.find(
+          torrent => torrent?.infoHash?.toLowerCase() === episodeId?.toLowerCase()
         );
         return activeTorrent !== undefined;
       })
       .map(([episodeId, episode]) => {
-        const activeTorrent = activeTorrents.find(
-          t => t.infoHash.toLowerCase() === episodeId.toLowerCase()
+        const activeTorrent = activeTorrents?.find(
+          t => t?.infoHash?.toLowerCase() === episodeId?.toLowerCase()
         );
         
         const download: Download = {
