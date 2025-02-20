@@ -70,3 +70,26 @@ export const videoFormatTime = (time: number) => {
 };
 
 export const normalize = (title: string) => title.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+export const formatSpeed = (bytesPerSecond: number): string => {
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let value = bytesPerSecond;
+  let unitIndex = 0;
+
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex++;
+  }
+
+  // Limit to 4 total digits
+  let formattedValue: string;
+  if (value >= 100) {
+    formattedValue = Math.round(value).toString();
+  } else if (value >= 10) {
+    formattedValue = value.toFixed(1);
+  } else {
+    formattedValue = value.toFixed(2);
+  }
+
+  return `${formattedValue}${units[unitIndex]}`;
+};

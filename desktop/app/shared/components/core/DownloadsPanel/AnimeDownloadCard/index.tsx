@@ -1,5 +1,4 @@
-import { prettyBytes } from '@utils/strings';
-import { Button } from '@nextui-org/react';
+import { formatSpeed } from '@utils/strings';
 import { Icon } from '@iconify/react';
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -44,13 +43,18 @@ const calculateGroupProgress = (episodes: AnimeGroup['episodes']) => {
 };
 
 const calculateGroupSpeeds = (episodes: AnimeGroup['episodes']) => {
-  return episodes.reduce(
+  const speeds = episodes.reduce(
     (acc, episode) => ({
       downloadSpeed: acc.downloadSpeed + episode.progress.downloadSpeed,
       uploadSpeed: acc.uploadSpeed + episode.progress.uploadSpeed,
     }),
     { downloadSpeed: 0, uploadSpeed: 0 }
   );
+
+  return {
+    downloadSpeed: Math.max(speeds.downloadSpeed, 0),
+    uploadSpeed: Math.max(speeds.uploadSpeed, 0)
+  };
 };
 
 const AnimeDownloadCard = ({ animeGroup }: AnimeDownloadCardProps) => {
@@ -98,7 +102,7 @@ const AnimeDownloadCard = ({ animeGroup }: AnimeDownloadCardProps) => {
                     <Icon icon="material-symbols:download" className="text-sm" />
                   </span>
                   <span className="ml-1">
-                    {prettyBytes(Math.min(downloadSpeed, 999999))}/s
+                    {formatSpeed(downloadSpeed)}/s
                   </span>
                 </div>
                 <div className="flex items-center min-w-[80px]">
@@ -106,7 +110,7 @@ const AnimeDownloadCard = ({ animeGroup }: AnimeDownloadCardProps) => {
                     <Icon icon="material-symbols:upload" className="text-sm" />
                   </span>
                   <span className="ml-1">
-                    {prettyBytes(Math.min(uploadSpeed, 999999))}/s
+                    {formatSpeed(uploadSpeed)}/s
                   </span>
                 </div>
               </div>

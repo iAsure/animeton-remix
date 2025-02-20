@@ -1,8 +1,8 @@
-import { prettyBytes } from '@utils/strings';
 import { Button } from '@nextui-org/react';
 import { Icon } from '@iconify/react';
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { formatSpeed } from '@utils/strings';
 
 interface EpisodeProgress {
   isPaused: boolean;
@@ -122,8 +122,8 @@ const EpisodeItem = ({ episode }: EpisodeItemProps) => {
                 />
               </span>
               {episode.progress.progress >= 1
-                ? prettyBytes(episode.progress.uploadSpeed)
-                : prettyBytes(episode.progress.downloadSpeed)}
+                ? formatSpeed(episode.progress.uploadSpeed)
+                : formatSpeed(episode.progress.downloadSpeed)}
               /s
             </span>
           )}
