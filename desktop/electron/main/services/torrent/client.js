@@ -6,6 +6,7 @@ import log from 'electron-log';
 import { humanizeDuration } from '../../../shared/utils/time.js';
 import { IPC_CHANNELS } from '../../../shared/constants/event-channels.js';
 import http from 'http';
+import net from 'net';
 
 /** @type {import('webtorrent').Instance} */
 let activeClient = null;
@@ -45,31 +46,23 @@ async function checkServerHealth() {
     log.info(`Checking server health on port ${port}`);
 
     const isHealthy = await new Promise((resolve) => {
-      const req = http.request(
-        {
-          hostname: 'localhost',
-          port: port,
-          path: '/webtorrent',
-          method: 'GET',
-          timeout: 5000,
-        },
-        (res) => {
-          resolve(true);
-        }
-      );
+      const request = http.get(`http://localhost:${port}/webtorrent`, {
+        timeout: 10_000,
+      }, (response) => {
+        response.destroy();
+        resolve(response.statusCode === 200);
+      });
 
-      req.on('error', () => {
-        log.error('Server health check error');
+      request.on('error', (err) => {
+        log.error('Server health check error (HTTP):', err.message);
         resolve(false);
       });
 
-      req.on('timeout', () => {
-        log.error('Server health check timeout');
-        req.destroy();
+      request.on('timeout', () => {
+        request.destroy();
+        log.error('Server health check timeout (HTTP)');
         resolve(false);
       });
-
-      req.end();
     });
 
     log.info(`Server health check result: ${isHealthy}`);
@@ -112,14 +105,9 @@ async function closeServer() {
  */
 async function createTorrentServer(client) {
   if (torrentServer) {
-    const isHealthy = await checkServerHealth();
-    if (isHealthy) {
-      log.info('Using existing healthy server');
-      return torrentServer;
-    }
+    return torrentServer;
   }
 
-  // Ensure any existing server is properly closed
   await closeServer();
 
   for (let attempt = 0; attempt < SERVER_INIT_RETRIES; attempt++) {
@@ -130,7 +118,6 @@ async function createTorrentServer(client) {
         }/${SERVER_INIT_RETRIES})`
       );
 
-      // Destroy and recreate client if server creation fails
       if (attempt > 0) {
         log.info('Recreating WebTorrent client...');
         if (activeClient) {
@@ -167,14 +154,9 @@ async function createTorrentServer(client) {
 
           log.info(`Torrent server listening on port ${port}`);
 
-          // Add small delay before health check
-          await new Promise((resolve) => setTimeout(resolve, 100));
-
           const isHealthy = await checkServerHealth();
           if (!isHealthy) {
-            reject(
-              new Error('Server health check failed after initialization')
-            );
+            reject(new Error('Server health check failed after initialization'));
             return;
           }
 
@@ -235,8 +217,7 @@ async function initializeWebTorrentClient() {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
-    if (activeClient && torrentServer && (await checkServerHealth())) {
-      log.info('Using existing healthy client and server');
+    if (activeClient && torrentServer) {
       return { client: activeClient, instance: torrentServer };
     }
   }
@@ -244,7 +225,7 @@ async function initializeWebTorrentClient() {
   isInitializing = true;
 
   try {
-    if (!activeClient || !torrentServer || !(await checkServerHealth())) {
+    if (!activeClient || !torrentServer) {
       await cleanup();
 
       const { default: WebTorrent } = await import('webtorrent');
@@ -271,9 +252,7 @@ async function initializeWebTorrentClient() {
     const instance = await createTorrentServer(activeClient);
 
     if (!instance) {
-      throw new Error(
-        'Failed to create torrent server after multiple attempts'
-      );
+      throw new Error('Failed to create torrent server after multiple attempts');
     }
 
     return { client: activeClient, instance };
@@ -317,11 +296,6 @@ async function cleanup() {
  */
 async function handleTorrent(torrent, instance) {
   activeTorrentInfoHash = torrent.infoHash;
-
-  const isHealthy = await checkServerHealth();
-  if (!isHealthy) {
-    throw new Error('No se pudo iniciar el servidor de reproducción');
-  }
 
   const fileName = encodeURIComponent(torrent.files[0].name);
   const url = `http://localhost:${instance.server.address().port}/webtorrent/${

@@ -3,15 +3,16 @@ import os from 'os';
 import { promises as fs } from 'fs';
 import log from 'electron-log';
 import { app } from 'electron';
-import levenshtein from 'fast-levenshtein';
 import { IPC_CHANNELS } from '../../../shared/constants/event-channels.js';
 
 function normalizeFileName(fileName) {
   return fileName
     .replace(/\[.*?\]/g, '')
-    .replace('.mkv', '')
+    .replace(/\(.*?\)/g, '')
+    .replace(/\.mkv$/i, '')
     .replace(/\s+/g, ' ')
-    .trim();
+    .trim()
+    .toLowerCase();
 }
 
 async function cleanupTorrentFiles() {
@@ -33,57 +34,77 @@ async function cleanupTorrentFiles() {
     log.info('mkvFiles', mkvFiles);
 
     const historyEpisodes = Object.entries(history.episodes)
-      .filter(([_, episode]) => episode?.episodeFileName && !episode.progressData.completed)
+      .filter(([_, episode]) => {
+        const isIncomplete = !episode?.progressData?.completed;
+        const hasRequiredInfo = episode?.episodeFileName && 
+                              episode?.episodeTorrentUrl && 
+                              episode?.progressData;
+        return isIncomplete && hasRequiredInfo;
+      })
       .map(([infoHash, episode]) => ({
         fileName: episode.episodeFileName,
+        normalizedName: normalizeFileName(episode.episodeFileName),
         torrentUrl: episode.episodeTorrentUrl,
-        infoHash
+        infoHash,
+        lastWatched: episode.progressData.lastWatched || 0,
+        progress: episode.progressData.progress || 0,
+        episodeNumber: episode.episodeNumber
       }))
       .filter(Boolean);
+
     log.info('historyEpisodes', historyEpisodes);
 
-    const SIMILARITY_THRESHOLD = 3;
-    const torrentsToAdd = [];
+    const torrentsToAdd = new Map();
 
     const filesToKeep = mkvFiles.filter((mkvFile) => {
       if (!mkvFile) return false;
 
       const normalizedMkvFile = normalizeFileName(String(mkvFile));
 
-      const distances = historyEpisodes
-        .map((episode) => {
-          const normalizedHistoryFile = normalizeFileName(String(episode.fileName));
-          return {
-            episode,
-            normalizedHistoryFile,
-            distance: levenshtein.get(normalizedMkvFile, normalizedHistoryFile),
-          };
-        });
-
-      if (distances.length === 0) return false;
-
-      const mostSimilar = distances.reduce(
-        (min, current) => (current.distance < min.distance ? current : min),
-        { distance: Infinity }
+      const matchingEpisode = historyEpisodes.find(episode => 
+        episode.normalizedName === normalizedMkvFile
       );
 
-      log.info(`Distance for ${mkvFile}:`, {
-        normalizedMkvFile,
-        mostSimilar,
-      });
-
-      if (mostSimilar.distance <= SIMILARITY_THRESHOLD) {
-        torrentsToAdd.push({
-          torrentUrl: mostSimilar.episode.torrentUrl,
-          torrentHash: mostSimilar.episode.infoHash
+      if (matchingEpisode) {
+        log.info(`Match found for ${mkvFile}:`, {
+          normalizedMkvFile,
+          historyFile: matchingEpisode.normalizedName,
+          episodeNumber: matchingEpisode.episodeNumber
         });
+
+        const shouldResume = matchingEpisode.progress > 0 && matchingEpisode.progress < 0.9;
+        
+        if (shouldResume && !torrentsToAdd.has(matchingEpisode.infoHash)) {
+          torrentsToAdd.set(matchingEpisode.infoHash, {
+            torrentUrl: matchingEpisode.torrentUrl,
+            torrentHash: matchingEpisode.infoHash,
+            fileName: mkvFile,
+            progress: matchingEpisode.progress,
+            lastWatched: matchingEpisode.lastWatched,
+            episodeNumber: matchingEpisode.episodeNumber
+          });
+        }
         return true;
       }
 
+      log.info(`No match found for ${mkvFile}:`, {
+        normalizedMkvFile
+      });
       return false;
     });
 
+    const torrentsArray = Array.from(torrentsToAdd.values());
+
     log.info('filesToKeep', filesToKeep);
+    log.info('torrentsToAdd', {
+      count: torrentsArray.length,
+      details: torrentsArray.map(t => ({
+        fileName: t.fileName,
+        progress: t.progress,
+        lastWatched: new Date(t.lastWatched).toISOString(),
+        episodeNumber: t.episodeNumber
+      }))
+    });
 
     if (filesToKeep.length > 0) {
       log.info(
@@ -102,9 +123,9 @@ async function cleanupTorrentFiles() {
     await Promise.all(deletions);
     log.info(`Cleaned up ${deletions.length} temporary MKV files`);
 
-    return torrentsToAdd;
+    return torrentsArray.sort((a, b) => b.lastWatched - a.lastWatched);
   } catch (error) {
-    log.warn('Failed to cleanup temporary files:', error);
+    log.error('Failed to cleanup temporary files:', error);
     return [];
   }
 }
