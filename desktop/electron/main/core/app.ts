@@ -86,7 +86,15 @@ export async function initializeApp() {
     await setupRemix(build, viteDevServer);
 
     webTorrentProcess = utilityProcess.fork(
-      path.join(__dirname, '../services/torrent/client.js')
+      path.join(__dirname, '../services/torrent/client.js'),
+      [],
+      {
+        env: {
+          ...process.env,
+          UV_THREADPOOL_SIZE: '4',
+          NODE_OPTIONS: '--max-old-space-size=4096'
+        }
+      }
     );
     subtitlesWorker = new Worker(
       path.join(__dirname, '../services/subtitles/worker.js')
@@ -145,12 +153,15 @@ export async function initializeApp() {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     for (const torrent of torrentsToAdd) {
-      log.info('Adding torrent:', torrent);
+      log.info('Adding autoclean torrent:', torrent);
       webTorrentProcess.postMessage({
         type: IPC_CHANNELS.TORRENT.ADD,
-        data: torrent
+        data: {
+          ...torrent,
+          fromAutoclean: true
+        }
       });
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     app.on('before-quit', async (event) => {

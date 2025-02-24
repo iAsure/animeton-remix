@@ -81,7 +81,8 @@ async function cleanupTorrentFiles() {
             fileName: mkvFile,
             progress: matchingEpisode.progress,
             lastWatched: matchingEpisode.lastWatched,
-            episodeNumber: matchingEpisode.episodeNumber
+            episodeNumber: matchingEpisode.episodeNumber,
+            fromAutoclean: true
           });
         }
         return true;

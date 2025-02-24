@@ -190,7 +190,7 @@ const EpisodeCard = memo(
                       />
                     </Tooltip>
                   )}
-                  {episodeTorrentLink?.includes('(nf)') && (
+                  {anime?.torrent?.hasNetflixSubs && (
                     <Tooltip content="Netflix Subs">
                       <Icon
                         icon="streamline:netflix"

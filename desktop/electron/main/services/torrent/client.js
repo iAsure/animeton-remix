@@ -7,6 +7,7 @@ import { humanizeDuration } from '../../../shared/utils/time.js';
 import { IPC_CHANNELS } from '../../../shared/constants/event-channels.js';
 import http from 'http';
 import net from 'net';
+import fetch from 'node-fetch';
 
 /** @type {import('webtorrent').Instance} */
 let activeClient = null;
@@ -15,6 +16,11 @@ let torrentServer = null;
 let isInitializing = false;
 let serverClosing = false;
 let activeTorrentInfoHash = null;
+
+const TORRENT_TYPES = {
+  PLAYBACK: 'playback',
+  AUTOCLEAN: 'autoclean'
+};
 
 const ANNOUNCE = [
   atob('d3NzOi8vdHJhY2tlci5vcGVud2VidG9ycmVudC5jb20='),
@@ -349,6 +355,26 @@ async function handleTorrent(torrent, instance) {
 }
 
 function sendProgressUpdate(torrent) {
+  if (torrent.torrentType === TORRENT_TYPES.AUTOCLEAN && torrent.infoHash !== activeTorrentInfoHash) {
+    process.parentPort?.postMessage({
+      type: IPC_CHANNELS.TORRENT.PROGRESS,
+      data: {
+        numPeers: torrent.numPeers,
+        downloaded: torrent.downloaded,
+        total: torrent.length,
+        progress: torrent.progress,
+        downloadSpeed: torrent.downloadSpeed,
+        uploadSpeed: torrent.uploadSpeed,
+        remaining: torrent.done
+          ? 'Done'
+          : humanizeDuration(torrent.timeRemaining),
+        isBuffering: false,
+        ready: true,
+      },
+    });
+    return;
+  }
+
   if (torrent.infoHash !== activeTorrentInfoHash) return;
 
   const file = torrent?.files[0];
@@ -477,12 +503,28 @@ async function validateTorrent(torrentUrl) {
   }
 
   try {
-    const response = await fetch(torrentUrl);
-    if (!response.ok) {
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const response = await fetch(torrentUrl, { 
+      signal: controller.signal 
+    }).finally(() => clearTimeout(timeoutId));
+
+    if (response.status === 404) {
+      throw new Error('Episodio no encontrado');
     }
   } catch (error) {
-    throw new Error('No se pudo acceder al episodio, verifica tu conexión');
+    log.error('Error validating torrent:', error);
+    
+    if (error.name === 'AbortError' || error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
+      return;
+    }
+
+    if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+      throw new Error('No se pudo acceder al episodio, el servidor no está disponible');
+    }
+
+    throw new Error('Torrent no disponible en este momento');
   }
 }
 
@@ -521,7 +563,10 @@ process.parentPort?.on('message', async (message) => {
   try {
     switch (eventMessage.type) {
       case IPC_CHANNELS.TORRENT.ADD:
-        await handleAddTorrent(eventMessage.data);
+        await handleAddTorrent({
+          ...eventMessage.data,
+          type: eventMessage.data.fromAutoclean ? TORRENT_TYPES.AUTOCLEAN : TORRENT_TYPES.PLAYBACK
+        });
         break;
 
       case IPC_CHANNELS.TORRENT.PAUSE:
@@ -565,7 +610,7 @@ process.parentPort?.on('message', async (message) => {
   }
 });
 
-async function handleAddTorrent({ torrentUrl, torrentHash }) {
+async function handleAddTorrent({ torrentUrl, torrentHash, type = TORRENT_TYPES.PLAYBACK }) {
   try {
     const { client, instance } = await initializeWebTorrentClient();
 
@@ -575,23 +620,45 @@ async function handleAddTorrent({ torrentUrl, torrentHash }) {
 
     if (dupTorrent) {
       log.info('Duplicate torrent found, using existing torrent');
-      await handleTorrent(dupTorrent, instance);
+      if (type === TORRENT_TYPES.PLAYBACK) {
+        await handleTorrent(dupTorrent, instance);
+      }
       return;
     }
 
     await validateTorrent(torrentUrl);
 
     client.add(torrentUrl, { announce: ANNOUNCE }, (torrent) => {
-      handleTorrent(torrent, instance).catch((error) => {
-        log.error('Error handling torrent:', error);
-      });
+      torrent.torrentType = type;
+      
+      // Set highest priority for playback torrents
+      if (type === TORRENT_TYPES.PLAYBACK) {
+        torrent.critical(0, torrent.pieces.length - 1);
+        handleTorrent(torrent, instance).catch((error) => {
+          log.error('Error handling torrent:', error);
+        });
+      } else {
+        // For autoclean torrents, just track progress
+        sendProgressUpdate(torrent);
+        torrent.on('done', () => {
+          sendProgressUpdate(torrent);
+        });
+      }
+
+      // Lower priority of older torrents
+      client.torrents
+        .filter(t => t !== torrent)
+        .forEach(t => {
+          t.critical(0, 0);
+          t.unchokeSlots = 2;
+        });
     });
   } catch (error) {
     log.error('Error adding torrent:', error);
     process.parentPort?.postMessage({
       type: IPC_CHANNELS.TORRENT.ERROR,
       data: {
-        error: error?.message || 'Episodio no disponible en este momento',
+        error: error?.message || 'Torrent no disponible en este momento',
       },
     });
   }

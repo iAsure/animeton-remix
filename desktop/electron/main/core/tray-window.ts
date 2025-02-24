@@ -54,7 +54,7 @@ export class TrayManager {
           this.trayWindow?.hide();
           break;
         case 'quit':
-          app.exit();
+          app.quit();
           break;
       }
     };
@@ -97,7 +97,7 @@ export class TrayManager {
       fullscreenable: false,
       resizable: false,
       skipTaskbar: true,
-      alwaysOnTop: true,
+      alwaysOnTop: false,
       type: 'toolbar',
       webPreferences: {
         nodeIntegration: true,
@@ -257,7 +257,9 @@ export class TrayManager {
     });
 
     this.trayWindow.on('blur', () => {
-      this.trayWindow?.hide();
+      if (this.trayWindow?.isVisible()) {
+        this.trayWindow.hide();
+      }
     });
   }
 
@@ -296,14 +298,16 @@ export class TrayManager {
       x = workArea.x;
     }
 
-    this.trayWindow.setAlwaysOnTop(true, 'pop-up-menu');
-    this.trayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-
+    this.trayWindow.setAlwaysOnTop(true);
     this.trayWindow.setPosition(x, y);
     this.trayWindow.show();
     this.updateTrayContent();
-
-    this.trayWindow.focus();
+    
+    setTimeout(() => {
+      if (this.trayWindow) {
+        this.trayWindow.focus();
+      }
+    }, 10);
   }
 
   private updateTrayContent() {
