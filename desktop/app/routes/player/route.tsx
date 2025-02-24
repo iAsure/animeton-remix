@@ -9,6 +9,7 @@ import useApiSubtitles from '@hooks/media/useApiSubtitles';
 import useChapters from '@hooks/media/useChapters';
 import useUserActivity from '@hooks/user/useUserActivity';
 import useRpcFrame from '@hooks/canvas/useRpcFrame';
+import useAnimeEpisodesData from '@hooks/anime/useAnimeEpisodesData';
 
 import VideoSpinner from '@components/video/VideoSpinner';
 import VideoControls from '@components/video/VideoControls';
@@ -21,6 +22,7 @@ import usePlayerStore from '@stores/player';
 
 import { useNotification } from '@context/NotificationContext';
 import { useConfig } from '@context/ConfigContext';
+import { useTorrentPlayer } from '@context/TorrentPlayerContext';
 
 import { useAmplitude } from '@lib/amplitude';
 
@@ -42,6 +44,7 @@ const Player = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
   const amplitude = useAmplitude();
+  const { playEpisode } = useTorrentPlayer();
 
   const { updateProgress, getEpisodeProgress, history } = useUserActivity();
 
@@ -55,6 +58,9 @@ const Player = () => {
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [isLocalBuffering, setIsLocalBuffering] = useState(false);
   let mouseTimer: NodeJS.Timeout;
+
+  const { episodes } = useAnimeEpisodesData(animeData?.idAnilist, true);
+  const [nextEpisode, setNextEpisode] = useState<any>(null);
 
   const {
     progress,
@@ -87,6 +93,24 @@ const Player = () => {
     animeHistoryData?.episodeNumber || animeData?.torrent?.episode;
 
   const rpcFrame = useRpcFrame({ imageUrl: animeImage }) || null;
+
+  useEffect(() => {
+    if (episodes && animeEpisode) {
+      const currentIndex = episodes.findIndex(ep => {
+        const episodeNumber = ep?.episodeNumber || ep?.episode || ep?.torrent?.episode;
+        return episodeNumber === animeEpisode;
+      });
+      if (currentIndex !== -1 && currentIndex < episodes.length - 1) {
+        setNextEpisode(episodes[currentIndex + 1]);
+      }
+    }
+  }, [episodes, animeEpisode]);
+
+  const handleNextEpisode = useCallback(() => {
+    if (nextEpisode) {
+      playEpisode(nextEpisode);
+    }
+  }, [nextEpisode, playEpisode]);
 
   useEffect(() => {
     if (subtitles) {
@@ -268,7 +292,17 @@ const Player = () => {
       />
       {config?.features?.subtitlesStatus && <SubtitleStatus />}
       <VideoPlayPauseOverlay />
-      <VideoControls videoRef={videoRef} chapters={chapters} />
+      <VideoControls 
+        videoRef={videoRef} 
+        chapters={chapters} 
+        onNextEpisode={handleNextEpisode}
+        hasNextEpisode={!!nextEpisode}
+        nextEpisodeData={{
+          title: nextEpisode?.title,
+          episodeNumber: nextEpisode?.episodeNumber || nextEpisode?.episode || nextEpisode?.torrent?.episode,
+          image: nextEpisode?.image
+        }}
+      />
       {isLoadingVideo && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
           <VideoSpinner

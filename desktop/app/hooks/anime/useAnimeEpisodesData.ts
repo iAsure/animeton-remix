@@ -7,6 +7,9 @@ interface Episode {
   };
   episodeNumber?: number;
   episode?: number;
+  torrent?: {
+    episode?: number;
+  }
 }
 
 const useAnimeEpisodesData = (idAnilist: number | string, withTorrents = false) => {

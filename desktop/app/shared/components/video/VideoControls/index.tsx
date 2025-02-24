@@ -16,9 +16,16 @@ import { IPC_CHANNELS } from '@electron/constants/event-channels';
 interface VideoControlsProps {
   videoRef: React.RefObject<HTMLVideoElement>;
   chapters: any[];
+  onNextEpisode?: () => void;
+  hasNextEpisode?: boolean;
+  nextEpisodeData?: {
+    title?: { en?: string; ja?: string };
+    episodeNumber?: number;
+    image?: string;
+  };
 }
 
-const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
+const VideoControls = ({ videoRef, chapters, onNextEpisode, hasNextEpisode, nextEpisodeData }: VideoControlsProps) => {
   const {
     isPlaying,
     currentTime,
@@ -40,6 +47,7 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
   const [showSubtitleSelector, setShowSubtitleSelector] = useState(false);
   const [showSkipButton, setShowSkipButton] = useState(true);
   const [previousVolume, setPreviousVolume] = useState(1);
+  const [showNextEpisodeOverlay, setShowNextEpisodeOverlay] = useState(false);
 
   const currentChapter = chapters.find(
     chapter => currentTime >= chapter.start/1000 && currentTime <= chapter.end/1000
@@ -314,8 +322,53 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
     }
   };
 
+  useEffect(() => {
+    if (!videoRef.current || !hasNextEpisode) return;
+
+    const checkTimeForNextEpisode = () => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      const timeLeft = video.duration - video.currentTime;
+      const shouldShowOverlay = timeLeft <= 60;
+
+      setShowNextEpisodeOverlay(shouldShowOverlay);
+    };
+
+    const video = videoRef.current;
+    video.addEventListener('timeupdate', checkTimeForNextEpisode);
+    return () => video.removeEventListener('timeupdate', checkTimeForNextEpisode);
+  }, [videoRef, hasNextEpisode, currentChapter]);
+
   return (
     <>
+      {/* Next Episode Overlay */}
+      {showNextEpisodeOverlay && hasNextEpisode && (
+        <div className="fixed right-10 bottom-24 bg-black/80 text-white p-3 rounded-lg flex items-center gap-3 shadow-lg border border-white/10 cursor-pointer" onClick={onNextEpisode} style={{ zIndex: 1000 }}>
+          {nextEpisodeData?.image && (
+            <div className="relative w-16 aspect-square">
+              {nextEpisodeData?.image ? (
+                <>
+                  <img src={nextEpisodeData.image} alt="Next episode" className="w-full h-full object-cover rounded brightness-50" />
+                  <Icon icon="ph:play-fill" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white w-10 h-10" />
+                </>
+              ) : (
+                <div className="w-full h-full bg-transparent rounded flex items-center justify-center">
+                  <Icon icon="ph:play-fill" className="text-white w-10 h-10" />
+                </div>
+              )}
+            </div>
+          )}
+          <div className="flex flex-col gap-1">
+            <p className="text-sm text-white/70">Siguiente episodio</p>
+            <p className="text-base font-medium">
+              {nextEpisodeData?.episodeNumber && `Episodio ${nextEpisodeData.episodeNumber}`}
+              {nextEpisodeData?.title?.en && ` - ${nextEpisodeData.title.en}`}
+            </p>
+          </div>
+        </div>
+      )}
+
       <Button
         className="fixed right-10 bottom-24 bg-white text-black text-base font-extrabold shadow-sm rounded-lg"
         onClick={handleSkipChapter}
@@ -370,19 +423,33 @@ const VideoControls = ({ videoRef, chapters }: VideoControlsProps) => {
         <div className="flex items-center justify-between px-4 h-16">
           {/* Left controls */}
           <div className="flex items-center space-x-4">
-            <button
-              onClick={handlePlayPause}
-              className="p-2 text-white/90 hover:text-white hover:scale-125 transition-all"
-            >
-              <Icon
-                icon={
-                  isPlaying ? 'fluent:pause-48-filled' : 'fluent:play-48-filled'
-                }
-                className="pointer-events-none"
-                width="32"
-                height="32"
-              />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handlePlayPause}
+                className="p-2 text-white/90 hover:text-white hover:scale-125 transition-all"
+              >
+                <Icon
+                  icon={isPlaying ? 'fluent:pause-48-filled' : 'fluent:play-48-filled'}
+                  className="pointer-events-none"
+                  width="32"
+                  height="32"
+                />
+              </button>
+
+              {hasNextEpisode && (
+                <button
+                  onClick={onNextEpisode}
+                  className="p-2 text-white/90 hover:text-white hover:scale-125 transition-all"
+                >
+                  <Icon
+                    icon="fluent:next-48-filled"
+                    className="pointer-events-none"
+                    width="28"
+                    height="28"
+                  />
+                </button>
+              )}
+            </div>
 
             {/* Volume control */}
             <div className="flex items-center space-x-2">
