@@ -19,7 +19,7 @@ let activeTorrentInfoHash = null;
 
 const TORRENT_TYPES = {
   PLAYBACK: 'playback',
-  AUTOCLEAN: 'autoclean'
+  AUTOCLEAN: 'autoclean',
 };
 
 const ANNOUNCE = [
@@ -52,12 +52,16 @@ async function checkServerHealth() {
     log.info(`Checking server health on port ${port}`);
 
     const isHealthy = await new Promise((resolve) => {
-      const request = http.get(`http://localhost:${port}/webtorrent`, {
-        timeout: 10_000,
-      }, (response) => {
-        response.destroy();
-        resolve(response.statusCode === 200);
-      });
+      const request = http.get(
+        `http://localhost:${port}/webtorrent`,
+        {
+          timeout: 10_000,
+        },
+        (response) => {
+          response.destroy();
+          resolve(response.statusCode === 200);
+        }
+      );
 
       request.on('error', (err) => {
         log.error('Server health check error (HTTP):', err.message);
@@ -138,6 +142,9 @@ async function createTorrentServer(client) {
           dht: true,
           natUpnp: true,
         });
+
+        activeClient.setMaxListeners(100);
+
         client = activeClient;
       }
 
@@ -162,7 +169,9 @@ async function createTorrentServer(client) {
 
           const isHealthy = await checkServerHealth();
           if (!isHealthy) {
-            reject(new Error('Server health check failed after initialization'));
+            reject(
+              new Error('Server health check failed after initialization')
+            );
             return;
           }
 
@@ -193,13 +202,21 @@ async function createTorrentServer(client) {
 
 async function readConfigFile() {
   try {
-    const configPath = path.join(process.env.APPDATA, 'anitorrent', 'config.json');
+    const configPath = path.join(
+      process.env.APPDATA,
+      'anitorrent',
+      'config.json'
+    );
     const configData = await fs.promises.readFile(configPath, 'utf-8');
     const config = JSON.parse(configData);
 
     if (config?.preferences?.speedLimits) {
-      config.preferences.speedLimits.download = Math.round(config.preferences.speedLimits.download || 5);
-      config.preferences.speedLimits.upload = Math.round(config.preferences.speedLimits.upload || 5);
+      config.preferences.speedLimits.download = Math.round(
+        config.preferences.speedLimits.download || 5
+      );
+      config.preferences.speedLimits.upload = Math.round(
+        config.preferences.speedLimits.upload || 5
+      );
     }
 
     return config;
@@ -209,9 +226,9 @@ async function readConfigFile() {
       preferences: {
         speedLimits: {
           download: 5,
-          upload: 5
-        }
-      }
+          upload: 5,
+        },
+      },
     };
   }
 }
@@ -231,9 +248,7 @@ async function initializeWebTorrentClient() {
   isInitializing = true;
 
   try {
-    if (!activeClient || !torrentServer) {
-      await cleanup();
-
+    if (!activeClient) {
       const { default: WebTorrent } = await import('webtorrent');
       const config = await readConfigFile();
       const downloadLimit = config?.preferences?.speedLimits?.download || 5;
@@ -248,23 +263,48 @@ async function initializeWebTorrentClient() {
         natUpnp: true,
       });
 
-      log.info('WebTorrent client initialized with speed limits:', { downloadLimit, uploadLimit });
+      activeClient.setMaxListeners(100);
+
+      log.info('WebTorrent client initialized with speed limits:', {
+        downloadLimit,
+        uploadLimit,
+      });
 
       setInterval(() => {
         sendActiveTorrentsUpdate();
-      }, 750);
+      }, 1000);
     }
 
-    const instance = await createTorrentServer(activeClient);
-
-    if (!instance) {
-      throw new Error('Failed to create torrent server after multiple attempts');
+    if (!torrentServer) {
+      const instance = await createTorrentServer(activeClient);
+      if (!instance) {
+        throw new Error(
+          'Failed to create torrent server after multiple attempts'
+        );
+      }
     }
 
-    return { client: activeClient, instance };
+    return { client: activeClient, instance: torrentServer };
   } catch (error) {
     log.error('Failed to initialize WebTorrent client:', error);
-    await cleanup();
+
+    if (!activeClient) {
+      const { default: WebTorrent } = await import('webtorrent');
+      activeClient = new WebTorrent({
+        downloadLimit: 5 * 1048576,
+        uploadLimit: 5 * 1572864,
+        torrentPort: 0,
+        maxConns: 100,
+        dht: true,
+        natUpnp: true,
+      });
+    }
+
+    process.parentPort?.postMessage({
+      type: IPC_CHANNELS.TORRENT.ERROR,
+      data: { error: error.message || 'Error initializing torrent client' },
+    });
+
     throw error;
   } finally {
     isInitializing = false;
@@ -277,6 +317,16 @@ async function cleanup() {
   if (progressInterval) {
     clearInterval(progressInterval);
     progressInterval = null;
+  }
+
+  if (activeClient) {
+    activeClient.torrents.forEach((torrent) => {
+      if (torrent._customHandlers) {
+        torrent.removeListener('done', torrent._customHandlers.done);
+        torrent.removeListener('error', torrent._customHandlers.error);
+        delete torrent._customHandlers;
+      }
+    });
   }
 
   await closeServer();
@@ -331,7 +381,13 @@ async function handleTorrent(torrent, instance) {
     }
   }, 500);
 
-  torrent.on('done', async () => {
+  if (torrent._customHandlers) {
+    torrent.removeListener('done', torrent._customHandlers.done);
+    torrent.removeListener('error', torrent._customHandlers.error);
+    delete torrent._customHandlers;
+  }
+
+  const doneHandler = async () => {
     await verifyDownload(filePath, torrent);
 
     if (torrent.infoHash === activeTorrentInfoHash) {
@@ -342,20 +398,34 @@ async function handleTorrent(torrent, instance) {
     if (filePath.toLowerCase().endsWith('.mkv')) {
       await handleMkvSubtitles(filePath);
     }
-  });
+  };
 
-  torrent.on('error', (error) => {
+  const errorHandler = (error) => {
     if (torrent.infoHash === activeTorrentInfoHash) {
       process.parentPort?.postMessage({
         type: IPC_CHANNELS.TORRENT.ERROR,
         data: { error: error.message },
       });
     }
-  });
+  };
+
+  torrent.removeAllListeners('done');
+  torrent.removeAllListeners('error');
+
+  torrent.on('done', doneHandler);
+  torrent.on('error', errorHandler);
+
+  torrent._customHandlers = {
+    done: doneHandler,
+    error: errorHandler,
+  };
 }
 
 function sendProgressUpdate(torrent) {
-  if (torrent.torrentType === TORRENT_TYPES.AUTOCLEAN && torrent.infoHash !== activeTorrentInfoHash) {
+  if (
+    torrent.torrentType === TORRENT_TYPES.AUTOCLEAN &&
+    torrent.infoHash !== activeTorrentInfoHash
+  ) {
     process.parentPort?.postMessage({
       type: IPC_CHANNELS.TORRENT.PROGRESS,
       data: {
@@ -506,8 +576,8 @@ async function validateTorrent(torrentUrl) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    const response = await fetch(torrentUrl, { 
-      signal: controller.signal 
+    const response = await fetch(torrentUrl, {
+      signal: controller.signal,
     }).finally(() => clearTimeout(timeoutId));
 
     if (response.status === 404) {
@@ -515,13 +585,19 @@ async function validateTorrent(torrentUrl) {
     }
   } catch (error) {
     log.error('Error validating torrent:', error);
-    
-    if (error.name === 'AbortError' || error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
+
+    if (
+      error.name === 'AbortError' ||
+      error.code === 'ETIMEDOUT' ||
+      error.code === 'ECONNABORTED'
+    ) {
       return;
     }
 
     if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-      throw new Error('No se pudo acceder al episodio, el servidor no está disponible');
+      throw new Error(
+        'No se pudo acceder al episodio, el servidor no está disponible'
+      );
     }
 
     throw new Error('Torrent no disponible en este momento');
@@ -565,15 +641,19 @@ process.parentPort?.on('message', async (message) => {
       case IPC_CHANNELS.TORRENT.ADD:
         await handleAddTorrent({
           ...eventMessage.data,
-          type: eventMessage.data.fromAutoclean ? TORRENT_TYPES.AUTOCLEAN : TORRENT_TYPES.PLAYBACK
+          type: eventMessage.data.fromAutoclean
+            ? TORRENT_TYPES.AUTOCLEAN
+            : TORRENT_TYPES.PLAYBACK,
         });
         break;
 
       case IPC_CHANNELS.TORRENT.PAUSE:
-        const pauseResult = await handlePauseTorrent(eventMessage?.data.payload);
+        const pauseResult = await handlePauseTorrent(
+          eventMessage?.data.payload
+        );
         process.parentPort?.postMessage({
           type: IPC_CHANNELS.TORRENT.PAUSE,
-          data: pauseResult
+          data: pauseResult,
         });
         break;
 
@@ -610,7 +690,11 @@ process.parentPort?.on('message', async (message) => {
   }
 });
 
-async function handleAddTorrent({ torrentUrl, torrentHash, type = TORRENT_TYPES.PLAYBACK }) {
+async function handleAddTorrent({
+  torrentUrl,
+  torrentHash,
+  type = TORRENT_TYPES.PLAYBACK,
+}) {
   try {
     const { client, instance } = await initializeWebTorrentClient();
 
@@ -620,6 +704,7 @@ async function handleAddTorrent({ torrentUrl, torrentHash, type = TORRENT_TYPES.
 
     if (dupTorrent) {
       log.info('Duplicate torrent found, using existing torrent');
+      dupTorrent.setMaxListeners(30);
       if (type === TORRENT_TYPES.PLAYBACK) {
         await handleTorrent(dupTorrent, instance);
       }
@@ -629,26 +714,36 @@ async function handleAddTorrent({ torrentUrl, torrentHash, type = TORRENT_TYPES.
     await validateTorrent(torrentUrl);
 
     client.add(torrentUrl, { announce: ANNOUNCE }, (torrent) => {
+      torrent.setMaxListeners(30);
       torrent.torrentType = type;
-      
-      // Set highest priority for playback torrents
+
+      torrent.on('error', (err) => {
+        log.error('Torrent error:', err);
+        process.parentPort?.postMessage({
+          type: IPC_CHANNELS.TORRENT.ERROR,
+          data: { error: err.message || 'Error en el torrent' },
+        });
+      });
+
       if (type === TORRENT_TYPES.PLAYBACK) {
         torrent.critical(0, torrent.pieces.length - 1);
         handleTorrent(torrent, instance).catch((error) => {
           log.error('Error handling torrent:', error);
+          process.parentPort?.postMessage({
+            type: IPC_CHANNELS.TORRENT.ERROR,
+            data: { error: error.message || 'Error handling torrent' },
+          });
         });
       } else {
-        // For autoclean torrents, just track progress
         sendProgressUpdate(torrent);
         torrent.on('done', () => {
           sendProgressUpdate(torrent);
         });
       }
 
-      // Lower priority of older torrents
       client.torrents
-        .filter(t => t !== torrent)
-        .forEach(t => {
+        .filter((t) => t !== torrent)
+        .forEach((t) => {
           t.critical(0, 0);
           t.unchokeSlots = 2;
         });
@@ -658,9 +753,10 @@ async function handleAddTorrent({ torrentUrl, torrentHash, type = TORRENT_TYPES.
     process.parentPort?.postMessage({
       type: IPC_CHANNELS.TORRENT.ERROR,
       data: {
-        error: error?.message || 'Torrent no disponible en este momento',
+        error: error?.message || 'Error al agregar el torrent',
       },
     });
+    throw error;
   }
 }
 
@@ -723,7 +819,10 @@ async function handleSetSpeedLimits({ downloadLimit, uploadLimit }) {
   activeClient.throttleDownload(downloadBytes);
   activeClient.throttleUpload(uploadBytes);
 
-  log.info('Speed limits updated:', { downloadLimit: downloadNum, uploadLimit: uploadNum });
+  log.info('Speed limits updated:', {
+    downloadLimit: downloadNum,
+    uploadLimit: uploadNum,
+  });
 }
 
 process.on('SIGTERM', cleanup);

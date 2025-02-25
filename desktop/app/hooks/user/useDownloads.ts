@@ -40,20 +40,21 @@ interface Download {
 const useDownloads = () => {
   const [downloads, setDownloads] = useState<Download[]>([]);
   const [visualDownloads, setVisualDownloads] = useState<Download[]>([]);
+  const [activeTorrents, setActiveTorrents] = useState<ActiveTorrent[]>([]);
   const { history } = useUserActivity();
 
-  const updateDownloads = useCallback((activeTorrents: ActiveTorrent[]) => {
-    if (!history || !activeTorrents) return;
+  const updateDownloads = useCallback((torrents: ActiveTorrent[]) => {
+    if (!history || !torrents) return;
 
     const newDownloads = Object.entries(history.episodes)
       .filter(([episodeId, _]) => {
-        const activeTorrent = activeTorrents?.find(
+        const activeTorrent = torrents?.find(
           torrent => torrent?.infoHash?.toLowerCase() === episodeId?.toLowerCase()
         );
         return activeTorrent !== undefined;
       })
       .map(([episodeId, episode]) => {
-        const activeTorrent = activeTorrents?.find(
+        const activeTorrent = torrents?.find(
           t => t?.infoHash?.toLowerCase() === episodeId?.toLowerCase()
         );
         
@@ -121,10 +122,16 @@ const useDownloads = () => {
   }, [history]);
 
   useEffect(() => {
+    if (history && activeTorrents.length > 0) {
+      updateDownloads(activeTorrents);
+    }
+  }, [history, activeTorrents, updateDownloads]);
+
+  useEffect(() => {
     const initializeDownloads = async () => {
       try {
-        const activeTorrents = await window.api.torrent.getActiveTorrents();
-        updateDownloads(activeTorrents);
+        const torrents = await window.api.torrent.getActiveTorrents();
+        setActiveTorrents(torrents);
       } catch (error) {
         console.error('Error fetching active torrents:', error);
       }
@@ -132,8 +139,8 @@ const useDownloads = () => {
 
     initializeDownloads();
 
-    const handleActiveTorrents = (_: any, activeTorrents: ActiveTorrent[]) => {
-      updateDownloads(activeTorrents);
+    const handleActiveTorrents = (_: any, torrents: ActiveTorrent[]) => {
+      setActiveTorrents(torrents);
     };
 
     window.api.torrent.onActiveTorrents.subscribe(handleActiveTorrents);
@@ -141,7 +148,7 @@ const useDownloads = () => {
     return () => {
       window.api.torrent.onActiveTorrents.unsubscribe(handleActiveTorrents);
     };
-  }, [updateDownloads]);
+  }, []);
 
   return {
     downloads,

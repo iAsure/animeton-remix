@@ -4,13 +4,18 @@ import log from 'electron-log';
 export function setupShortcuts(mainWindow: BrowserWindow) {
   try {
     globalShortcut.register('F11', () => {
-      mainWindow.setFullScreen(!mainWindow.isFullScreen());
+      if (mainWindow.isFocused()) {
+        mainWindow.setFullScreen(!mainWindow.isFullScreen());
+      }
     });
 
-    globalShortcut.register('Escape', () => {
-      if (mainWindow.isFullScreen()) {
-        mainWindow.setFullScreen(false);
-      }
+    mainWindow.on('focus', () => {
+      mainWindow.webContents.on('before-input-event', (event, input) => {
+        if (input.key === 'Escape' && mainWindow.isFullScreen()) {
+          mainWindow.setFullScreen(false);
+          event.preventDefault();
+        }
+      });
     });
 
     if (!process.env.DEV) {
@@ -19,7 +24,7 @@ export function setupShortcuts(mainWindow: BrowserWindow) {
       });
     }
 
-    log.info('Global shortcuts registered successfully');
+    log.info('Shortcuts registered successfully');
   } catch (error) {
     log.error('Failed to register shortcuts:', error);
   }

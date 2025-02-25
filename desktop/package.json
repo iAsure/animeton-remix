@@ -18,11 +18,11 @@
     "build": "remix vite:build && tsc -p tsconfig.electron.json",
     "predist": "npm run build",
     "dist": "electron-builder",
-    "dev": "cross-env DEV=1 electron .",
+    "dev": "cross-env DEV=1 electron --trace-warnings .",
     "predev": "npm run build",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "prestart": "npm run build",
-    "start": "electron .",
+    "start": "electron --trace-warnings .",
     "typecheck": "tsc"
   },
   "dependencies": {
