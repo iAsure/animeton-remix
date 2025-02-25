@@ -64,8 +64,8 @@ const AnimeDownloadCard = ({ animeGroup }: AnimeDownloadCardProps) => {
   const isPaused = animeGroup.episodes.every((ep) => ep.progress.isPaused);
 
   return (
-    <div className="text-white bg-zinc-900 rounded-md hover:bg-zinc-800/50 transition-colors relative overflow-hidden">
-      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-zinc-800">
+    <div className="text-white bg-zinc-950 rounded-md hover:bg-zinc-900/50 transition-colors relative overflow-hidden">
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-zinc-900">
         <div
           className={`h-full transition-all duration-300 ${
             isPaused ? 'bg-zinc-500' : 'bg-[#ff5680]'
@@ -119,7 +119,7 @@ const AnimeDownloadCard = ({ animeGroup }: AnimeDownloadCardProps) => {
 
           <div className="flex items-center justify-center">
             <button
-              className="flex items-center justify-center h-14 w-6 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-md transition-colors"
+              className="flex items-center justify-center h-14 w-6 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md transition-colors"
               onClick={() => setIsExpanded(!isExpanded)}
             >
               <Icon
@@ -154,7 +154,7 @@ const AnimeDownloadCard = ({ animeGroup }: AnimeDownloadCardProps) => {
                 delay: 0.1,
                 exit: { duration: 0.1, delay: 0 }
               }}
-              className="border-t border-zinc-800 bg-zinc-950/40 px-3 py-2"
+              className="border-t border-zinc-800 bg-black/40 px-3 py-2"
             >
               <EpisodesList episodes={animeGroup.episodes} />
             </motion.div>

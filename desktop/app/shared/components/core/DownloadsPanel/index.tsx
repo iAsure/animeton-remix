@@ -41,7 +41,7 @@ const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
     <>
       {/* Overlay */}
       <div
-        className={`fixed inset-0 bg-black/50 transition-opacity duration-300 z-[9998] ${
+        className={`fixed inset-0 bg-black/60 transition-opacity duration-300 z-[9998] ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
@@ -49,7 +49,7 @@ const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
 
       {/* Panel */}
       <div
-        className={`fixed right-0 top-14 h-[calc(100vh-3.5rem)] w-80 bg-zinc-950 border-l border-zinc-800 transform transition-transform duration-300 ease-in-out z-[9999] ${
+        className={`fixed right-0 top-14 h-[calc(100vh-3.5rem)] w-80 bg-black border-l border-zinc-800 transform transition-transform duration-300 ease-in-out z-[9999] ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -64,10 +64,13 @@ const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
               <span>No hay descargas activas</span>
             </div>
           ) : (
-            <div className="mt-4 space-y-4">
-              {animeGroups.map(group => (
-                <AnimeDownloadCard key={group.animeId} animeGroup={group} />
-              ))}
+            <div className="relative h-[calc(100%-6rem)]">
+              <div className="h-full mt-4 space-y-4 overflow-y-auto pr-2">
+                {animeGroups.map(group => (
+                  <AnimeDownloadCard key={group.animeId} animeGroup={group} />
+                ))}
+              </div>
+              <div className="absolute bottom-0 left-0 right-2 h-12 bg-gradient-to-t from-black to-transparent pointer-events-none" />
             </div>
           )}
         </div>
