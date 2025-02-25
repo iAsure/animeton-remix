@@ -61,14 +61,15 @@ const AnimeDownloadCard = ({ animeGroup }: AnimeDownloadCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const totalProgress = calculateGroupProgress(animeGroup.episodes);
   const { downloadSpeed, uploadSpeed } = calculateGroupSpeeds(animeGroup.episodes);
-  const isPaused = animeGroup.episodes.every((ep) => ep.progress.isPaused);
+  const activeEpisodes = animeGroup.episodes.filter(ep => !ep.progress.isPaused);
+  const hasActiveDownloads = activeEpisodes.length > 0;
 
   return (
     <div className="text-white bg-zinc-950 rounded-md hover:bg-zinc-900/50 transition-colors relative overflow-hidden">
       <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-zinc-900">
         <div
           className={`h-full transition-all duration-300 ${
-            isPaused ? 'bg-zinc-500' : 'bg-[#ff5680]'
+            hasActiveDownloads ? 'bg-[#ff5680]' : 'bg-zinc-500'
           }`}
           style={{
             width: `${Math.round(totalProgress * 100)}%`,
@@ -95,7 +96,7 @@ const AnimeDownloadCard = ({ animeGroup }: AnimeDownloadCardProps) => {
               {animeGroup.episodes.length === 1 ? 'episodio' : 'episodios'}
             </div>
 
-            {!isPaused && (
+            {hasActiveDownloads && (
               <div className="flex items-center gap-1 mt-1 text-xs text-zinc-500">
                 <div className="flex items-center min-w-[80px]">
                   <span className="w-4 flex justify-center">
