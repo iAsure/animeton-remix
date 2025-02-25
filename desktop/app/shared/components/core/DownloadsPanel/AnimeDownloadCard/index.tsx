@@ -127,7 +127,7 @@ const AnimeDownloadCard = ({ animeGroup }: AnimeDownloadCardProps) => {
                 icon="material-symbols:chevron-right"
                 width={22}
                 height={22}
-                className={`transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                className={`transition-transform pointer-events-none ${isExpanded ? 'rotate-90' : ''}`}
               />
             </button>
           </div>

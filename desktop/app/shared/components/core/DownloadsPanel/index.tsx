@@ -65,7 +65,7 @@ const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
             </div>
           ) : (
             <div className="relative h-[calc(100%-6rem)]">
-              <div className="h-full mt-4 space-y-4 overflow-y-auto pr-2">
+              <div className="h-full mt-4 pb-8 space-y-4 overflow-y-auto pr-2">
                 {animeGroups.map(group => (
                   <AnimeDownloadCard key={group.animeId} animeGroup={group} />
                 ))}
