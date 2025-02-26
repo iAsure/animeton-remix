@@ -35,18 +35,20 @@ const groupDownloadsByAnime = (downloads: any[]): AnimeGroup[] => {
 };
 
 const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
-  const { visualDownloads, hasVisualDownloads } = useDownloads();
+  const { visualDownloads, removeDownload } = useDownloads();
   const [localDownloads, setLocalDownloads] = useState<any[]>(visualDownloads);
   
-  // Actualizar los downloads locales cuando cambian los visualDownloads
   useEffect(() => {
     setLocalDownloads(visualDownloads);
   }, [visualDownloads]);
   
-  // Manejar la eliminación de un episodio
   const handleEpisodeRemoved = (episodeId: string) => {
-    // Actualizar el estado local inmediatamente para una mejor UX
     setLocalDownloads(prev => prev.filter(download => download.episodeId !== episodeId));
+    removeDownload(episodeId);
+    
+    if (localDownloads.length === 1 && localDownloads[0].episodeId === episodeId) {
+      setLocalDownloads([]);
+    }
   };
   
   const animeGroups = groupDownloadsByAnime(localDownloads);

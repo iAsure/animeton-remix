@@ -45,17 +45,16 @@ const useDownloads = () => {
   const updateDownloads = useCallback((activeTorrents: ActiveTorrent[]) => {
     if (!history || !activeTorrents) return;
 
+    const activeTorrentsMap = new Map(
+      activeTorrents.map(torrent => [torrent.infoHash.toLowerCase(), torrent])
+    );
+
     const newDownloads = Object.entries(history.episodes)
       .filter(([episodeId, _]) => {
-        const activeTorrent = activeTorrents?.find(
-          torrent => torrent?.infoHash?.toLowerCase() === episodeId?.toLowerCase()
-        );
-        return activeTorrent !== undefined;
+        return activeTorrentsMap.has(episodeId.toLowerCase());
       })
       .map(([episodeId, episode]) => {
-        const activeTorrent = activeTorrents?.find(
-          t => t?.infoHash?.toLowerCase() === episodeId?.toLowerCase()
-        );
+        const activeTorrent = activeTorrentsMap.get(episodeId.toLowerCase());
         
         const download: Download = {
           episodeId,
@@ -90,7 +89,11 @@ const useDownloads = () => {
     setDownloads(newDownloads);
     
     setVisualDownloads(prevVisual => {
-      const updatedVisual = [...prevVisual];
+      const filteredVisual = prevVisual.filter(visual => {
+        return activeTorrentsMap.has(visual.torrentHash.toLowerCase());
+      });
+      
+      const updatedVisual = [...filteredVisual];
       
       newDownloads.forEach(download => {
         const existingIndex = updatedVisual.findIndex(d => d.episodeId === download.episodeId);
@@ -101,18 +104,6 @@ const useDownloads = () => {
           };
         } else {
           updatedVisual.push(download);
-        }
-      });
-
-      prevVisual.forEach(visual => {
-        if (!newDownloads.find(d => d.episodeId === visual.episodeId)) {
-          const existingIndex = updatedVisual.findIndex(d => d.episodeId === visual.episodeId);
-          if (existingIndex >= 0) {
-            updatedVisual[existingIndex] = {
-              ...visual,
-              status: 'paused'
-            };
-          }
         }
       });
 
@@ -143,11 +134,22 @@ const useDownloads = () => {
     };
   }, [updateDownloads]);
 
+  const removeDownload = useCallback((episodeId: string) => {
+    setDownloads(prev => 
+      prev.filter(download => download.episodeId !== episodeId)
+    );
+    
+    setVisualDownloads(prev => 
+      prev.filter(download => download.episodeId !== episodeId)
+    );
+  }, []);
+
   return {
     downloads,
     visualDownloads,
     hasActiveDownloads: downloads.length > 0,
     hasVisualDownloads: visualDownloads.length > 0,
+    removeDownload,
     getDownloadByEpisodeId: useCallback((episodeId: string) => {
       return visualDownloads.find(d => d.episodeId === episodeId);
     }, [visualDownloads])

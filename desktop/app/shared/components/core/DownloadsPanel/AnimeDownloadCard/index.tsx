@@ -62,17 +62,14 @@ const AnimeDownloadCard = ({ animeGroup, onEpisodeRemoved }: AnimeDownloadCardPr
   const [isExpanded, setIsExpanded] = useState(false);
   const [localEpisodes, setLocalEpisodes] = useState<AnimeGroup['episodes']>(animeGroup.episodes);
   
-  // Actualizar los episodios locales cuando cambian los props
   useEffect(() => {
     setLocalEpisodes(animeGroup.episodes);
   }, [animeGroup.episodes]);
   
-  // Manejar la eliminación de un episodio
   const handleEpisodeRemoved = (episodeId: string) => {
-    // Actualizar el estado local inmediatamente para una mejor UX
-    setLocalEpisodes(prev => prev.filter(ep => ep.episodeId !== episodeId));
+    const updatedEpisodes = localEpisodes.filter(ep => ep.episodeId !== episodeId);
+    setLocalEpisodes(updatedEpisodes);
     
-    // Propagar el evento al componente padre
     if (onEpisodeRemoved) {
       onEpisodeRemoved(episodeId);
     }
@@ -83,7 +80,6 @@ const AnimeDownloadCard = ({ animeGroup, onEpisodeRemoved }: AnimeDownloadCardPr
   const activeEpisodes = localEpisodes.filter(ep => !ep.progress.isPaused);
   const hasActiveDownloads = activeEpisodes.length > 0;
   
-  // Si no hay episodios, no renderizar nada
   if (localEpisodes.length === 0) {
     return null;
   }

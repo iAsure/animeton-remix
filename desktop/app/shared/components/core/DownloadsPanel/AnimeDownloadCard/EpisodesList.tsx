@@ -36,6 +36,7 @@ interface EpisodeItemProps {
 
 interface EpisodesListProps {
   episodes: Episode[];
+  onEpisodeRemoved?: (episodeId: string) => void;
 }
 
 const EpisodeItem = ({ episode, onEpisodeRemoved }: EpisodeItemProps) => {
@@ -186,7 +187,7 @@ const EpisodeItem = ({ episode, onEpisodeRemoved }: EpisodeItemProps) => {
   );
 };
 
-const EpisodesList = ({ episodes }: EpisodesListProps) => {
+const EpisodesList = ({ episodes, onEpisodeRemoved }: EpisodesListProps) => {
   const sortedEpisodes = [...episodes].sort(
     (a, b) => a.episodeInfo.episodeNumber - b.episodeInfo.episodeNumber
   );
@@ -207,7 +208,10 @@ const EpisodesList = ({ episodes }: EpisodesListProps) => {
           }}
           className="py-2 first:pt-0 last:pb-0"
         >
-          <EpisodeItem episode={episode} />
+          <EpisodeItem 
+            episode={episode} 
+            onEpisodeRemoved={onEpisodeRemoved}
+          />
         </motion.div>
       ))}
     </div>
