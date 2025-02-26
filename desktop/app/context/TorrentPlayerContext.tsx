@@ -1,7 +1,7 @@
 import { createContext, useContext, useState } from 'react';
 import { useNavigate } from '@remix-run/react';
 import { useNotification } from '@context/NotificationContext';
-import log from 'electron-log';
+import usePlayerStore from '@stores/player';
 
 interface TorrentPlayerContextType {
   loadingHash: string | null;
@@ -27,6 +27,7 @@ export const TorrentPlayerProvider = ({
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const [loadingHash, setLoadingHash] = useState<string | undefined>('');
+  const { reset } = usePlayerStore();
 
   const playEpisode = (episode) => {
     const torrentLink = episode?.episodeTorrentUrl || episode?.torrent?.link || episode?.torrent?.torrentUrl;
@@ -41,6 +42,8 @@ export const TorrentPlayerProvider = ({
       return;
     }
 
+    reset();
+    
     setLoadingHash(infoHash);
     const encodedUrl = encodeURIComponent(torrentLink);
     navigate(

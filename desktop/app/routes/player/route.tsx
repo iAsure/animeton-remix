@@ -40,6 +40,7 @@ const Player = () => {
     setPlaybackState,
     setPlayLastAction,
     reset,
+    setSubtitleContent,
   } = usePlayerStore();
   const { config } = useConfig();
   const { showNotification } = useNotification();
@@ -73,7 +74,7 @@ const Player = () => {
     ready: torrentReady,
     error: torrentError,
   } = useTorrentStream(torrentUrl, torrentHash);
-  const { loadApiSubtitles } = useSubtitles(videoRef, isVideoReady);
+  const { loadApiSubtitles, clearSubtitles } = useSubtitles(videoRef, isVideoReady, torrentUrl);
   const { subtitles, fetchSubtitles } = useApiSubtitles(torrentHash);
   const { chapters } = useChapters();
   const { isWaitingForSubtitles } = useSubtitleBuffering({
@@ -128,9 +129,13 @@ const Player = () => {
 
   const handleNextEpisode = useCallback(() => {
     if (nextEpisode) {
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
+      clearSubtitles();
       playEpisode(nextEpisode);
     }
-  }, [nextEpisode, playEpisode]);
+  }, [nextEpisode, playEpisode, clearSubtitles]);
 
   useEffect(() => {
     if (subtitles) {

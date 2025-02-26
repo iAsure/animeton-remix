@@ -8,12 +8,15 @@ import usePlayerStore from '@stores/player';
 
 const useSubtitles = (
   videoRef: React.RefObject<HTMLVideoElement>,
-  isVideoReady: boolean
+  isVideoReady: boolean,
+  torrentUrl?: string
 ) => {
   const [subtitlesRenderer, setSubtitlesRenderer] = useState<JASSUB | null>(
     null
   );
   const [infoHash, setInfoHash] = useState<string | null>(null);
+  const previousInfoHashRef = useRef<string | null>(null);
+  const previousTorrentUrlRef = useRef<string | null>(null);
 
   const {
     duration,
@@ -35,6 +38,21 @@ const useSubtitles = (
     setLastSegmentCount,
     selectedSubtitleTrack,
   } = usePlayerStore();
+
+  const clearSubtitles = useCallback(() => {
+    console.info('Clearing subtitles');
+    if (subtitlesRenderer) {
+      subtitlesRenderer.setTrack(defaultHeader);
+    }
+    setSubtitleContent(null);
+    setAvailableSubtitles([]);
+    setSelectedSubtitleTrack(null);
+  }, [
+    subtitlesRenderer,
+    setSubtitleContent,
+    setAvailableSubtitles,
+    setSelectedSubtitleTrack,
+  ]);
 
   const initializeSubtitlesRenderer = useCallback(() => {
     if (videoRef.current && !subtitlesRenderer && isVideoReady) {
@@ -74,6 +92,30 @@ const useSubtitles = (
       }
     };
   }, [initializeSubtitlesRenderer, subtitlesRenderer, isVideoReady]);
+
+  useEffect(() => {
+    if (
+      infoHash &&
+      previousInfoHashRef.current &&
+      infoHash !== previousInfoHashRef.current
+    ) {
+      console.info('Torrent hash changed, clearing subtitles');
+      clearSubtitles();
+    }
+    previousInfoHashRef.current = infoHash;
+  }, [infoHash, clearSubtitles]);
+
+  useEffect(() => {
+    if (
+      torrentUrl &&
+      previousTorrentUrlRef.current &&
+      torrentUrl !== previousTorrentUrlRef.current
+    ) {
+      console.info('Torrent URL changed, clearing subtitles');
+      clearSubtitles();
+    }
+    previousTorrentUrlRef.current = torrentUrl;
+  }, [torrentUrl, clearSubtitles]);
 
   const loadSubtitles = useCallback(
     (subtitleContent: string) => {
@@ -127,27 +169,35 @@ const useSubtitles = (
         sub.track.name === 'English'
     );
 
-    const parsedSubtitles = baseSubtitles.map((subtitle) => {
-      const updatedSubtitle = { ...subtitle };
-      
-      if (subtitle.track.name === 'English') {
-        updatedSubtitle.track.name = 'Ingles';
-      } else if (subtitle.track.language === 'spa' && !subtitle.track.name?.includes('Lat')) {
-        updatedSubtitle.track.name = 'Español España';
-      } else if (subtitle.track.language === 'spa' && subtitle.track.name?.includes('Lat')) {
-        updatedSubtitle.track.name = 'Español Latino';
-      }
-      
-      return {
-        ...updatedSubtitle,
-        parsedContent: formatAssSubtitles(updatedSubtitle),
-        source: 'extractor',
-      };
-    }).sort((a, b) => {
-      if (a.track.name === 'Ingles') return 1;
-      if (b.track.name === 'Ingles') return -1;
-      return 0;
-    });
+    const parsedSubtitles = baseSubtitles
+      .map((subtitle) => {
+        const updatedSubtitle = { ...subtitle };
+
+        if (subtitle.track.name === 'English') {
+          updatedSubtitle.track.name = 'Ingles';
+        } else if (
+          subtitle.track.language === 'spa' &&
+          !subtitle.track.name?.includes('Lat')
+        ) {
+          updatedSubtitle.track.name = 'Español España';
+        } else if (
+          subtitle.track.language === 'spa' &&
+          subtitle.track.name?.includes('Lat')
+        ) {
+          updatedSubtitle.track.name = 'Español Latino';
+        }
+
+        return {
+          ...updatedSubtitle,
+          parsedContent: formatAssSubtitles(updatedSubtitle),
+          source: 'extractor',
+        };
+      })
+      .sort((a, b) => {
+        if (a.track.name === 'Ingles') return 1;
+        if (b.track.name === 'Ingles') return -1;
+        return 0;
+      });
 
     const currentSubtitles = usePlayerStore.getState().availableSubtitles;
     const currentSelectedSubtitleTrack =
@@ -157,9 +207,9 @@ const useSubtitles = (
     let newSubtitles;
     if (currentApiSub) {
       const latIndex = parsedSubtitles.findIndex(
-        sub => sub.track.name && sub.track.name.includes('Lat')
+        (sub) => sub.track.name && sub.track.name.includes('Lat')
       );
-      
+
       if (latIndex !== -1) {
         newSubtitles = [...parsedSubtitles];
         newSubtitles[latIndex] = currentApiSub;
@@ -171,8 +221,10 @@ const useSubtitles = (
     }
 
     setAvailableSubtitles(newSubtitles);
-    
-    const currentSubtitleContent = newSubtitles.find((sub) => sub.track.name === currentSelectedSubtitleTrack?.track.name)?.parsedContent;
+
+    const currentSubtitleContent = newSubtitles.find(
+      (sub) => sub.track.name === currentSelectedSubtitleTrack?.track.name
+    )?.parsedContent;
     setSubtitleContent(currentSubtitleContent);
 
     if (!currentSelectedSubtitleTrack) {
@@ -288,7 +340,10 @@ const useSubtitles = (
           message: `Analizando archivo...`,
         });
       } else {
-        console.info('Skipping extraction, current state:', extractionState.status);
+        console.info(
+          'Skipping extraction, current state:',
+          extractionState.status
+        );
       }
     },
     [extractionState.status]
@@ -370,7 +425,9 @@ const useSubtitles = (
     if (extractionState.status === 'completed') return;
     if (extractionState.status !== 'extracting') return;
 
-    const extractedRanges = usePlayerStore.getState().getExtractedSubtitleRanges();
+    const extractedRanges = usePlayerStore
+      .getState()
+      .getExtractedSubtitleRanges();
     const currentSegments = extractedRanges.length;
     const REQUIRED_MATCHES = 30;
 
@@ -444,6 +501,7 @@ const useSubtitles = (
     loadSubtitlesFromFile,
     loadApiSubtitles,
     infoHash,
+    clearSubtitles,
   };
 };
 
