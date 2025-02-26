@@ -31,15 +31,17 @@ interface Episode {
 
 interface EpisodeItemProps {
   episode: Episode;
+  onEpisodeRemoved?: (episodeId: string) => void;
 }
 
 interface EpisodesListProps {
   episodes: Episode[];
 }
 
-const EpisodeItem = ({ episode }: EpisodeItemProps) => {
+const EpisodeItem = ({ episode, onEpisodeRemoved }: EpisodeItemProps) => {
   const [localIsPaused, setLocalIsPaused] = useState(episode.progress.isPaused);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
   const [hasProgressAfterResume, setHasProgressAfterResume] = useState(true);
 
   useEffect(() => {
@@ -79,9 +81,17 @@ const EpisodeItem = ({ episode }: EpisodeItemProps) => {
 
   const handleRemove = async () => {
     try {
+      setIsRemoving(true);
+      
       await window.api.torrent.remove(episode.torrentHash);
+      
+      if (onEpisodeRemoved) {
+        onEpisodeRemoved(episode.episodeId);
+      }
     } catch (error) {
       console.error('Error al eliminar torrent:', error);
+    } finally {
+      setIsRemoving(false);
     }
   };
 
@@ -143,7 +153,7 @@ const EpisodeItem = ({ episode }: EpisodeItemProps) => {
           isIconOnly
           size="sm"
           variant="flat"
-          disabled={isProcessing}
+          disabled={isProcessing || isRemoving}
           className="text-zinc-400 hover:text-white disabled:opacity-50 disabled:cursor-wait h-6 w-6 min-w-0"
           onClick={handlePauseResume}
         >
@@ -162,10 +172,14 @@ const EpisodeItem = ({ episode }: EpisodeItemProps) => {
           isIconOnly
           size="sm"
           variant="flat"
-          className="text-zinc-400 hover:text-red-500 h-6 w-6 min-w-0"
+          disabled={isRemoving}
+          className="text-zinc-400 hover:text-red-500 disabled:opacity-50 disabled:cursor-wait h-6 w-6 min-w-0"
           onClick={handleRemove}
         >
-          <Icon icon="material-symbols:delete" className="text-base" />
+          <Icon 
+            icon={isRemoving ? 'mdi:loading' : 'material-symbols:delete'} 
+            className={`text-base ${isRemoving ? 'animate-spin' : ''}`} 
+          />
         </Button>
       </div>
     </div>

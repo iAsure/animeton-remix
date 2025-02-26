@@ -117,12 +117,18 @@ async function cleanupTorrentFiles() {
     const filesToDelete = mkvFiles.filter(
       (file) => !filesToKeep.includes(file)
     );
-    const deletions = filesToDelete.map((file) =>
-      fs.unlink(path.join(tempPath, file))
-    );
-
-    await Promise.all(deletions);
-    log.info(`Cleaned up ${deletions.length} temporary MKV files`);
+    
+    for (const file of filesToDelete) {
+      try {
+        const filePath = path.join(tempPath, file);
+        await fs.unlink(filePath);
+        log.info(`Removed unused MKV file: ${filePath}`);
+      } catch (error) {
+        log.warn(`Failed to remove MKV file: ${file}`, error);
+      }
+    }
+    
+    log.info(`Cleaned up ${filesToDelete.length} temporary MKV files`);
 
     return torrentsArray.sort((a, b) => b.lastWatched - a.lastWatched);
   } catch (error) {

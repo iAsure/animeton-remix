@@ -1,6 +1,6 @@
 import { formatSpeed } from '@utils/strings';
 import { Icon } from '@iconify/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import EpisodesList from './EpisodesList';
 
@@ -32,6 +32,7 @@ interface AnimeGroup {
 
 interface AnimeDownloadCardProps {
   animeGroup: AnimeGroup;
+  onEpisodeRemoved?: (episodeId: string) => void;
 }
 
 const calculateGroupProgress = (episodes: AnimeGroup['episodes']) => {
@@ -57,12 +58,35 @@ const calculateGroupSpeeds = (episodes: AnimeGroup['episodes']) => {
   };
 };
 
-const AnimeDownloadCard = ({ animeGroup }: AnimeDownloadCardProps) => {
+const AnimeDownloadCard = ({ animeGroup, onEpisodeRemoved }: AnimeDownloadCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const totalProgress = calculateGroupProgress(animeGroup.episodes);
-  const { downloadSpeed, uploadSpeed } = calculateGroupSpeeds(animeGroup.episodes);
-  const activeEpisodes = animeGroup.episodes.filter(ep => !ep.progress.isPaused);
+  const [localEpisodes, setLocalEpisodes] = useState<AnimeGroup['episodes']>(animeGroup.episodes);
+  
+  // Actualizar los episodios locales cuando cambian los props
+  useEffect(() => {
+    setLocalEpisodes(animeGroup.episodes);
+  }, [animeGroup.episodes]);
+  
+  // Manejar la eliminación de un episodio
+  const handleEpisodeRemoved = (episodeId: string) => {
+    // Actualizar el estado local inmediatamente para una mejor UX
+    setLocalEpisodes(prev => prev.filter(ep => ep.episodeId !== episodeId));
+    
+    // Propagar el evento al componente padre
+    if (onEpisodeRemoved) {
+      onEpisodeRemoved(episodeId);
+    }
+  };
+  
+  const totalProgress = calculateGroupProgress(localEpisodes);
+  const { downloadSpeed, uploadSpeed } = calculateGroupSpeeds(localEpisodes);
+  const activeEpisodes = localEpisodes.filter(ep => !ep.progress.isPaused);
   const hasActiveDownloads = activeEpisodes.length > 0;
+  
+  // Si no hay episodios, no renderizar nada
+  if (localEpisodes.length === 0) {
+    return null;
+  }
 
   return (
     <div className="text-white bg-zinc-950 rounded-md hover:bg-zinc-900/50 transition-colors relative overflow-hidden">
@@ -92,8 +116,8 @@ const AnimeDownloadCard = ({ animeGroup }: AnimeDownloadCardProps) => {
               <span className="block truncate">{animeGroup.animeName}</span>
             </div>
             <div className="text-xs text-zinc-400">
-              {animeGroup.episodes.length}{' '}
-              {animeGroup.episodes.length === 1 ? 'episodio' : 'episodios'}
+              {localEpisodes.length}{' '}
+              {localEpisodes.length === 1 ? 'episodio' : 'episodios'}
             </div>
 
             {hasActiveDownloads && (
@@ -157,7 +181,10 @@ const AnimeDownloadCard = ({ animeGroup }: AnimeDownloadCardProps) => {
               }}
               className="border-t border-zinc-800 bg-black/40 px-3 py-2"
             >
-              <EpisodesList episodes={animeGroup.episodes} />
+              <EpisodesList 
+                episodes={localEpisodes} 
+                onEpisodeRemoved={handleEpisodeRemoved}
+              />
             </motion.div>
           </motion.div>
         )}

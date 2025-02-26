@@ -2,6 +2,7 @@ import { Divider } from '@nextui-org/react';
 import useDownloads from '@hooks/user/useDownloads';
 import AnimeDownloadCard from './AnimeDownloadCard';
 import { Icon } from '@iconify/react';
+import { useState, useEffect } from 'react';
 
 interface SidePanelProps {
   isOpen: boolean;
@@ -35,7 +36,21 @@ const groupDownloadsByAnime = (downloads: any[]): AnimeGroup[] => {
 
 const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
   const { visualDownloads, hasVisualDownloads } = useDownloads();
-  const animeGroups = groupDownloadsByAnime(visualDownloads);
+  const [localDownloads, setLocalDownloads] = useState<any[]>(visualDownloads);
+  
+  // Actualizar los downloads locales cuando cambian los visualDownloads
+  useEffect(() => {
+    setLocalDownloads(visualDownloads);
+  }, [visualDownloads]);
+  
+  // Manejar la eliminación de un episodio
+  const handleEpisodeRemoved = (episodeId: string) => {
+    // Actualizar el estado local inmediatamente para una mejor UX
+    setLocalDownloads(prev => prev.filter(download => download.episodeId !== episodeId));
+  };
+  
+  const animeGroups = groupDownloadsByAnime(localDownloads);
+  const hasLocalDownloads = localDownloads.length > 0;
 
   return (
     <>
@@ -55,10 +70,10 @@ const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
       >
         <div className="p-6 h-full">
           <h2 className="text-xl font-bold text-white mb-4">
-            Descargas {hasVisualDownloads ? `(${visualDownloads.length})` : ''}
+            Descargas {hasLocalDownloads ? `(${localDownloads.length})` : ''}
           </h2>
           <Divider />
-          {!hasVisualDownloads ? (
+          {!hasLocalDownloads ? (
             <div className="flex flex-col items-center justify-center h-[calc(100%-6rem)] text-zinc-500 text-sm">
               <Icon icon="material-symbols:download-done" className="text-4xl mb-2" />
               <span>No hay descargas activas</span>
@@ -67,7 +82,11 @@ const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
             <div className="relative h-[calc(100%-6rem)]">
               <div className="h-full mt-4 pb-8 space-y-4 overflow-y-auto pr-2">
                 {animeGroups.map(group => (
-                  <AnimeDownloadCard key={group.animeId} animeGroup={group} />
+                  <AnimeDownloadCard 
+                    key={group.animeId} 
+                    animeGroup={group} 
+                    onEpisodeRemoved={handleEpisodeRemoved}
+                  />
                 ))}
               </div>
               <div className="absolute bottom-0 left-0 right-2 h-12 bg-gradient-to-t from-black to-transparent pointer-events-none" />

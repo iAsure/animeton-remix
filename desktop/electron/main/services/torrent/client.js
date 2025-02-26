@@ -1,5 +1,6 @@
 import path from 'path';
 import os from 'os';
+import { promises as fsPromises } from 'fs';
 import fs from 'fs';
 import { parentPort } from 'worker_threads';
 import log from 'electron-log';
@@ -219,7 +220,7 @@ async function readConfigFile() {
       'anitorrent',
       'config.json'
     );
-    const configData = await fs.promises.readFile(configPath, 'utf-8');
+    const configData = await fsPromises.readFile(configPath, 'utf-8');
     const config = JSON.parse(configData);
 
     if (config?.preferences?.speedLimits) {
@@ -542,7 +543,7 @@ function calculateRanges(torrent, startPiece, endPiece, numPieces) {
 async function verifyDownload(filePath, torrent, maxAttempts = 10) {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      const stats = await fs.promises.stat(filePath);
+      const stats = await fsPromises.stat(filePath);
       if (stats.size === torrent.files[0].length) {
         return true;
       }
@@ -557,7 +558,7 @@ async function verifyDownload(filePath, torrent, maxAttempts = 10) {
 async function handleMkvSubtitles(filePath) {
   try {
     // Verify file exists before processing
-    await fs.promises.access(filePath).catch(() => {
+    await fsPromises.access(filePath).catch(() => {
       return;
     });
 
@@ -812,12 +813,41 @@ async function handleRemoveTorrent(infoHash) {
   const torrent = activeClient?.torrents.find((t) => t.infoHash === infoHash);
   if (!torrent) throw new Error(`Torrent ${infoHash} not found`);
 
+  let filePath = null;
+  if (torrent.files && torrent.files.length > 0) {
+    const file = torrent.files.find(f => f.name.toLowerCase().endsWith('.mkv'));
+    if (file) {
+      filePath = path.join(os.tmpdir(), 'webtorrent', file.name);
+    }
+  }
+
   torrent.destroy();
+  
+  if (filePath) {
+    try {
+      await fsPromises.access(filePath);
+      await fsPromises.unlink(filePath);
+      log.info(`Removed MKV file: ${filePath}`);
+    } catch (error) {
+      log.warn(`Failed to remove MKV file: ${filePath}`, error);
+    }
+  }
+
+  if (infoHash === activeTorrentInfoHash) {
+    activeTorrentInfoHash = null;
+  }
+  
   sendActiveTorrentsUpdate();
+
+  process.parentPort?.postMessage({
+    type: IPC_CHANNELS.TORRENT.REMOVE,
+    data: { infoHash }
+  });
 
   return {
     success: true,
     infoHash,
+    fileRemoved: !!filePath
   };
 }
 
