@@ -1,7 +1,7 @@
 import { Icon } from '@iconify/react';
 import { Divider, Button } from '@nextui-org/react';
 import { useNavigate } from '@remix-run/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import useHeaderNavigation from '@hooks/system/useHeaderNavigation';
 import useUpdateDownload from '@hooks/system/useUpdateDownload';
@@ -45,7 +45,7 @@ const Header = () => {
   } = useHeaderNavigation();
   const { updateDownloaded, handleUpdateClick } = useUpdateDownload();
 
-  const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
+  const [isDownloadsPanelOpen, setIsDownloadsPanelOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleMenuToggle = () => {
@@ -65,9 +65,15 @@ const Header = () => {
 
   const appUserDiscordId = config?.user?.discordId;
 
-  const handleSidePanelToggle = () => {
-    setIsSidePanelOpen(!isSidePanelOpen);
+  const handleDownloadsPanelToggle = () => {
+    setIsDownloadsPanelOpen(!isDownloadsPanelOpen);
   };
+
+  useEffect(() => {
+    if (isPlayerRoute(currentPath) && isDownloadsPanelOpen) {
+      setIsDownloadsPanelOpen(false);
+    }
+  }, [currentPath, isDownloadsPanelOpen]);
 
   return (
     <>
@@ -80,10 +86,7 @@ const Header = () => {
         }}
       >
         <div className="fixed w-full bg-zinc-950 overflow-hidden flex top-0 left-0 right-0 py-2 px-8 h-14">
-          <div
-            className="flex flex-row w-full h-full items-center"
-            style={{ zIndex: 9000 }}
-          >
+          <div className="flex flex-row w-full h-full items-center" style={{ zIndex: 9000 }}>
             <div className="flex flex-row items-center gap-2 flex-1">
               {/* Navigate Buttons */}
               <div className="flex flex-row items-center webkit-app-region-no-drag">
@@ -285,19 +288,23 @@ const Header = () => {
                 <SettingsMenu onClose={() => setIsMenuOpen(false)} />
               )}
 
-              <Divider orientation="vertical" className="bg-zinc-800 h-6" />
+              {!isPlayerRoute(currentPath) && (
+                <>
+                  <Divider orientation="vertical" className="bg-zinc-800 h-6" />
 
-              <NewBadge>
-                <Button
-                  isIconOnly
-                  variant="light"
-                  size="sm"
-                  className="text-white bg-zinc-900 webkit-app-region-no-drag"
-                  onClick={handleSidePanelToggle}
-                >
-                  <Icon icon="mdi:downloads" width="22" height="22" />
-                </Button>
-              </NewBadge>
+                  <NewBadge>
+                    <Button
+                      isIconOnly
+                      variant="light"
+                      size="sm"
+                      className="text-white bg-zinc-900 webkit-app-region-no-drag"
+                      onClick={handleDownloadsPanelToggle}
+                    >
+                      <Icon icon="mdi:downloads" width="22" height="22" />
+                    </Button>
+                  </NewBadge>
+                </>
+              )}
 
               <Divider orientation="vertical" className="bg-zinc-800 h-6" />
 
@@ -307,8 +314,8 @@ const Header = () => {
         </div>
       </div>
       <DownloadsPanel
-        isOpen={isSidePanelOpen}
-        onClose={() => setIsSidePanelOpen(false)}
+        isOpen={isDownloadsPanelOpen}
+        onClose={() => setIsDownloadsPanelOpen(false)}
       />
     </>
   );
