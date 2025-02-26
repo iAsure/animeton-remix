@@ -10,6 +10,7 @@ import useChapters from '@hooks/media/useChapters';
 import useUserActivity from '@hooks/user/useUserActivity';
 import useRpcFrame from '@hooks/canvas/useRpcFrame';
 import useAnimeEpisodesData from '@hooks/anime/useAnimeEpisodesData';
+import useSubtitleBuffering from '@hooks/media/useSubtitleBuffering';
 
 import VideoSpinner from '@components/video/VideoSpinner';
 import VideoControls from '@components/video/VideoControls';
@@ -35,6 +36,8 @@ const Player = () => {
     isMouseMoving,
     setMouseMoving,
     setIsPlaying,
+    setCurrentTime,
+    setPlaybackState,
     setPlayLastAction,
     reset,
   } = usePlayerStore();
@@ -73,9 +76,16 @@ const Player = () => {
   const { loadApiSubtitles } = useSubtitles(videoRef, isVideoReady);
   const { subtitles, fetchSubtitles } = useApiSubtitles(torrentHash);
   const { chapters } = useChapters();
+  const { isWaitingForSubtitles } = useSubtitleBuffering({
+    videoRef,
+    isVideoReady,
+    setIsLocalBuffering
+  });
 
   const isLoadingVideo =
-    isLocalBuffering || (!subtitleContent?.length && !torrentReady);
+    isLocalBuffering || 
+    isWaitingForSubtitles || 
+    (!subtitleContent?.length && !torrentReady);
 
   const animeHistoryData = history?.episodes[torrentHash];
 
@@ -93,6 +103,16 @@ const Player = () => {
     animeHistoryData?.episodeNumber || animeData?.torrent?.episode;
 
   const rpcFrame = useRpcFrame({ imageUrl: animeImage }) || null;
+
+  const handleTimeUpdate = useCallback(() => {
+    if (videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime);
+      
+      if (duration !== videoRef.current.duration && !isNaN(videoRef.current.duration)) {
+        setPlaybackState(videoRef.current.currentTime, videoRef.current.duration);
+      }
+    }
+  }, [setCurrentTime, setPlaybackState, duration]);
 
   useEffect(() => {
     if (episodes && animeEpisode) {
@@ -215,6 +235,16 @@ const Player = () => {
   }, [setMouseMoving]);
 
   useEffect(() => {
+    if (videoRef.current && isVideoReady) {
+      videoRef.current.addEventListener('timeupdate', handleTimeUpdate);
+      
+      return () => {
+        videoRef.current?.removeEventListener('timeupdate', handleTimeUpdate);
+      };
+    }
+  }, [videoRef, isVideoReady, handleTimeUpdate]);
+
+  useEffect(() => {
     const handleTorrentServerDone = (event: any, data: any) => {
       const { url } = data;
       if (videoRef.current) {
@@ -309,6 +339,7 @@ const Player = () => {
             progress={progress}
             downloadSpeed={downloadSpeed}
             uploadSpeed={uploadSpeed}
+            isWaitingForSubtitles={isWaitingForSubtitles}
           />
         </div>
       )}
@@ -323,4 +354,4 @@ const Player = () => {
   );
 };
 
-export default Player;
+export default Player; 

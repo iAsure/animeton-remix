@@ -69,6 +69,7 @@ interface PlayerStore {
 
   // Actions
   setIsPlaying: (isPlaying: boolean) => void;
+  setCurrentTime: (currentTime: number) => void;
   setPlaybackState: (currentTime: number, duration: number) => void;
   setVolume: (volume: number) => void;
   setMuted: (isMuted: boolean) => void;
@@ -133,6 +134,7 @@ const usePlayerStore = create<PlayerStore>((set, get) => ({
 
   // Actions
   setIsPlaying: (isPlaying) => set({ isPlaying }),
+  setCurrentTime: (currentTime) => set({ currentTime }),
   setPlaybackState: (currentTime, duration) => set({ currentTime, duration }),
   setVolume: (volume) => set({ volume }),
   setMuted: (isMuted) => set({ isMuted }),
