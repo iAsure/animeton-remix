@@ -47,7 +47,7 @@ const VideoSpinner = ({
     if (subtitleMessage) return subtitleMessage;
     
     if (isDownloadComplete) {
-      return 'Cargando..';
+      return 'Cargando...';
     }
     
     return Number(parsedProgress) > 0
