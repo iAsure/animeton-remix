@@ -87,13 +87,17 @@ const Player = () => {
   });
 
   const isLoadingVideo =
-    isLocalBuffering || 
-    isWaitingForSubtitles ||
-    !videoRef.current ||
-    !videoRef.current.readyState ||
-    videoRef.current.readyState < 3 ||
-    (videoRef.current.duration === 0 && videoRef.current.currentTime === 0) ||
-    (videoRef.current.duration === 0 || isNaN(videoRef.current.duration));
+    remaining === 'Complete' && isSeeking
+      ? false
+      : isLocalBuffering ||
+        isWaitingForSubtitles ||
+        !videoRef.current ||
+        !videoRef.current.readyState ||
+        videoRef.current.readyState < 3 ||
+        (videoRef.current.duration === 0 &&
+          videoRef.current.currentTime === 0) ||
+        videoRef.current.duration === 0 ||
+        isNaN(videoRef.current.duration);
 
   const animeHistoryData = history?.episodes[torrentHash];
 
@@ -213,25 +217,31 @@ const Player = () => {
   }, [torrentHash, duration, updateProgress, animeData]);
 
   const handleVideoWaiting = useCallback(() => {
+    console.info('Video waiting');
+
+    if (isSeeking && remaining === 'Complete') {
+      console.info(
+        'Ignoring waiting event during seeking with complete download'
+      );
+      return;
+    }
+
     setIsLocalBuffering(true);
-    
+
     if (remaining === 'Complete' && videoRef.current) {
-      setIsSeeking(true);
-      
-      const seekingTimeout = setTimeout(() => {
+      const waitingTimeout = setTimeout(() => {
         if (videoRef.current) {
           const isStillWaiting = videoRef.current.readyState < 3;
-          
+
           if (!isStillWaiting) {
             setIsLocalBuffering(false);
-            setIsSeeking(false);
           }
         }
       }, 300);
-      
-      return () => clearTimeout(seekingTimeout);
+
+      return () => clearTimeout(waitingTimeout);
     }
-  }, [remaining]);
+  }, [remaining, isSeeking]);
 
   const handleVideoReady = useCallback(() => {
     console.info('Video ready');
@@ -260,7 +270,11 @@ const Player = () => {
   }, [setIsPlaying]);
 
   const handleCanPlay = useCallback(() => {
-    if (videoRef.current && videoRef.current.readyState >= 3 && videoRef.current.duration > 0) {
+    if (
+      videoRef.current &&
+      videoRef.current.readyState >= 3 &&
+      videoRef.current.duration > 0
+    ) {
       setIsLocalBuffering(false);
       setIsSeeking(false);
       handleVideoReady();
@@ -274,12 +288,32 @@ const Player = () => {
   }, [setMouseMoving]);
 
   const handleVideoSeeking = useCallback(() => {
+    console.info('Video seeking');
+
     setIsSeeking(true);
-  }, []);
+
+    if (remaining === 'Complete') {
+      console.info('Seeking with complete download, disabling buffering');
+      setIsLocalBuffering(false);
+    }
+
+    setTimeout(() => {
+      console.info('Seeking timeout reached, resetting state');
+      setIsSeeking(false);
+    }, 500);
+  }, [remaining]);
 
   const handleVideoSeeked = useCallback(() => {
+    console.info('Video seeked');
+
     setIsSeeking(false);
-    if (videoRef.current && videoRef.current.readyState >= 3 && videoRef.current.duration > 0) {
+
+    if (
+      videoRef.current &&
+      videoRef.current.readyState >= 3 &&
+      videoRef.current.duration > 0
+    ) {
+      console.info('Video seeked and ready, disabling buffering');
       setIsLocalBuffering(false);
     }
   }, []);
@@ -290,7 +324,11 @@ const Player = () => {
 
   const handleLoadedData = useCallback(() => {
     console.info('Video data loaded');
-    if (videoRef.current && videoRef.current.readyState >= 3 && videoRef.current.duration > 0) {
+    if (
+      videoRef.current &&
+      videoRef.current.readyState >= 3 &&
+      videoRef.current.duration > 0
+    ) {
       setIsLocalBuffering(false);
     }
   }, []);
@@ -298,7 +336,7 @@ const Player = () => {
   useEffect(() => {
     if (videoRef.current && isVideoReady) {
       videoRef.current.addEventListener('timeupdate', handleTimeUpdate);
-      
+
       return () => {
         videoRef.current?.removeEventListener('timeupdate', handleTimeUpdate);
       };
@@ -307,26 +345,34 @@ const Player = () => {
 
   useEffect(() => {
     if (!videoRef.current) return;
-    
+
     const checkReadyState = () => {
       if (videoRef.current) {
-        const isReady = videoRef.current.readyState >= 3 && 
-                        videoRef.current.duration > 0 && 
-                        !isNaN(videoRef.current.duration);
-        
+        const isReady =
+          videoRef.current.readyState >= 3 &&
+          videoRef.current.duration > 0 &&
+          !isNaN(videoRef.current.duration);
+
         if (isReady && isLocalBuffering && !isWaitingForSubtitles) {
-          console.info('Video ready state reached, disabling buffering');
-          setIsLocalBuffering(false);
+          if (isSeeking && remaining === 'Complete') {
+            console.info(
+              'Video ready during seeking with complete download, keeping buffering off'
+            );
+            setIsLocalBuffering(false);
+          } else if (!isSeeking) {
+            console.info('Video ready state reached, disabling buffering');
+            setIsLocalBuffering(false);
+          }
         }
       }
     };
-    
+
     const intervalId = setInterval(checkReadyState, 100);
-    
+
     return () => {
       clearInterval(intervalId);
     };
-  }, [videoRef, isLocalBuffering, isWaitingForSubtitles]);
+  }, [videoRef, isLocalBuffering, isWaitingForSubtitles, isSeeking, remaining]);
 
   useEffect(() => {
     const handleTorrentServerDone = (event: any, data: any) => {
@@ -368,6 +414,19 @@ const Player = () => {
       });
     }
   }, [animeData]);
+
+  useEffect(() => {
+    if (isSeeking) {
+      console.info('Seeking state activated');
+
+      const seekingTimeout = setTimeout(() => {
+        console.info('Seeking timeout reached, resetting state');
+        setIsSeeking(false);
+      }, 1000);
+
+      return () => clearTimeout(seekingTimeout);
+    }
+  }, [isSeeking]);
 
   return (
     <div
@@ -432,6 +491,7 @@ const Player = () => {
             uploadSpeed={uploadSpeed}
             isWaitingForSubtitles={isWaitingForSubtitles}
             remaining={remaining}
+            isSeeking={isSeeking}
           />
         </div>
       )}

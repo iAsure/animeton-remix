@@ -7,6 +7,7 @@ interface VideoSpinnerProps {
   uploadSpeed: string;
   isWaitingForSubtitles?: boolean;
   remaining?: string;
+  isSeeking?: boolean;
 }
 
 const VideoSpinner = ({
@@ -15,6 +16,7 @@ const VideoSpinner = ({
   uploadSpeed,
   isWaitingForSubtitles = false,
   remaining = '',
+  isSeeking = false,
 }: VideoSpinnerProps) => {
   const parsedProgress = Number(progress).toFixed(0);
   const { extractionState } = usePlayerStore();
@@ -44,10 +46,14 @@ const VideoSpinner = ({
   };
 
   const getStatusMessage = () => {
+    if (isSeeking) {
+      return 'Navegando...';
+    }
+    
     if (subtitleMessage) return subtitleMessage;
     
     if (isDownloadComplete) {
-      return 'Cargando...';
+      return 'Preparando video...';
     }
     
     return Number(parsedProgress) > 0
