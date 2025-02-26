@@ -32,7 +32,6 @@ const Player = () => {
     isPlaying,
     isFullscreen,
     duration,
-    subtitleContent,
     isMouseMoving,
     setMouseMoving,
     setIsPlaying,
@@ -40,7 +39,6 @@ const Player = () => {
     setPlaybackState,
     setPlayLastAction,
     reset,
-    setSubtitleContent,
   } = usePlayerStore();
   const { config } = useConfig();
   const { showNotification } = useNotification();
@@ -60,7 +58,8 @@ const Player = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const [isVideoReady, setIsVideoReady] = useState(false);
-  const [isLocalBuffering, setIsLocalBuffering] = useState(false);
+  const [isLocalBuffering, setIsLocalBuffering] = useState(true);
+  const [isSeeking, setIsSeeking] = useState(false);
   let mouseTimer: NodeJS.Timeout;
 
   const { episodes } = useAnimeEpisodesData(animeData?.idAnilist, true);
@@ -71,22 +70,30 @@ const Player = () => {
     downloadSpeed,
     uploadSpeed,
     numPeers,
-    ready: torrentReady,
     error: torrentError,
+    remaining,
   } = useTorrentStream(torrentUrl, torrentHash);
-  const { loadApiSubtitles, clearSubtitles } = useSubtitles(videoRef, isVideoReady, torrentUrl);
+  const { loadApiSubtitles, clearSubtitles } = useSubtitles(
+    videoRef,
+    isVideoReady,
+    torrentUrl
+  );
   const { subtitles, fetchSubtitles } = useApiSubtitles(torrentHash);
   const { chapters } = useChapters();
   const { isWaitingForSubtitles } = useSubtitleBuffering({
     videoRef,
     isVideoReady,
-    setIsLocalBuffering
+    setIsLocalBuffering,
   });
 
   const isLoadingVideo =
     isLocalBuffering || 
-    isWaitingForSubtitles || 
-    (!subtitleContent?.length && !torrentReady);
+    isWaitingForSubtitles ||
+    !videoRef.current ||
+    !videoRef.current.readyState ||
+    videoRef.current.readyState < 3 ||
+    (videoRef.current.duration === 0 && videoRef.current.currentTime === 0) ||
+    (videoRef.current.duration === 0 || isNaN(videoRef.current.duration));
 
   const animeHistoryData = history?.episodes[torrentHash];
 
@@ -108,17 +115,24 @@ const Player = () => {
   const handleTimeUpdate = useCallback(() => {
     if (videoRef.current) {
       setCurrentTime(videoRef.current.currentTime);
-      
-      if (duration !== videoRef.current.duration && !isNaN(videoRef.current.duration)) {
-        setPlaybackState(videoRef.current.currentTime, videoRef.current.duration);
+
+      if (
+        duration !== videoRef.current.duration &&
+        !isNaN(videoRef.current.duration)
+      ) {
+        setPlaybackState(
+          videoRef.current.currentTime,
+          videoRef.current.duration
+        );
       }
     }
   }, [setCurrentTime, setPlaybackState, duration]);
 
   useEffect(() => {
     if (episodes && animeEpisode) {
-      const currentIndex = episodes.findIndex(ep => {
-        const episodeNumber = ep?.episodeNumber || ep?.episode || ep?.torrent?.episode;
+      const currentIndex = episodes.findIndex((ep) => {
+        const episodeNumber =
+          ep?.episodeNumber || ep?.episode || ep?.torrent?.episode;
         return episodeNumber === animeEpisode;
       });
       if (currentIndex !== -1 && currentIndex < episodes.length - 1) {
@@ -200,7 +214,24 @@ const Player = () => {
 
   const handleVideoWaiting = useCallback(() => {
     setIsLocalBuffering(true);
-  }, []);
+    
+    if (remaining === 'Complete' && videoRef.current) {
+      setIsSeeking(true);
+      
+      const seekingTimeout = setTimeout(() => {
+        if (videoRef.current) {
+          const isStillWaiting = videoRef.current.readyState < 3;
+          
+          if (!isStillWaiting) {
+            setIsLocalBuffering(false);
+            setIsSeeking(false);
+          }
+        }
+      }, 300);
+      
+      return () => clearTimeout(seekingTimeout);
+    }
+  }, [remaining]);
 
   const handleVideoReady = useCallback(() => {
     console.info('Video ready');
@@ -229,8 +260,11 @@ const Player = () => {
   }, [setIsPlaying]);
 
   const handleCanPlay = useCallback(() => {
-    setIsLocalBuffering(false);
-    handleVideoReady();
+    if (videoRef.current && videoRef.current.readyState >= 3 && videoRef.current.duration > 0) {
+      setIsLocalBuffering(false);
+      setIsSeeking(false);
+      handleVideoReady();
+    }
   }, [handleVideoReady]);
 
   const handleMouseMove = useCallback(() => {
@@ -238,6 +272,28 @@ const Player = () => {
     clearTimeout(mouseTimer);
     mouseTimer = setTimeout(() => setMouseMoving(false), 3000);
   }, [setMouseMoving]);
+
+  const handleVideoSeeking = useCallback(() => {
+    setIsSeeking(true);
+  }, []);
+
+  const handleVideoSeeked = useCallback(() => {
+    setIsSeeking(false);
+    if (videoRef.current && videoRef.current.readyState >= 3 && videoRef.current.duration > 0) {
+      setIsLocalBuffering(false);
+    }
+  }, []);
+
+  const handleLoadedMetadata = useCallback(() => {
+    console.info('Video metadata loaded');
+  }, []);
+
+  const handleLoadedData = useCallback(() => {
+    console.info('Video data loaded');
+    if (videoRef.current && videoRef.current.readyState >= 3 && videoRef.current.duration > 0) {
+      setIsLocalBuffering(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (videoRef.current && isVideoReady) {
@@ -248,6 +304,29 @@ const Player = () => {
       };
     }
   }, [videoRef, isVideoReady, handleTimeUpdate]);
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    
+    const checkReadyState = () => {
+      if (videoRef.current) {
+        const isReady = videoRef.current.readyState >= 3 && 
+                        videoRef.current.duration > 0 && 
+                        !isNaN(videoRef.current.duration);
+        
+        if (isReady && isLocalBuffering && !isWaitingForSubtitles) {
+          console.info('Video ready state reached, disabling buffering');
+          setIsLocalBuffering(false);
+        }
+      }
+    };
+    
+    const intervalId = setInterval(checkReadyState, 100);
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [videoRef, isLocalBuffering, isWaitingForSubtitles]);
 
   useEffect(() => {
     const handleTorrentServerDone = (event: any, data: any) => {
@@ -323,19 +402,26 @@ const Player = () => {
         onCanPlay={handleCanPlay}
         onPlay={handleVideoPlay}
         onWaiting={handleVideoWaiting}
+        onSeeking={handleVideoSeeking}
+        onSeeked={handleVideoSeeked}
+        onLoadedMetadata={handleLoadedMetadata}
+        onLoadedData={handleLoadedData}
         crossOrigin="anonymous"
       />
       {config?.features?.subtitlesStatus && <SubtitleStatus />}
       <VideoPlayPauseOverlay />
-      <VideoControls 
-        videoRef={videoRef} 
-        chapters={chapters} 
+      <VideoControls
+        videoRef={videoRef}
+        chapters={chapters}
         onNextEpisode={handleNextEpisode}
         hasNextEpisode={!!nextEpisode}
         nextEpisodeData={{
           title: nextEpisode?.title,
-          episodeNumber: nextEpisode?.episodeNumber || nextEpisode?.episode || nextEpisode?.torrent?.episode,
-          image: nextEpisode?.image
+          episodeNumber:
+            nextEpisode?.episodeNumber ||
+            nextEpisode?.episode ||
+            nextEpisode?.torrent?.episode,
+          image: nextEpisode?.image,
         }}
       />
       {isLoadingVideo && (
@@ -345,6 +431,7 @@ const Player = () => {
             downloadSpeed={downloadSpeed}
             uploadSpeed={uploadSpeed}
             isWaitingForSubtitles={isWaitingForSubtitles}
+            remaining={remaining}
           />
         </div>
       )}
@@ -359,4 +446,4 @@ const Player = () => {
   );
 };
 
-export default Player; 
+export default Player;

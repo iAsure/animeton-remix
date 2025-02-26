@@ -6,6 +6,7 @@ interface VideoSpinnerProps {
   downloadSpeed: string;
   uploadSpeed: string;
   isWaitingForSubtitles?: boolean;
+  remaining?: string;
 }
 
 const VideoSpinner = ({
@@ -13,9 +14,11 @@ const VideoSpinner = ({
   downloadSpeed,
   uploadSpeed,
   isWaitingForSubtitles = false,
+  remaining = '',
 }: VideoSpinnerProps) => {
   const parsedProgress = Number(progress).toFixed(0);
   const { extractionState } = usePlayerStore();
+  const isDownloadComplete = remaining === 'Complete';
 
   const pulseTransition = {
     repeat: Infinity,
@@ -40,7 +43,20 @@ const VideoSpinner = ({
     }
   };
 
+  const getStatusMessage = () => {
+    if (subtitleMessage) return subtitleMessage;
+    
+    if (isDownloadComplete) {
+      return 'Cargando..';
+    }
+    
+    return Number(parsedProgress) > 0
+      ? `${parsedProgress}% | Descargando...`
+      : 'Iniciando...';
+  };
+
   const subtitleMessage = getSubtitleStatusMessage();
+  const statusMessage = getStatusMessage();
 
   return (
     <div
@@ -62,30 +78,24 @@ const VideoSpinner = ({
 
       <div className="mt-6 text-center text-gray-200 font-medium">
         <div className="flex flex-col items-center justify-center space-y-3">
-          {subtitleMessage ? (
-            <span className="text-3xl text-white font-semibold">
-              {subtitleMessage}
-            </span>
-          ) : (
-            Number(parsedProgress) > 0 && (
-              <>
-                <span className="text-3xl text-white font-semibold">
-                  {parsedProgress}% | Descargando...
-                </span>
+          <span className="text-3xl text-white font-semibold">
+            {statusMessage}
+          </span>
 
-                <div className="flex items-center space-x-4 text-base text-gray-400">
-                  <span className="flex items-center">
-                    <span className="mr-1">↓</span>
-                    {downloadSpeed}
-                  </span>
-                  <span className="flex items-center">
-                    <span className="mr-1">↑</span>
-                    {uploadSpeed}
-                  </span>
-                </div>
-              </>
-            )
-          )}
+          {!subtitleMessage &&
+            !isDownloadComplete &&
+            Number(parsedProgress) > 0 && (
+              <div className="flex items-center space-x-4 text-base text-gray-400">
+                <span className="flex items-center">
+                  <span className="mr-1">↓</span>
+                  {downloadSpeed}
+                </span>
+                <span className="flex items-center">
+                  <span className="mr-1">↑</span>
+                  {uploadSpeed}
+                </span>
+              </div>
+            )}
         </div>
       </div>
     </div>

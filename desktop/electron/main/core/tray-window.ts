@@ -79,7 +79,7 @@ export class TrayManager {
 
   private setupTray() {
     log.info('Creating tray icon');
-    const trayIcon = nativeImage.createFromPath('./public/favicon.ico');
+    const trayIcon = nativeImage.createFromPath('../../../public/favicon.ico');
     this.tray = new Tray(trayIcon);
     this.tray.setToolTip('AniTorrent');
 
