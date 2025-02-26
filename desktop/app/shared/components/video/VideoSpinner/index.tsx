@@ -1,4 +1,4 @@
-import { Icon } from '@iconify/react';
+import { motion } from "framer-motion";
 
 interface VideoSpinnerProps {
   progress: number;
@@ -13,6 +13,13 @@ const VideoSpinner = ({
 }: VideoSpinnerProps) => {
   const parsedProgress = Number(progress).toFixed(0);
 
+  const pulseTransition = {
+    repeat: Infinity,
+    duration: 2,
+    ease: "easeInOut",
+    times: [0, 0.5, 1]
+  };
+
   return (
     <div
       className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm"
@@ -20,11 +27,15 @@ const VideoSpinner = ({
         zIndex: 999,
       }}
     >
-      <Icon
-        icon="fluent:spinner-ios-16-filled"
+      <motion.img
+        src="./anitorrent.png"
         width="128"
         height="128"
-        className="animate-spin text-white/90"
+        animate={{ 
+          opacity: [1, 0.4, 1],
+          scale: [1, 0.95, 1]
+        }}
+        transition={pulseTransition}
       />
 
       <div className="mt-6 text-center text-gray-200 font-medium">

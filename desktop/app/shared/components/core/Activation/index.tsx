@@ -76,8 +76,8 @@ const Activation = () => {
 
       <div className="flex flex-col items-center justify-center bg-zinc-950 p-8 rounded-lg w-full">
         <img
-          src="assets/animeton.png"
-          alt="Animeton Logo"
+          src="assets/anitorrent.png"
+          alt="Anitorrent Logo"
           className="w-32 h-32 mb-6"
         />
         <h1 className="text-3xl font-bold mb-4 text-white">

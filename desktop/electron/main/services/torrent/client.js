@@ -8,6 +8,9 @@ import { IPC_CHANNELS } from '../../../shared/constants/event-channels.js';
 import http from 'http';
 import net from 'net';
 import fetch from 'node-fetch';
+import events from 'events';
+
+events.defaultMaxListeners = 30;
 
 /** @type {import('webtorrent').Instance} */
 let activeClient = null;
@@ -58,11 +61,14 @@ async function checkServerHealth() {
           timeout: 10_000,
         },
         (response) => {
+          response.setMaxListeners(30);
           response.destroy();
           resolve(response.statusCode === 200);
         }
       );
 
+      request.setMaxListeners(30);
+      
       request.on('error', (err) => {
         log.error('Server health check error (HTTP):', err.message);
         resolve(false);
@@ -158,6 +164,12 @@ async function createTorrentServer(client) {
         instance.server.listen(0, 'localhost', async () => {
           clearTimeout(timeout);
           torrentServer = instance;
+
+          instance.server.setMaxListeners(100);
+          
+          instance.server.on('connection', (socket) => {
+            socket.setMaxListeners(30);
+          });
 
           const port = instance.server.address()?.port;
           if (!port) {
@@ -272,7 +284,7 @@ async function initializeWebTorrentClient() {
 
       setInterval(() => {
         sendActiveTorrentsUpdate();
-      }, 1000);
+      }, 500);
     }
 
     if (!torrentServer) {
@@ -716,6 +728,10 @@ async function handleAddTorrent({
     client.add(torrentUrl, { announce: ANNOUNCE }, (torrent) => {
       torrent.setMaxListeners(30);
       torrent.torrentType = type;
+
+      torrent.on('wire', (wire) => {
+        wire.setMaxListeners(30);
+      });
 
       torrent.on('error', (err) => {
         log.error('Torrent error:', err);

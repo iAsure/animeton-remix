@@ -117,6 +117,8 @@ export async function initializeApp() {
       mainWindow = await setupWindow();
     }
 
+    mainWindow.setMaxListeners(100);
+
     await setupIpcHandlers(webTorrentProcess, subtitlesWorker, mainWindow);
     setupShortcuts(mainWindow);
 
