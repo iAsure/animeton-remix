@@ -2,7 +2,8 @@ import { Divider } from '@nextui-org/react';
 import useDownloads from '@hooks/user/useDownloads';
 import AnimeDownloadCard from './AnimeDownloadCard';
 import { Icon } from '@iconify/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useAmplitude } from '@lib/amplitude';
 
 interface SidePanelProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ const groupDownloadsByAnime = (downloads: any[]): AnimeGroup[] => {
 const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
   const { visualDownloads, removeDownload } = useDownloads();
   const [localDownloads, setLocalDownloads] = useState<any[]>(visualDownloads);
+  const amplitude = useAmplitude();
   
   useEffect(() => {
     setLocalDownloads(visualDownloads);
@@ -50,6 +52,14 @@ const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
       setLocalDownloads([]);
     }
   };
+
+  const handleOpenPath = useCallback((path: string) => {
+    window.api.shell.openPath(path);
+    amplitude.track('Open Path', {
+      source: 'DownloadsPanel',
+      path
+    });
+  }, [amplitude]);
   
   const animeGroups = groupDownloadsByAnime(localDownloads);
   const hasLocalDownloads = localDownloads.length > 0;
@@ -71,9 +81,19 @@ const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
         }`}
       >
         <div className="p-6 h-full">
-          <h2 className="text-xl font-bold text-white mb-4">
-            Descargas {hasLocalDownloads ? `(${localDownloads.length})` : ''}
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white">
+              Descargas {hasLocalDownloads ? `(${localDownloads.length})` : ''}
+            </h2>
+            <button
+              onClick={() => handleOpenPath('downloads')}
+              className="text-sm px-3 py-1 bg-zinc-900 hover:bg-zinc-800 rounded-md transition-colors flex items-center gap-2"
+              title="Abrir carpeta de descargas"
+            >
+              <Icon icon="gravity-ui:folder-open" className="text-zinc-400" />
+              <span>Explorar</span>
+            </button>
+          </div>
           <Divider />
           {!hasLocalDownloads ? (
             <div className="flex flex-col items-center justify-center h-[calc(100%-6rem)] text-zinc-500 text-sm">
