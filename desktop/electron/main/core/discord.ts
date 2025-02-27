@@ -54,6 +54,8 @@ export class DiscordRPC {
       }
     };
 
+    this.window.webContents.setMaxListeners(100);
+
     this.setupEventListeners();
     this.debouncedUpdate = debounce(this.setActivity.bind(this), 3000);
     this.initialize();

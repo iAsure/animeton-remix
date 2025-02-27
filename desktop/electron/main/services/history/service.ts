@@ -42,6 +42,10 @@ export class HistoryService {
     this.historyPath = path.join(app.getPath('userData'), 'history.json');
     this.history = this.getDefaultHistory();
     this.mainWindow = mainWindow;
+    
+    if (this.mainWindow?.webContents) {
+      this.mainWindow.webContents.setMaxListeners(100);
+    }
   }
 
   private getDefaultHistory(): WatchHistory {

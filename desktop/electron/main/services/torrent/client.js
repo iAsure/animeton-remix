@@ -20,6 +20,7 @@ let torrentServer = null;
 let isInitializing = false;
 let serverClosing = false;
 let activeTorrentInfoHash = null;
+let healthCheckInterval = null;
 
 const TORRENT_TYPES = {
   PLAYBACK: 'playback',
@@ -45,6 +46,22 @@ const ANNOUNCE = [
 
 const SERVER_INIT_RETRIES = 3;
 const SERVER_INIT_DELAY = 1000;
+
+process.on('unhandledRejection', (reason, promise) => {
+  log.error('Unhandled Rejection in torrent client:', reason);
+  process.parentPort?.postMessage({
+    type: IPC_CHANNELS.TORRENT.ERROR,
+    data: { error: reason?.message || 'Error no controlado en el cliente torrent' },
+  });
+});
+
+process.on('uncaughtException', (error) => {
+  log.error('Uncaught Exception in torrent client:', error);
+  process.parentPort?.postMessage({
+    type: IPC_CHANNELS.TORRENT.ERROR,
+    data: { error: error.message || 'Excepción no controlada en el cliente torrent' },
+  });
+});
 
 async function checkServerHealth() {
   if (!torrentServer) return false;
@@ -246,6 +263,25 @@ async function readConfigFile() {
   }
 }
 
+async function logClientAndServerStatus() {
+  try {
+    const clientActive = !!activeClient;
+    const serverActive = torrentServer ? await checkServerHealth() : false;
+    const torrentsCount = clientActive && activeClient ? activeClient.torrents.length : 0;
+    const serverPort = torrentServer?.server?.address()?.port;
+    
+    log.info('Torrent system status:', {
+      clientActive,
+      serverActive,
+      serverPort: serverPort || 'none',
+      torrentsCount,
+      activeTorrentInfoHash: activeTorrentInfoHash || 'none'
+    });
+  } catch (error) {
+    log.error('Error in logClientAndServerStatus:', error);
+  }
+}
+
 async function initializeWebTorrentClient() {
   if (isInitializing) {
     log.info('Client initialization already in progress, waiting...');
@@ -286,6 +322,8 @@ async function initializeWebTorrentClient() {
       setInterval(() => {
         sendActiveTorrentsUpdate();
       }, 500);
+      
+      healthCheckInterval = setInterval(logClientAndServerStatus, 5000);
     }
 
     if (!torrentServer) {
@@ -708,6 +746,7 @@ async function handleAddTorrent({
   torrentHash,
   type = TORRENT_TYPES.PLAYBACK,
 }) {
+  activeTorrentInfoHash = null;
   try {
     const { client, instance } = await initializeWebTorrentClient();
 
@@ -726,44 +765,71 @@ async function handleAddTorrent({
 
     await validateTorrent(torrentUrl);
 
-    client.add(torrentUrl, { announce: ANNOUNCE }, (torrent) => {
-      torrent.setMaxListeners(30);
-      torrent.torrentType = type;
-
-      torrent.on('wire', (wire) => {
-        wire.setMaxListeners(30);
+    const clientErrorHandler = (err) => {
+      log.error('WebTorrent client error:', err);
+      process.parentPort?.postMessage({
+        type: IPC_CHANNELS.TORRENT.ERROR,
+        data: { error: err.message || 'Error en el cliente torrent' },
       });
+    };
 
-      torrent.on('error', (err) => {
-        log.error('Torrent error:', err);
-        process.parentPort?.postMessage({
-          type: IPC_CHANNELS.TORRENT.ERROR,
-          data: { error: err.message || 'Error en el torrent' },
+    client.once('error', clientErrorHandler);
+
+    await new Promise((resolve, reject) => {
+      const torrentAddTimeout = setTimeout(() => {
+        client.removeListener('error', clientErrorHandler);
+        reject(new Error('Timeout al agregar el torrent'));
+      }, 30000);
+
+      client.add(torrentUrl, { announce: ANNOUNCE }, (torrent) => {
+        clearTimeout(torrentAddTimeout);
+        client.removeListener('error', clientErrorHandler);
+        
+        torrent.setMaxListeners(30);
+        torrent.torrentType = type;
+
+        torrent.on('wire', (wire) => {
+          wire.setMaxListeners(30);
         });
-      });
 
-      if (type === TORRENT_TYPES.PLAYBACK) {
-        torrent.critical(0, torrent.pieces.length - 1);
-        handleTorrent(torrent, instance).catch((error) => {
-          log.error('Error handling torrent:', error);
+        torrent.on('error', (err) => {
+          log.error('Torrent error:', err);
           process.parentPort?.postMessage({
             type: IPC_CHANNELS.TORRENT.ERROR,
-            data: { error: error.message || 'Error handling torrent' },
+            data: { error: err.message || 'Error en el torrent' },
           });
         });
-      } else {
-        sendProgressUpdate(torrent);
-        torrent.on('done', () => {
-          sendProgressUpdate(torrent);
-        });
-      }
 
-      client.torrents
-        .filter((t) => t !== torrent)
-        .forEach((t) => {
-          t.critical(0, 0);
-          t.unchokeSlots = 2;
-        });
+        if (type === TORRENT_TYPES.PLAYBACK) {
+          torrent.critical(0, torrent.pieces.length - 1);
+          handleTorrent(torrent, instance).catch((error) => {
+            log.error('Error handling torrent:', error);
+            process.parentPort?.postMessage({
+              type: IPC_CHANNELS.TORRENT.ERROR,
+              data: { error: error.message || 'Error handling torrent' },
+            });
+          });
+        } else {
+          sendProgressUpdate(torrent);
+          torrent.on('done', () => {
+            sendProgressUpdate(torrent);
+          });
+        }
+
+        client.torrents
+          .filter((t) => t !== torrent)
+          .forEach((t) => {
+            t.critical(0, 0);
+            t.unchokeSlots = 2;
+          });
+
+        resolve();
+      }).on('error', (err) => {
+        clearTimeout(torrentAddTimeout);
+        client.removeListener('error', clientErrorHandler);
+        log.error('Error adding torrent:', err);
+        reject(err);
+      });
     });
   } catch (error) {
     log.error('Error adding torrent:', error);

@@ -1,6 +1,8 @@
 import { globalShortcut, BrowserWindow } from 'electron';
 import log from 'electron-log';
 
+let beforeInputEventHandler: ((event: Electron.Event, input: Electron.Input) => void) | null = null;
+
 export function setupShortcuts(mainWindow: BrowserWindow) {
   try {
     globalShortcut.register('F11', () => {
@@ -9,13 +11,22 @@ export function setupShortcuts(mainWindow: BrowserWindow) {
       }
     });
 
+    beforeInputEventHandler = (event, input) => {
+      if (input.key === 'Escape' && mainWindow.isFullScreen()) {
+        mainWindow.setFullScreen(false);
+        event.preventDefault();
+      }
+    };
+
+    mainWindow.webContents.setMaxListeners(100);
+
     mainWindow.on('focus', () => {
-      mainWindow.webContents.on('before-input-event', (event, input) => {
-        if (input.key === 'Escape' && mainWindow.isFullScreen()) {
-          mainWindow.setFullScreen(false);
-          event.preventDefault();
-        }
-      });
+      mainWindow.webContents.removeAllListeners('before-input-event');
+      mainWindow.webContents.on('before-input-event', beforeInputEventHandler);
+    });
+
+    mainWindow.on('blur', () => {
+      mainWindow.webContents.removeAllListeners('before-input-event');
     });
 
     if (!process.env.DEV) {
@@ -31,6 +42,24 @@ export function setupShortcuts(mainWindow: BrowserWindow) {
 }
 
 export function unregisterShortcuts() {
-  globalShortcut.unregisterAll();
-  log.info('Global shortcuts unregistered');
+  try {
+    const windows = BrowserWindow.getAllWindows();
+    for (const win of windows) {
+      if (!win.isDestroyed()) {
+        // Clean up the before-input-event handler
+        if (win.webContents) {
+          win.webContents.removeAllListeners('before-input-event');
+        }
+        
+        win.removeAllListeners('focus');
+        win.removeAllListeners('blur');
+      }
+    }
+    beforeInputEventHandler = null;
+    
+    globalShortcut.unregisterAll();
+    log.info('Shortcuts and event listeners unregistered successfully');
+  } catch (error) {
+    log.error('Error unregistering shortcuts and event listeners:', error);
+  }
 }

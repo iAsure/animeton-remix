@@ -14,6 +14,8 @@ export const init = (mainWindow: Electron.BrowserWindow) => {
   const autoUpdater = getAutoUpdater();
 
   autoUpdater.logger = log;
+  
+  mainWindow.webContents.setMaxListeners(100);
 
   autoUpdater.on('error', (err) => {
     log.error(`Update error: ${err.message}`);

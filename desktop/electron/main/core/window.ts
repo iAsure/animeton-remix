@@ -2,6 +2,7 @@ import { BrowserWindow } from 'electron';
 import path from 'path';
 import log from 'electron-log';
 import { fileURLToPath } from "node:url";
+import { unregisterShortcuts } from './shortcuts.js';
 
 let mainWindow: BrowserWindow | null = null;
 const windows = new Set<BrowserWindow>();
@@ -60,6 +61,7 @@ export async function setupWindow(partition = 'persist:partition'): Promise<Brow
   
   mainWindow.on('closed', () => {
     windows.delete(mainWindow);
+    unregisterShortcuts();
     mainWindow = null;
   });
 

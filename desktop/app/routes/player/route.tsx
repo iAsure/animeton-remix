@@ -178,16 +178,42 @@ const Player = () => {
 
   useEffect(() => {
     if (torrentError) {
-      console.error('Torrent error:', torrentError);
+      console.error('Torrent error in Player component:', torrentError);
 
       showNotification({
-        title: 'Error',
+        title: 'Error de reproducción',
         message: torrentError,
         type: 'error',
       });
-      navigate('/', { viewTransition: true });
+
+      if (amplitude && animeData) {
+        amplitude.track('Playback Error', {
+          idAnilist: animeData.idAnilist,
+          title: animeTitle,
+          episode: animeEpisode,
+          torrent: torrentUrl,
+          hash: torrentHash,
+          error: torrentError,
+        });
+      }
+
+      const redirectTimeout = setTimeout(() => {
+        navigate('/', { viewTransition: true });
+      }, 3500);
+
+      return () => clearTimeout(redirectTimeout);
     }
-  }, [torrentError]);
+  }, [
+    torrentError,
+    showNotification,
+    navigate,
+    amplitude,
+    animeData,
+    animeTitle,
+    animeEpisode,
+    torrentUrl,
+    torrentHash,
+  ]);
 
   useEffect(() => {
     if (torrentHash && videoRef.current) {
@@ -533,9 +559,18 @@ const Player = () => {
         </div>
       )}
       {torrentError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-          <div className="text-red-500 text-lg">
-            Error loading video: {torrentError}
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center bg-black/90"
+          style={{ zIndex: 9999 }}
+        >
+          <div className="text-red-500 text-2xl font-semibold mb-2">
+            Error de reproducción
+          </div>
+          <div className="text-red-400 text-lg max-w-2xl text-center mb-6 px-4">
+            {torrentError}
+          </div>
+          <div className="text-gray-400 text-sm mb-6 px-4 text-center max-w-xl">
+            Serás redirigido a la página principal en unos segundos...
           </div>
         </div>
       )}

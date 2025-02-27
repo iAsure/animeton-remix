@@ -5,6 +5,11 @@ export class SubtitlesService {
   constructor(subtitlesWorker, mainWindow) {
     this.worker = subtitlesWorker;
     this.mainWindow = mainWindow;
+    
+    this.worker.setMaxListeners(100);
+    if (this.mainWindow?.webContents) {
+      this.mainWindow.webContents.setMaxListeners(100);
+    }
   }
 
   async processFile(filePath) {

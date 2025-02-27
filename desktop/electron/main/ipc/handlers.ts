@@ -8,17 +8,19 @@ import os from 'os';
 import { Worker as NodeWorker } from 'worker_threads';
 import { ConfigService } from '../services/config/service.js';
 import { HistoryService } from '../services/history/service.js';
-import { validateActivationKey, closeActivationWindow, activateKey } from '../core/activation-window.js';
-import { setupWindow } from '../core/window.js';
+import { validateActivationKey, activateKey } from '../core/activation-window.js';
 import { AppConfig } from 'electron/shared/types/config.js';
 import fs from 'fs/promises';
 import { init as initUpdater } from '../core/updater.js';
+import { unregisterShortcuts } from '../core/shortcuts.js';
 
 export async function setupIpcHandlers(
   webTorrentProcess: UtilityProcess,
   subtitlesWorker: NodeWorker,
   mainWindow: BrowserWindow
 ) {
+  mainWindow.webContents.setMaxListeners(100);
+  
   // Initialize services
   const subtitlesService = new SubtitlesService(subtitlesWorker, mainWindow);
   const torrentHandlers = setupTorrentHandlers(
@@ -226,6 +228,7 @@ export async function setupIpcHandlers(
   mainWindow.on('closed', () => {
     configService.cleanup();
     historyService.cleanup();
+    unregisterShortcuts();
   });
 
   ipcMain.handle(IPC_CHANNELS.ACTIVATION.VALIDATE, async (_, key) => {
