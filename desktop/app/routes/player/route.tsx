@@ -11,6 +11,7 @@ import useUserActivity from '@hooks/user/useUserActivity';
 import useRpcFrame from '@hooks/canvas/useRpcFrame';
 import useAnimeEpisodesData from '@hooks/anime/useAnimeEpisodesData';
 import useSubtitleBuffering from '@hooks/media/useSubtitleBuffering';
+import useJinglePlayer from '@hooks/media/useJinglePlayer';
 
 import VideoSpinner from '@components/video/VideoSpinner';
 import VideoControls from '@components/video/VideoControls';
@@ -98,6 +99,14 @@ const Player = () => {
           videoRef.current.currentTime === 0) ||
         videoRef.current.duration === 0 ||
         isNaN(videoRef.current.duration);
+
+  const { isJinglePlaying, jingleError } = useJinglePlayer({
+    videoRef,
+    isVideoReady,
+    isLoadingVideo,
+  });
+
+  const controlsInteractive = !isJinglePlaying;
 
   const animeHistoryData = history?.episodes[torrentHash];
 
@@ -270,14 +279,24 @@ const Player = () => {
   }, [setIsPlaying]);
 
   const handleCanPlay = useCallback(() => {
+    console.info('Video can play, readyState:', videoRef.current?.readyState);
     if (
       videoRef.current &&
       videoRef.current.readyState >= 3 &&
       videoRef.current.duration > 0
     ) {
+      console.info(
+        'Video ready for playback, duration:',
+        videoRef.current.duration
+      );
       setIsLocalBuffering(false);
       setIsSeeking(false);
       handleVideoReady();
+
+      if (videoRef.current.currentTime < 0.7) {
+        console.info('Pausing video to allow jingle playback');
+        videoRef.current.pause();
+      }
     }
   }, [handleVideoReady]);
 
@@ -428,6 +447,18 @@ const Player = () => {
     }
   }, [isSeeking]);
 
+  useEffect(() => {
+    if (jingleError) {
+      console.error('Error en jingle:', jingleError);
+    }
+  }, [jingleError]);
+
+  useEffect(() => {
+    if (isJinglePlaying) {
+      setMouseMoving(true);
+    }
+  }, [isJinglePlaying, setMouseMoving]);
+
   return (
     <div
       className={`absolute w-full h-full overflow-hidden ${
@@ -446,18 +477,22 @@ const Player = () => {
           },
         }}
       />
-      <VideoInfo
-        animeName={animeTitle}
-        episodeNumber={animeEpisode}
-        numPeers={numPeers}
-        isMouseMoving={isMouseMoving}
-      />
+      {isMouseMoving && (
+        <VideoInfo
+          animeName={animeTitle}
+          episodeNumber={animeEpisode}
+          numPeers={numPeers}
+          isMouseMoving={isMouseMoving}
+        />
+      )}
       <video
         id="output"
         ref={videoRef}
         autoPlay
-        className="w-full h-full max-w-[100vw] max-h-[100vh] flex bg-cover bg-center object-contain"
-        onClick={handleVideoClick}
+        className={`w-full h-full max-w-[100vw] max-h-[100vh] flex bg-cover bg-center object-contain ${
+          isJinglePlaying ? 'opacity-0' : 'opacity-100'
+        } transition-opacity duration-500`}
+        onClick={controlsInteractive ? handleVideoClick : undefined}
         onCanPlay={handleCanPlay}
         onPlay={handleVideoPlay}
         onWaiting={handleVideoWaiting}
@@ -469,21 +504,23 @@ const Player = () => {
       />
       {config?.features?.subtitlesStatus && <SubtitleStatus />}
       <VideoPlayPauseOverlay />
-      <VideoControls
-        videoRef={videoRef}
-        chapters={chapters}
-        onNextEpisode={handleNextEpisode}
-        hasNextEpisode={!!nextEpisode}
-        nextEpisodeData={{
-          title: nextEpisode?.title,
-          episodeNumber:
-            nextEpisode?.episodeNumber ||
-            nextEpisode?.episode ||
-            nextEpisode?.torrent?.episode,
-          image: nextEpisode?.image,
-        }}
-      />
-      {isLoadingVideo && (
+      <div className={controlsInteractive ? '' : 'pointer-events-none'}>
+        <VideoControls
+          videoRef={videoRef}
+          chapters={chapters}
+          onNextEpisode={handleNextEpisode}
+          hasNextEpisode={!!nextEpisode}
+          nextEpisodeData={{
+            title: nextEpisode?.title,
+            episodeNumber:
+              nextEpisode?.episodeNumber ||
+              nextEpisode?.episode ||
+              nextEpisode?.torrent?.episode,
+            image: nextEpisode?.image,
+          }}
+        />
+      </div>
+      {isLoadingVideo && !isJinglePlaying && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
           <VideoSpinner
             progress={progress}
