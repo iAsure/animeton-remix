@@ -323,7 +323,7 @@ async function initializeWebTorrentClient() {
         sendActiveTorrentsUpdate();
       }, 500);
       
-      healthCheckInterval = setInterval(logClientAndServerStatus, 5000);
+      healthCheckInterval = setInterval(logClientAndServerStatus, 30_000);
     }
 
     if (!torrentServer) {
@@ -852,8 +852,10 @@ async function handleCheckServer() {
 }
 
 async function handlePauseTorrent({ infoHash, torrentUrl }) {
+  log.info('downloads api: handlePauseTorrent', { infoHash, torrentUrl });
   const torrent = activeClient?.torrents.find((t) => t.infoHash === infoHash);
   if (!torrent) {
+    log.info('downloads api: Torrent not found, adding it');
     await handleAddTorrent({ torrentUrl, torrentHash: infoHash });
     sendActiveTorrentsUpdate();
     return {
@@ -863,10 +865,14 @@ async function handlePauseTorrent({ infoHash, torrentUrl }) {
     };
   }
 
+  log.info('downloads api: Torrent found, pausing it');
+
   torrent.destroy();
   activeTorrentInfoHash = null;
 
   sendActiveTorrentsUpdate();
+
+  log.info('downloads api: Torrent paused');
 
   return {
     success: true,

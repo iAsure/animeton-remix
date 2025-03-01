@@ -18,13 +18,19 @@ interface AnimeGroup {
 }
 
 const groupDownloadsByAnime = (downloads: any[]): AnimeGroup[] => {
+  if (!downloads || downloads.length === 0) return [];
+  
   const groups = downloads.reduce((acc, download) => {
+    if (!download || !download.episodeInfo) return acc;
+    
     const animeId = download.episodeInfo.animeIdAnilist;
+    if (!animeId) return acc;
+    
     if (!acc[animeId]) {
       acc[animeId] = {
         animeId,
-        animeName: download.episodeInfo.animeName,
-        animeImage: download.episodeInfo.animeImage,
+        animeName: download.episodeInfo.animeName || '',
+        animeImage: download.episodeInfo.animeImage || '',
         episodes: []
       };
     }
@@ -37,23 +43,29 @@ const groupDownloadsByAnime = (downloads: any[]): AnimeGroup[] => {
 
 const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
   const { visualDownloads, removeDownload } = useDownloads();
-  const [localDownloads, setLocalDownloads] = useState<any[]>(visualDownloads);
+  const [localDownloads, setLocalDownloads] = useState<any[]>(visualDownloads || []);
   const amplitude = useAmplitude();
   
   useEffect(() => {
-    setLocalDownloads(visualDownloads);
+    if (visualDownloads) {
+      setLocalDownloads(visualDownloads);
+    }
   }, [visualDownloads]);
   
   const handleEpisodeRemoved = (episodeId: string) => {
-    setLocalDownloads(prev => prev.filter(download => download.episodeId !== episodeId));
+    if (!episodeId) return;
+    
+    setLocalDownloads(prev => prev.filter(download => download && download.episodeId !== episodeId));
     removeDownload(episodeId);
     
-    if (localDownloads.length === 1 && localDownloads[0].episodeId === episodeId) {
+    if (localDownloads.length === 1 && localDownloads[0]?.episodeId === episodeId) {
       setLocalDownloads([]);
     }
   };
 
   const handleOpenPath = useCallback((path: string) => {
+    if (!path) return;
+    
     window.api.shell.openPath(path);
     amplitude.track('Open Path', {
       source: 'DownloadsPanel',
@@ -62,7 +74,7 @@ const DownloadsPanel = ({ isOpen, onClose }: SidePanelProps) => {
   }, [amplitude]);
   
   const animeGroups = groupDownloadsByAnime(localDownloads);
-  const hasLocalDownloads = localDownloads.length > 0;
+  const hasLocalDownloads = localDownloads && localDownloads.length > 0;
 
   return (
     <>

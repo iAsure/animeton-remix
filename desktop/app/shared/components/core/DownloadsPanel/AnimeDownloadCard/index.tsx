@@ -15,7 +15,7 @@ interface AnimeGroup {
       progress: number;
       downloadSpeed: number;
       uploadSpeed: number;
-      isPaused: boolean;
+      isPaused?: boolean;
       remaining: string;
     };
     episodeInfo: {
@@ -27,6 +27,7 @@ interface AnimeGroup {
       episodeTorrentUrl: string;
       pubDate: string;
     };
+    status: 'downloading' | 'paused' | 'completed';
   }>;
 }
 
@@ -36,18 +37,22 @@ interface AnimeDownloadCardProps {
 }
 
 const calculateGroupProgress = (episodes: AnimeGroup['episodes']) => {
+  if (!episodes || episodes.length === 0) return 0;
+  
   const totalProgress = episodes.reduce(
-    (acc, episode) => acc + episode.progress.progress,
+    (acc, episode) => acc + (episode?.progress?.progress || 0),
     0
   );
   return totalProgress / episodes.length;
 };
 
 const calculateGroupSpeeds = (episodes: AnimeGroup['episodes']) => {
+  if (!episodes) return { downloadSpeed: 0, uploadSpeed: 0 };
+  
   const speeds = episodes.reduce(
     (acc, episode) => ({
-      downloadSpeed: acc.downloadSpeed + episode.progress.downloadSpeed,
-      uploadSpeed: acc.uploadSpeed + episode.progress.uploadSpeed,
+      downloadSpeed: acc.downloadSpeed + (episode?.progress?.downloadSpeed || 0),
+      uploadSpeed: acc.uploadSpeed + (episode?.progress?.uploadSpeed || 0),
     }),
     { downloadSpeed: 0, uploadSpeed: 0 }
   );
@@ -60,14 +65,20 @@ const calculateGroupSpeeds = (episodes: AnimeGroup['episodes']) => {
 
 const AnimeDownloadCard = ({ animeGroup, onEpisodeRemoved }: AnimeDownloadCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [localEpisodes, setLocalEpisodes] = useState<AnimeGroup['episodes']>(animeGroup.episodes);
+  const [localEpisodes, setLocalEpisodes] = useState<AnimeGroup['episodes']>(
+    animeGroup?.episodes || []
+  );
   
   useEffect(() => {
-    setLocalEpisodes(animeGroup.episodes);
-  }, [animeGroup.episodes]);
+    if (animeGroup?.episodes) {
+      setLocalEpisodes(animeGroup.episodes);
+    }
+  }, [animeGroup?.episodes]);
   
   const handleEpisodeRemoved = (episodeId: string) => {
-    const updatedEpisodes = localEpisodes.filter(ep => ep.episodeId !== episodeId);
+    if (!episodeId) return;
+    
+    const updatedEpisodes = localEpisodes.filter(ep => ep && ep.episodeId !== episodeId);
     setLocalEpisodes(updatedEpisodes);
     
     if (onEpisodeRemoved) {
@@ -77,10 +88,13 @@ const AnimeDownloadCard = ({ animeGroup, onEpisodeRemoved }: AnimeDownloadCardPr
   
   const totalProgress = calculateGroupProgress(localEpisodes);
   const { downloadSpeed, uploadSpeed } = calculateGroupSpeeds(localEpisodes);
-  const activeEpisodes = localEpisodes.filter(ep => !ep.progress.isPaused);
+  
+  // Include all episodes, both active and paused
+  const activeEpisodes = localEpisodes.filter(ep => ep && ep.status !== 'paused');
   const hasActiveDownloads = activeEpisodes.length > 0;
   
-  if (localEpisodes.length === 0) {
+  // If there are no episodes at all, don't render the card
+  if (!localEpisodes || localEpisodes.length === 0) {
     return null;
   }
 
@@ -114,6 +128,9 @@ const AnimeDownloadCard = ({ animeGroup, onEpisodeRemoved }: AnimeDownloadCardPr
             <div className="text-xs text-zinc-400">
               {localEpisodes.length}{' '}
               {localEpisodes.length === 1 ? 'episodio' : 'episodios'}
+              {activeEpisodes.length < localEpisodes.length && (
+                <span> ({localEpisodes.length - activeEpisodes.length} pausados)</span>
+              )}
             </div>
 
             {hasActiveDownloads && (
